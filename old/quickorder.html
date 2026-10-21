@@ -1,0 +1,556 @@
+<!-- ไฟล์: QuickOrder.html (ปรับแก้ Pop-up Modal ให้ลอยตรงกลางตามรูปตัวอย่าง) -->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <script src="appInit.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <title>บันทึกยอดด่วน - ลาบหนองบัวลำภู</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="supabaseClient.js"></script>
+    <style>
+        :root {
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            touch-action: none;
+            -webkit-text-size-adjust: 100%;
+            background-color: var(--bg-color);
+            color: #1e293b;
+            font-family: 'Sarabun', 'Segoe UI', Tahoma, sans-serif;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        .page-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 672px;
+            margin: 0 auto;
+            box-sizing: border-box;
+            background-color: var(--bg-color);
+        }
+
+        .fixed-header-wrapper {
+            flex-shrink: 0;
+            width: 100%;
+            padding: 12px 12px 6px 12px;
+            box-sizing: border-box;
+            background-color: var(--bg-color);
+            z-index: 10;
+        }
+
+        /* สไตล์ปุ่มกลุ่มลูกค้า */
+        .group-btn-v2 { 
+            background-color: #ffffff; 
+            border: 1.5px solid #fde68a; 
+            color: #334155; 
+            transition: all 0.2s ease; 
+        }
+        .group-btn-v2.active { 
+            background-color: #f59e0b; 
+            border-color: #d97706; 
+            color: #ffffff; 
+            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3); 
+        }
+
+        .customer-autocomplete-wrapper { position: relative; width: 100%; }
+        .customer-dropdown {
+            position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #ffffff;
+            border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            max-height: 180px; overflow-y: auto; z-index: 50; display: none;
+        }
+        .customer-dropdown.active { display: block; }
+        .customer-dropdown-item {
+            padding: 10px 12px; font-size: 12px; color: #334155; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9;
+        }
+        .customer-dropdown-item:hover { background-color: #fef3c7; }
+
+        .main-content-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            padding: 0 12px 8px 12px;
+            gap: 12px;
+            overflow-y: auto;
+        }
+
+        .fixed-footer-wrapper {
+            flex-shrink: 0;
+            width: 100%;
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            padding: 10px 12px;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+            z-index: 20;
+        }
+
+        /* --- ปรับแต่ง Pop-up Modal ให้ลอยตรงกลางทรงขอบมนตามตัวอย่าง --- */
+        .custom-modal-overlay { 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+            background: rgba(15, 23, 42, 0.6); 
+            backdrop-filter: blur(4px);
+            display: none; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 9999; 
+            padding: 1rem; 
+        }
+        .custom-modal-overlay.active { display: flex !important; }
+        
+        .popup-container {
+            background: #ffffff; 
+            width: 100% !important; 
+            max-width: 28rem !important; 
+            max-height: 85vh !important; 
+            border-radius: 1.5rem !important; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            position: relative;
+            animation: popupFadeIn 0.2s ease-out;
+        }
+
+        @keyframes popupFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .popup-content-wrapper { width: 100%; background: #ffffff; overflow-y: auto; flex: 1; }
+    </style>
+</head>
+<body>
+
+<div class="page-container">
+    <div class="fixed-header-wrapper">
+        <div id="locationSelectorWrapper"></div>
+    </div>
+
+    <div class="main-content-box">
+        <div class="bg-white border-2 border-emerald-500/30 rounded-2xl p-4 shadow-sm space-y-3">
+            <label for="quickAmountInput" class="font-extrabold text-sm text-slate-700 flex items-center gap-1.5">
+                ⚡ กรอกยอดเงินรวมทั้งหมด (บาท)
+            </label>
+            <div class="relative flex items-center">
+                <input 
+                    type="number" 
+                    id="quickAmountInput" 
+                    placeholder="0" 
+                    inputmode="numeric" 
+                    class="w-full h-16 pl-4 pr-12 text-3xl font-black text-emerald-600 border-2 border-emerald-400 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500 bg-emerald-50/30"
+                >
+                <span class="absolute right-4 font-bold text-slate-400 text-base">บาท</span>
+            </div>
+            
+            <div>
+                <label for="quickNoteInput" class="font-bold text-xs text-slate-600 block mb-1">📝 หมายเหตุเพิ่มเติม (ถ้ามี)</label>
+                <input 
+                    type="text" 
+                    id="quickNoteInput" 
+                    placeholder="เช่น โอนจ่าย, ไม่ใส่ผัก" 
+                    class="w-full h-10 px-3 border border-slate-200 rounded-xl text-xs outline-none focus:border-emerald-500 bg-slate-50"
+                >
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed-footer-wrapper">
+        <div class="flex gap-2.5 max-w-2xl mx-auto">
+            <a href="index.html" class="bg-white hover:bg-gray-50 text-slate-800 border border-slate-300 font-bold py-3.5 px-3 rounded-xl text-xs flex-1 text-center shadow-sm transition flex items-center justify-center gap-1">
+                🏠 หน้าหลัก
+            </a>
+            <button type="button" onclick="submitQuickOrder()" id="btnSubmitOrder" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold py-3.5 px-3 rounded-xl text-xs flex-1 text-center shadow transition flex items-center justify-center gap-1">
+                💾 บันทึก
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pop-up สำหรับเลือกสถานที่ / โซน (กล่องลอยตรงกลางขอบมน) -->
+<div id="dynamicPopupOverlay" class="custom-modal-overlay" onclick="closeDynamicPopup()">
+    <div id="popupContainerBox" class="popup-container" onclick="event.stopPropagation()">
+        <div id="popupHeader" class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
+            <span id="popupTitle" class="font-extrabold text-sm text-slate-700 truncate px-1">📍 เลือกสถานที่ / ที่พัก</span>
+            <button type="button" onclick="closeDynamicPopup()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
+        </div>
+        <div class="popup-content-wrapper p-3.5 flex flex-col h-full">
+            <div class="pb-3 border-b border-slate-100 flex-shrink-0 bg-white">
+                <div id="addLocationSection" class="bg-amber-50 p-2.5 rounded-2xl border border-amber-200 flex gap-2">
+                    <input type="text" id="newLocationInput" placeholder="➕ เพิ่มสถานที่ใหม่..." class="flex-1 h-9 px-3 text-xs rounded-xl border border-amber-300 bg-white outline-none">
+                    <button type="button" onclick="addNewLocation()" class="h-9 px-4 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-sm">+ เพิ่ม</button>
+                </div>
+                <div id="addZoneSection" class="bg-blue-50 p-2.5 rounded-2xl border border-blue-200 flex gap-2 hidden">
+                    <input type="text" id="newZoneInput" placeholder="➕ เพิ่มโซน/ห้องพักใหม่..." class="flex-1 h-9 px-3 text-xs rounded-xl border border-blue-300 bg-white outline-none">
+                    <button type="button" onclick="addNewZone()" class="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-sm">+ เพิ่ม</button>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto pt-3">
+                <div id="selectionGrid" class="grid grid-cols-2 gap-2.5">
+                    <span class="text-slate-400 text-xs py-8 text-center col-span-2 block">⏳ กำลังโหลดข้อมูล...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('touchstart', function(event) {
+        if (event.touches.length > 1) { event.preventDefault(); }
+    }, { passive: false });
+
+    function removeDuplicateWords(text) {
+        if (!text) return '';
+        const parts = text.trim().split(/\s+/);
+        if (parts.length === 2 && parts[0] === parts[1]) { return parts[0]; }
+        return text.trim();
+    }
+
+    let locationData = {
+        groupId: 1,
+        groupName: 'ชาวบ้าน',
+        phone: '',
+        locationName: '',
+        zoneName: '',
+        locationId: null,
+        zoneId: null
+    };
+
+    let customersList = []; 
+    let selectedCustomerObj = null;
+    let locationsData = [];
+    let zonesData = [];
+    let selectedLocationForZone = null;
+
+    window.addEventListener('DOMContentLoaded', async () => {
+        initLocationComponent('locationSelectorWrapper');
+        await Promise.all([
+            fetchCustomersData(),
+            fetchLocationsAndZones()
+        ]);
+    });
+
+    function initLocationComponent(targetContainerId) {
+        const container = document.getElementById(targetContainerId);
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="bg-amber-50/50 border border-amber-200 rounded-2xl p-3 shadow-sm space-y-2">
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" onclick="selectCustomerGroup(1, 'ชาวบ้าน')" id="btn-group-1-${targetContainerId}" class="group-btn-v2 active h-[38px] rounded-xl font-bold text-xs flex items-center justify-center gap-1 cursor-pointer">🏡 ชาวบ้าน</button>
+                    <button type="button" onclick="selectCustomerGroup(2, 'นักท่องเที่ยว')" id="btn-group-2-${targetContainerId}" class="group-btn-v2 h-[38px] rounded-xl font-bold text-xs flex items-center justify-center gap-1 cursor-pointer">🧳 นักท่องเที่ยว</button>
+                    <button type="button" onclick="selectCustomerGroup(3, 'สบายดี')" id="btn-group-3-${targetContainerId}" class="group-btn-v2 h-[38px] rounded-xl font-bold text-xs flex items-center justify-center gap-1 cursor-pointer">😊 สบายดี</button>
+                </div>
+                <div class="flex gap-2 items-center">
+                    <div class="flex-1 customer-autocomplete-wrapper">
+                        <input type="text" id="customerInput-${targetContainerId}" oninput="handleCustomerInput(this.value)" placeholder="👤 ชื่อ หรือ เบอร์โทรลูกค้า" autocomplete="off" class="customer-input-field w-full h-[38px] px-3 border border-amber-200 rounded-xl text-xs bg-white outline-none">
+                        <div id="customerDropdown-${targetContainerId}" class="customer-dropdown"></div>
+                    </div>
+                    <div id="locationBtnContainer-${targetContainerId}" class="w-5/12 hidden">
+                        <button type="button" onclick="openLocationZoneModal()" class="w-full h-[38px] bg-amber-500 text-white font-bold px-2 rounded-xl text-xs flex items-center justify-center gap-1 shadow-sm">📍 <span id="locationBtnText-${targetContainerId}" class="truncate">เลือกสถานที่</span></button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async function fetchCustomersData() {
+        try {
+            if (typeof supabaseClient !== 'undefined') {
+                const { data, error } = await supabaseClient.from('customers').select('*').order('customer_name', { ascending: true });
+                if (error) throw error;
+                if (data) customersList = data;
+            }
+        } catch (err) { console.error('Error fetching customers:', err); }
+    }
+
+    async function fetchLocationsAndZones() {
+        try {
+            if (typeof supabaseClient !== 'undefined') {
+                const [locRes, zoneRes] = await Promise.all([
+                    supabaseClient.from('locations').select('*').order('location_name', { ascending: true }),
+                    supabaseClient.from('location_zone').select('*').order('zone_name', { ascending: true })
+                ]);
+                if (locRes.data) locationsData = locRes.data;
+                if (zoneRes.data) zonesData = zoneRes.data;
+            }
+        } catch (err) { console.error('Error fetching locations/zones:', err); }
+    }
+
+    function handleCustomerInput(val) {
+        document.querySelectorAll('.customer-input-field').forEach(inp => {
+            if (inp.value !== val) inp.value = val;
+        });
+        selectedCustomerObj = null;
+
+        const dropdown = document.getElementById('customerDropdown-locationSelectorWrapper');
+        if (!dropdown) return;
+        const cleanVal = removeDuplicateWords(val);
+        if (!cleanVal) { dropdown.classList.remove('active'); return; }
+        const matches = customersList.filter(c => removeDuplicateWords(c.customer_name || '').toLowerCase().includes(cleanVal.toLowerCase()));
+        if (matches.length === 0) { dropdown.classList.remove('active'); return; }
+        dropdown.innerHTML = '';
+        matches.forEach(cust => {
+            const item = document.createElement('div');
+            item.className = 'customer-dropdown-item';
+            item.innerHTML = `<span class="font-semibold">${removeDuplicateWords(cust.customer_name)}</span>`;
+            item.onclick = () => {
+                selectedCustomerObj = cust;
+                document.querySelectorAll('.customer-input-field').forEach(inp => inp.value = removeDuplicateWords(cust.customer_name));
+                dropdown.classList.remove('active');
+            };
+            dropdown.appendChild(item);
+        });
+        dropdown.classList.add('active');
+    }
+
+    function selectCustomerGroup(groupId, groupName) {
+        locationData.groupId = groupId;
+        locationData.groupName = groupName;
+
+        const btn1 = document.getElementById(`btn-group-1-locationSelectorWrapper`);
+        const btn2 = document.getElementById(`btn-group-2-locationSelectorWrapper`);
+        const btn3 = document.getElementById(`btn-group-3-locationSelectorWrapper`);
+        
+        if(btn1) btn1.classList.toggle('active', groupId === 1);
+        if(btn2) btn2.classList.toggle('active', groupId === 2);
+        if(btn3) btn3.classList.toggle('active', groupId === 3);
+
+        const locContainer = document.getElementById(`locationBtnContainer-locationSelectorWrapper`);
+        if (locContainer) {
+            if (groupId === 2) locContainer.classList.remove('hidden');
+            else locContainer.classList.add('hidden');
+        }
+
+        if (groupId !== 2) {
+            locationData.locationId = null;
+            locationData.zoneId = null;
+            locationData.locationName = '';
+            locationData.zoneName = '';
+        }
+    }
+
+    function openLocationZoneModal() {
+        document.getElementById('popupTitle').innerText = '📍 เลือกสถานที่ / ที่พัก';
+        renderLocationsView();
+        document.getElementById('dynamicPopupOverlay').classList.add('active');
+    }
+
+    function closeDynamicPopup() {
+        document.getElementById('dynamicPopupOverlay').classList.remove('active');
+    }
+
+    function renderLocationsView() {
+        document.getElementById('popupTitle').innerText = '📍 เลือกสถานที่ / ที่พัก';
+        document.getElementById('addLocationSection').classList.remove('hidden');
+        document.getElementById('addZoneSection').classList.add('hidden');
+        
+        const grid = document.getElementById('selectionGrid');
+        grid.innerHTML = '';
+
+        if (locationsData.length === 0) {
+            grid.innerHTML = '<span class="text-slate-400 text-xs py-8 text-center col-span-2 block">ไม่พบข้อมูลสถานที่</span>';
+            return;
+        }
+
+        locationsData.forEach(loc => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'py-3 px-3 bg-amber-50/60 hover:bg-amber-100 border border-amber-200/80 rounded-2xl text-center font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm truncate';
+            btn.innerHTML = `<div class="truncate">${loc.location_name}</div>`;
+            btn.onclick = () => {
+                selectedLocationForZone = loc;
+                renderZonesView(loc);
+            };
+            grid.appendChild(btn);
+        });
+    }
+
+    function renderZonesView(loc) {
+        document.getElementById('popupTitle').innerHTML = `🛋️ เลือกโซน <span class="text-amber-600 font-semibold text-xs block mt-0.5">สถานที่: ${loc.location_name}</span>`;
+        document.getElementById('addLocationSection').classList.add('hidden');
+        document.getElementById('addZoneSection').classList.remove('hidden');
+
+        const grid = document.getElementById('selectionGrid');
+        grid.innerHTML = '';
+
+        const filteredZones = zonesData.filter(z => String(z.location_id) === String(loc.location_id));
+
+        if (filteredZones.length === 0) {
+            selectLocationAndZone(loc.location_id, loc.location_name, null, '');
+            return;
+        }
+
+        const backBtn = document.createElement('button');
+        backBtn.type = 'button';
+        backBtn.className = 'py-2.5 px-3 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-2xl text-center font-bold text-xs transition active:scale-95 cursor-pointer col-span-2 text-slate-700 shadow-sm';
+        backBtn.innerHTML = `⬅️ กลับไปเลือกสถานที่อื่น`;
+        backBtn.onclick = () => renderLocationsView();
+        grid.appendChild(backBtn);
+
+        filteredZones.forEach(z => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'py-3 px-3 bg-blue-50/60 hover:bg-blue-100 border border-blue-200/80 rounded-2xl text-center font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm truncate';
+            btn.innerHTML = `<div class="truncate">${z.zone_name}</div>`;
+            btn.onclick = () => selectLocationAndZone(loc.location_id, loc.location_name, z.zone_id, z.zone_name);
+            grid.appendChild(btn);
+        });
+    }
+
+    async function addNewLocation() {
+        const input = document.getElementById('newLocationInput');
+        const name = input.value.trim();
+        if (!name) return;
+
+        if (typeof supabaseClient !== 'undefined') {
+            const { data, error } = await supabaseClient.from('locations').insert([{ location_name: name, min_order_for_free_delivery: 300, delivery_fee: 20 }]).select().single();
+            if (!error && data) {
+                locationsData.push(data);
+                input.value = '';
+                renderLocationsView();
+            }
+        }
+    }
+
+    async function addNewZone() {
+        const input = document.getElementById('newZoneInput');
+        const name = input.value.trim();
+        if (!name || !selectedLocationForZone) return;
+
+        if (typeof supabaseClient !== 'undefined') {
+            const { data, error } = await supabaseClient.from('location_zone').insert([{ zone_name: name, location_id: selectedLocationForZone.location_id }]).select().single();
+            if (!error && data) {
+                zonesData.push(data);
+                input.value = '';
+                renderZonesView(selectedLocationForZone);
+            }
+        }
+    }
+
+    function selectLocationAndZone(locId, locName, zoneId, zoneName) {
+        locationData.locationId = locId;
+        locationData.locationName = locName;
+        locationData.zoneId = zoneId;
+        locationData.zoneName = zoneName;
+
+        const txtEl = document.getElementById('locationBtnText-locationSelectorWrapper');
+        if (txtEl) {
+            txtEl.innerText = `${locName}${zoneName ? ' - ' + zoneName : ''}`;
+        }
+        closeDynamicPopup();
+    }
+
+    async function ensureCustomerSaved(inputValue) {
+        const val = removeDuplicateWords(inputValue);
+        if (!val) return null;
+        if (selectedCustomerObj) return selectedCustomerObj;
+
+        const existing = customersList.find(c => removeDuplicateWords(c.customer_name || '').toLowerCase() === val.toLowerCase());
+        if (existing) return existing;
+
+        try {
+            if (typeof supabaseClient !== 'undefined') {
+                const { data, error } = await supabaseClient
+                    .from('customers')
+                    .insert([{ customer_name: val }])
+                    .select()
+                    .single();
+
+                if (!error && data) {
+                    customersList.push(data);
+                    return data;
+                }
+            }
+        } catch (err) { console.error('Insert Customer Error:', err); }
+        return { customer_name: val };
+    }
+
+    async function submitQuickOrder() {
+        const amountInput = document.getElementById('quickAmountInput');
+        const totalAmount = Number(amountInput.value);
+
+        if (!totalAmount || totalAmount <= 0) {
+            alert('กรุณากรอกยอดเงินรวมให้ถูกต้อง');
+            amountInput.focus();
+            return;
+        }
+
+        const btn = document.getElementById('btnSubmitOrder');
+        btn.disabled = true;
+        btn.innerText = '⏳ กำลังบันทึกข้อมูล...';
+
+        try {
+            const rawCustomerInput = document.querySelector('.customer-input-field')?.value || '';
+            const customerObj = await ensureCustomerSaved(rawCustomerInput);
+            const customerDisplayName = customerObj ? removeDuplicateWords(customerObj.customer_name || '') : removeDuplicateWords(rawCustomerInput);
+            const userNote = document.getElementById('quickNoteInput').value || '';
+
+            let finalNickname = customerDisplayName;
+            if (!finalNickname) {
+                finalNickname = locationData.locationName || 'Quick Order';
+                if (locationData.zoneName && locationData.zoneName !== locationData.locationName) {
+                    finalNickname += ` (${locationData.zoneName})`;
+                }
+            }
+
+            const quickItems = [{
+                food_id: 9999,
+                name: 'ค่าอาหารรวม (Quick Order)',
+                food_name: 'ค่าอาหารรวม (Quick Order)',
+                qty: 1,
+                quantity: 1,
+                price: totalAmount,
+                unit_price: totalAmount,
+                total_price: totalAmount,
+                sum: totalAmount,
+                note: userNote
+            }];
+
+            const now = new Date();
+            const thaiTime = new Date(now.getTime() + (7 * 60 * 60 * 1000)).toISOString().replace('Z', '+07:00');
+
+            if (typeof supabaseClient !== 'undefined') {
+                const { error } = await supabaseClient
+                    .from('orders')
+                    .insert([{
+                        created_at: thaiTime,
+                        total_price: totalAmount,
+                        total_qty: 1,
+                        items: quickItems,
+                        nickname: finalNickname,
+                        customer_type_id: Number(locationData.groupId),
+                        note: userNote ? `[บันทึกด่วน] ${userNote}` : '[บันทึกด่วน]',
+                        location_id: locationData.locationId ? Number(locationData.locationId) : null,
+                        zone_id: locationData.zoneId ? Number(locationData.zoneId) : null,
+                        delivery_fee: 0,
+                        subtotal: totalAmount,
+                        customer_id: customerObj ? String(customerObj.customer_id || '') : null
+                    }]);
+
+                if (error) throw error;
+            }
+
+            window.location.href = 'index.html';
+
+        } catch (err) {
+            console.error('Submit Quick Order Error:', err);
+            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + (err.message || ''));
+            btn.disabled = false;
+            btn.innerHTML = '💾 บันทึก';
+        }
+    }
+</script>
+</body>
+</html>
