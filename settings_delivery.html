@@ -1,4 +1,4 @@
-<!-- ไฟล์: delivery_settings.html -->
+<!-- ไฟล์: delivery_settings.html (ฉบับแก้ไข Error คอลัมน์ name) -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -28,8 +28,8 @@
         }
         .excel-table th, .excel-table td {
             border: 1px solid #cbd5e1;
-            padding: 2px 4px; /* บีบพื้นที่ภายในให้แคบลงเพื่อลดความสูง */
-            height: 32px; /* ขยายความสูงเล็กน้อยเพื่อให้รับกับตัวหนังสือ 14px */
+            padding: 2px 4px;
+            height: 32px;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
@@ -67,7 +67,6 @@
                 <h1 class="font-extrabold text-sm text-slate-800 flex items-center gap-1.5">⚙️ ตั้งค่าเรทค่าส่ง & ยอดขั้นต่ำ</h1>
                 <p class="text-[11px] text-slate-500">กำหนดเงื่อนไขค่าจัดส่งสำหรับแต่ละสถานที่/รีสอร์ต</p>
             </div>
-            <!-- แก้ไขลิงก์และข้อความปุ่มกลับหน้าผู้ดูแลระบบ -->
             <a href="index_admin.html" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition">
                 ⬅️ กลับหน้าผู้ดูแลระบบ
             </a>
@@ -116,10 +115,11 @@
             }
 
             try {
+                // แก้ไขจาก .order('name') เป็น .order('location_name') ตามโครงสร้างตารางจริง
                 const { data, error } = await _db
                     .from('locations')
                     .select('*')
-                    .order('name', { ascending: true });
+                    .order('location_name', { ascending: true });
 
                 if (error) throw error;
 
@@ -129,14 +129,15 @@
 
                 data.forEach(loc => {
                     const locId = loc.location_id || loc.id;
+                    const locName = loc.location_name || 'ไม่ระบุชื่อ';
                     const minOrder = loc.min_order_for_free_delivery ?? 300;
                     const deliveryFee = loc.delivery_fee ?? 20;
 
                     const tr = document.createElement('tr');
                     tr.className = 'hover:bg-slate-50 transition';
                     tr.innerHTML = `
-                        <td class="font-bold text-slate-800 px-2 truncate" style="font-size: 14px;" title="${loc.name}">
-                            🏨 <span class="truncate">${loc.name}</span>
+                        <td class="font-bold text-slate-800 px-2 truncate" style="font-size: 14px;" title="${locName}">
+                            🏨 <span class="truncate">${locName}</span>
                         </td>
                         <td class="text-center align-middle p-0">
                             <input type="number" id="min_${locId}" value="${minOrder}" class="excel-input">
