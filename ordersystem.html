@@ -22,7 +22,6 @@
             font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none; 
         }
         
-        /* --- ปรับแต่ง Overlay พื้นหลังหลัง Pop-up --- */
         .custom-modal-overlay { 
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
             background: rgba(15, 23, 42, 0.6); 
@@ -35,7 +34,6 @@
         }
         .custom-modal-overlay.active { display: flex !important; }
         
-        /* --- ปรับกล่อง Pop-up ลอยตรงกลาง ขนาดลอยสวยงามแบบในรูปตัวอย่าง --- */
         .popup-container {
             background: #ffffff; 
             width: 100% !important; 
@@ -125,7 +123,6 @@
             </div>
             
             <div class="w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden" style="height: 70vh; min-height: 480px;">
-                <!-- เรียกใช้งาน foodgroup.html ผ่าน Iframe -->
                 <iframe id="foodGroupFrame" src="foodgroup.html" class="w-full h-full border-0"></iframe>
             </div>
 
@@ -295,6 +292,16 @@
         </div>
     </div>
 
+    <!-- Modal แจ้งเตือนสถานะสต็อกวัตถุดิบ (เฉพาะเมื่อเหลือ <= 5) -->
+    <div id="stockAlertModalOverlay" class="custom-modal-overlay" onclick="closeStockAlertModal()">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 text-center border border-slate-200 shadow-2xl m-4" onclick="event.stopPropagation()">
+            <div id="stockAlertIcon" class="w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center text-2xl font-bold bg-amber-100 text-amber-600 shadow-inner">⚠️</div>
+            <h3 id="stockAlertTitle" class="text-base font-extrabold text-slate-800 mb-1">แจ้งเตือนสต็อกใกล้หมด</h3>
+            <p id="stockAlertMessage" class="text-xs sm:text-sm text-slate-600 mb-5 leading-relaxed">กำลังตรวจสอบสต็อก...</p>
+            <button type="button" onclick="closeStockAlertModal()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow cursor-pointer">รับทราบ / ตกลง</button>
+        </div>
+    </div>
+
     <!-- SUB-POPUP: ฟอร์มเพิ่มเมนูพิเศษใหม่ -->
     <div id="addSpecialPopupOverlay" class="sub-popup-overlay" onclick="closeAddSpecialPopup()">
         <div class="sub-popup-box space-y-3" onclick="event.stopPropagation()">
@@ -393,7 +400,6 @@
             }
         });
 
-        // รับค่าสั่งการคลิกหมวดหมู่จาก Iframe (foodgroup.html)
         window.addEventListener('message', (event) => {
             const { type, catId, catName, isSpecial } = event.data || {};
             if (type === 'SELECT_CATEGORY') {
@@ -826,7 +832,82 @@
             updateCartUI();
         }
 
-        function saveToCartFromPopup() {
+        // =========================================================================
+        // ฟังก์ชันตัดสต็อกอัตโนมัติ (แจ้งเตือนเฉพาะเมื่อเหลือ <= 5)
+        // =========================================================================
+        async function checkAndDeductStock(foodId, orderedQty) {
+            if (typeof supabaseClient === 'undefined') return;
+            try {
+                // 1. ตรวจสอบว่าเมนูนี้ผูกสูตรกับวัตถุดิบตัวไหนบ้างในตาราง menu_food_stock
+                const { data: relations, error: relError } = await supabaseClient
+                    .from('menu_food_stock')
+                    .select('food_stock_id')
+                    .eq('food_id', foodId);
+
+                if (relError || !relations || relations.length === 0) return;
+
+                for (const rel of relations) {
+                    const stockId = rel.food_stock_id;
+
+                    // 2. ดึงข้อมูลสต็อกปัจจุบันจากตาราง food_stock
+                    const { data: stockData, error: stockError } = await supabaseClient
+                        .from('food_stock')
+                        .select('quantity, food_stock_name')
+                        .eq('food_stock_id', stockId)
+                        .single();
+
+                    if (stockError || !stockData) continue;
+
+                    const currentQty = parseFloat(stockData.quantity) || 0;
+                    let newQty = currentQty - orderedQty;
+                    if (newQty < 0) newQty = 0; // ถึงแม้จะติดลบหรือเหลือ 0 ก็ยังให้ขายต่อได้
+
+                    // 3. อัปเดตยอดคงเหลือใหม่ลงใน Supabase
+                    const { error: updateError } = await supabaseClient
+                        .from('food_stock')
+                        .update({ quantity: newQty, updated_at: new Date() })
+                        .eq('food_stock_id', stockId);
+
+                    if (updateError) {
+                        console.error('อัปเดตสต็อกไม่สำเร็จ:', updateError.message);
+                        continue;
+                    }
+
+                    // 4. เงื่อนไขการแจ้งเตือน: ถ้าน้อยกว่าหรือเท่ากับ 5 ค่อยเด้ง Pop-up (ถ้ามากกว่า 5 เงียบไว้ไม่ต้องแจ้ง)
+                    if (newQty <= 5) {
+                        showStockAlertModal(stockData.food_stock_name, newQty);
+                    }
+                }
+            } catch (err) {
+                console.error("เกิดข้อผิดพลาดในระบบตัดสต็อก:", err);
+            }
+        }
+
+        function showStockAlertModal(stockName, remainingQty) {
+            const titleEl = document.getElementById('stockAlertTitle');
+            const msgEl = document.getElementById('stockAlertMessage');
+            const iconEl = document.getElementById('stockAlertIcon');
+
+            if (remainingQty <= 0) {
+                iconEl.className = "w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center text-2xl font-bold bg-rose-100 text-rose-600 shadow-inner";
+                iconEl.textContent = "🚨";
+                titleEl.textContent = "วัตถุดิบหมดเกลี้ยงแล้ว!";
+                msgEl.innerHTML = `วัตถุดิบ <b>"${stockName}"</b> ถูกตัดสต็อกเรียบร้อยแล้ว<br><span class="text-rose-600 font-extrabold">ตอนนี้เหลือ 0 ชิ้น (หมดสต็อก)</span> แต่ยังสามารถขายและรับออเดอร์ต่อได้`;
+            } else {
+                iconEl.className = "w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center text-2xl font-bold bg-amber-100 text-amber-600 shadow-inner";
+                iconEl.textContent = "⚠️";
+                titleEl.textContent = "แจ้งเตือนสต็อกใกล้หมด!";
+                msgEl.innerHTML = `วัตถุดิบ <b>"${stockName}"</b> ถูกตัดสต็อกแล้ว<br>ตอนนี้<span class="text-amber-600 font-extrabold">เหลืออยู่เพียง ${remainingQty} ชิ้น</span> เท่านั้น`;
+            }
+
+            document.getElementById('stockAlertModalOverlay').classList.add('active');
+        }
+
+        function closeStockAlertModal() {
+            document.getElementById('stockAlertModalOverlay').classList.remove('active');
+        }
+
+        async function saveToCartFromPopup() {
             const priceInput = document.getElementById('foodPrice').value;
             const price = priceInput !== "" ? parseFloat(priceInput) : null;
             const note = document.getElementById('foodNote').value.trim();
@@ -847,6 +928,10 @@
             });
 
             localStorage.setItem('cart', JSON.stringify(cart));
+            
+            // เรียกใช้งานระบบเช็คและตัดสต็อกวัตถุดิบ (จะแจ้งเตือนเฉพาะเมื่อเหลือ <= 5 เท่านั้น)
+            await checkAndDeductStock(selectedFoodId, currentQty);
+
             closeDynamicPopup();
             updateCartUI();
         }
