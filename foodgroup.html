@@ -39,7 +39,7 @@
         .cat-nav-btn {
             position: relative; 
             background-color: #ffffff; 
-            border: 1.5px solid #ef4444; 
+            border: 1.5px solid #9ca3af; 
             color: #1e293b;
             font-size: 1rem; 
             font-weight: 700; 
@@ -105,11 +105,53 @@
         </div>
     </div>
 
+    <!-- Custom Popup Modal -->
+    <div id="customModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-opacity duration-200 opacity-0">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-xs p-5 text-center transform scale-95 transition-transform duration-200 border border-slate-100 flex flex-col items-center" id="modalBox">
+            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-2xl mb-3 shadow-inner">
+                📌
+            </div>
+            <h3 class="text-base font-bold text-slate-800 mb-1">แจ้งเตือน</h3>
+            <p id="modalMessage" class="text-slate-600 text-sm mb-5 font-medium leading-relaxed"></p>
+            <button onclick="closeCustomModal()" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold rounded-xl shadow-md shadow-emerald-500/20 transition duration-150">
+                ตกลง
+            </button>
+        </div>
+    </div>
+
     <script>
         const categoryIcons = ['🍱', '🍲', '🍳', '🍚', '🥩', '⭐', '🥗', '🛍️', '🍽️', '🥢', '🍹'];
         let cachedCategories = [];
         let cachedFoods = [];
         let currentCart = [];
+
+        // ฟังก์ชันเปิด/ปิด Custom Modal
+        function showCustomModal(message) {
+            const modal = document.getElementById('customModal');
+            const modalBox = document.getElementById('modalBox');
+            document.getElementById('modalMessage').innerText = message;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalBox.classList.remove('scale-95');
+                modalBox.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeCustomModal() {
+            const modal = document.getElementById('customModal');
+            const modalBox = document.getElementById('modalBox');
+            
+            modal.classList.add('opacity-0');
+            modalBox.classList.remove('scale-100');
+            modalBox.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }, 200);
+        }
 
         // กรณีรันไฟล์เดี่ยว ให้โหลดข้อมูลจาก Supabase ทันที
         window.addEventListener('DOMContentLoaded', async () => {
@@ -221,7 +263,8 @@
                             isSpecial: isSpecialCat
                         }, '*');
                     } else {
-                        alert(`เลือกหมวดหมู่: ${catName} (ID: ${cat.food_group_id})`);
+                        // เปลี่ยนจาก alert() เดิมเป็น Custom Pop-up
+                        showCustomModal(`เลือกหมวดหมู่: ${catName} (ID: ${cat.food_group_id})`);
                     }
                 };
 
