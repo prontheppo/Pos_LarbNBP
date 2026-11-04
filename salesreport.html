@@ -1,3 +1,8 @@
+<!-- 
+  ================================
+  FILE NAME: salereport.html  
+  ================================
+-->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -101,7 +106,7 @@
                     <div class="text-xs font-black text-slate-800" id="dailySummaryCount">0 บิล</div>
                 </div>
                 <div class="bg-emerald-50 p-2 rounded-lg border border-emerald-200 shadow-xs">
-                    <div class="text-[10px] text-emerald-700 font-bold">ยอดขายรวมสุทธิ</div>
+                    <div class="text-[10px] text-emerald-700 font-bold">ยอดรับสุทธิรวม</div>
                     <div class="text-xs font-black text-emerald-600" id="dailySummaryTotal">0 บาท</div>
                 </div>
             </div>
@@ -138,7 +143,7 @@
         </div>
         <div id="modalOrderList" class="p-4 overflow-y-auto space-y-3 flex-1 bg-slate-100"></div>
         <div class="p-3 bg-white border-t border-slate-100 flex justify-between items-center px-4">
-            <span class="text-xs font-bold text-slate-600">ยอดรวมของกลุ่มนี้:</span>
+            <span class="text-xs font-bold text-slate-600">ยอดสุทธิของกลุ่มนี้:</span>
             <span id="modalGroupTotal" class="text-sm font-black text-emerald-600">฿0.-</span>
         </div>
     </div>
@@ -248,6 +253,8 @@
                 }
             }
 
+            name = name.replace(/\s*\(สินค้าฝากซื้อ.*?\)/g, '').trim();
+
             let note = '';
             if (rawNote) {
                 if (typeof rawNote === 'string') {
@@ -257,7 +264,14 @@
                 }
             }
 
-            return { name: name || 'รายการ', qty: q, unitPrice, totalPrice: itemTotal, note };
+            let isConsignment = item.isSpecialMenu || String(item.food_group_id || item.group_id) === '98' || String(item.food_group_id || item.group_id) === '99' || name.includes('สินค้าฝากซื้อ');
+            let costPrice = Number(item.cost_price || 0) * q;
+
+            if (isConsignment) {
+                note = '';
+            }
+
+            return { name: name || 'รายการ', qty: q, unitPrice, totalPrice: itemTotal, note, isConsignment, costPrice };
         });
 
         let deliveryFee = Number(order.delivery_fee || 0);
@@ -267,6 +281,15 @@
         if (billTotal === 0 && subtotal > 0) {
             billTotal = subtotal + deliveryFee;
         }
+
+        let consignmentTotal = 0;
+        computedItems.forEach(item => {
+            if (item.isConsignment) {
+                consignmentTotal += item.costPrice;
+            }
+        });
+
+        let netProfitTotal = billTotal - consignmentTotal;
 
         let groupTypeName = "ชาวบ้าน";
         let typeId = Number(order.customer_type_id);
@@ -281,12 +304,32 @@
             groupTypeName = "สบายดี";
         }
 
+        // ปรับปรุงชื่อฝั่งขวา: ดึงเฉพาะข้อความในวงเล็บหรือตัดชื่อรีสอร์ทออกให้เหลือแต่ชื่อโซนแบบโล่งๆ ไม่มีวงเล็บ
+        let rawCustomerName = order.customer_name || '';
+        let zoneOnly = rawCustomerName;
+        if (rawCustomerName.includes('(') && rawCustomerName.includes(')')) {
+            const matches = rawCustomerName.match(/\((.*?)\)/g);
+            if (matches && matches.length > 0) {
+                zoneOnly = matches[matches.length - 1].replace(/[()]/g, '').trim();
+            }
+        } else if (rawCustomerName.toLowerCase().startsWith(groupTypeName.toLowerCase())) {
+            zoneOnly = rawCustomerName.replace(new RegExp(groupTypeName, 'gi'), '').trim();
+        }
+
+        if (!zoneOnly || zoneOnly === '' || zoneOnly === groupTypeName) {
+            zoneOnly = groupTypeName;
+        }
+
         return {
             ...order,
             parsedItems: computedItems,
             computedTotal: billTotal,
             deliveryFee: deliveryFee,
+            consignmentTotal,
+            netProfitTotal,
+            hasConsignment: consignmentTotal > 0,
             groupTypeName,
+            displayCustomerName: zoneOnly,
             dateStr: getOrderDateStr(order)
         };
     }
@@ -434,9 +477,11 @@
         allOrdersCache.forEach(order => {
             let dateStr = order.dateStr;
             if (!dateStr) return;
-            if (!dateGroups[dateStr]) dateGroups[dateStr] = { totalAmount: 0, count: 0 };
+            if (!dateGroups[dateStr]) dateGroups[dateStr] = { totalIncome: 0, totalExpense: 0, netTotal: 0, count: 0 };
 
-            dateGroups[dateStr].totalAmount += order.computedTotal;
+            dateGroups[dateStr].totalIncome += order.computedTotal;
+            dateGroups[dateStr].totalExpense += order.consignmentTotal;
+            dateGroups[dateStr].netTotal += order.netProfitTotal;
             dateGroups[dateStr].count += 1;
         });
 
@@ -452,9 +497,13 @@
                             <span>📅 วันที่:</span> <span class="text-purple-700 font-extrabold">${formatDateThai(dateStr)}</span>
                         </div>
                         <div class="text-[11px] text-slate-500 mt-1">จำนวนบิล: <span class="font-bold text-slate-700">${data.count} บิล</span></div>
+                        <div class="text-[10px] text-slate-500 mt-0.5 space-x-2">
+                            <span>รายรับ: <strong class="text-red-600">฿${data.totalIncome.toLocaleString()}</strong></span>
+                            <span>รายจ่าย: <strong class="text-yellow-700">฿${data.totalExpense.toLocaleString()}</strong></span>
+                        </div>
                     </div>
                     <div class="text-right">
-                        <div class="text-xs font-black text-emerald-600">฿${data.totalAmount.toLocaleString()}.-</div>
+                        <div class="text-xs font-black text-emerald-600">สุทธิ ฿${data.netTotal.toLocaleString()}.-</div>
                         <div class="text-[10px] text-slate-400 mt-0.5">แตะเพื่อดูบิลประจำวัน 🔍</div>
                     </div>
                 </div>`;
@@ -482,45 +531,90 @@
             return;
         }
 
-        let total = 0;
-        filtered.forEach(order => {
-            total += order.computedTotal;
+        let totalIncome = 0;
+        let totalExpense = 0;
+        let totalNet = 0;
 
-            let itemsHtml = order.parsedItems.map(item => {
+        filtered.forEach(order => {
+            totalIncome += order.computedTotal;
+            totalExpense += order.consignmentTotal;
+            totalNet += order.netProfitTotal;
+
+            let redItemsHtml = order.parsedItems.map(item => {
                 let comment = item.note ? ` <span class="text-amber-800 font-semibold bg-amber-50 px-1.5 py-0.5 rounded text-[11px]">(${item.note})</span>` : '';
-                return `<tr class="border-b border-slate-100">
-                    <td class="p-1.5 text-xs text-slate-800 font-medium">${item.name}${comment}</td>
+                let badge = item.isConsignment ? ` <span class="text-[9px] bg-amber-100 text-amber-800 px-1 rounded font-bold">ฝากซื้อ</span>` : '';
+                return `<tr class="border-b border-red-100">
+                    <td class="p-1.5 text-xs text-slate-800 font-medium">${item.name}${badge}${comment}</td>
                     <td class="p-1.5 text-xs text-center font-bold">x${item.qty}</td>
-                    <td class="p-1.5 text-xs text-right font-bold text-blue-600">${item.totalPrice.toLocaleString()}.-</td>
+                    <td class="p-1.5 text-xs text-right font-bold text-red-600">${item.totalPrice.toLocaleString()}.-</td>
                 </tr>`;
             }).join('');
 
             if (order.deliveryFee > 0) {
-                itemsHtml += `<tr class="border-b border-slate-100 bg-amber-50/60">
-                    <td class="p-1.5 text-xs text-amber-900 font-bold flex items-center gap-1"><span>🛵</span><span>ค่าบริการจัดส่ง</span></td>
-                    <td class="p-1.5 text-xs text-center font-bold text-amber-900">-</td>
-                    <td class="p-1.5 text-xs text-right font-bold text-amber-900">${order.deliveryFee.toLocaleString()}.-</td>
+                redItemsHtml += `<tr class="border-b border-red-100 bg-red-50/40">
+                    <td class="p-1.5 text-xs text-red-900 font-bold flex items-center gap-1"><span>🛵</span><span>ค่าบริการจัดส่ง</span></td>
+                    <td class="p-1.5 text-xs text-center font-bold text-red-900">-</td>
+                    <td class="p-1.5 text-xs text-right font-bold text-red-900">${order.deliveryFee.toLocaleString()}.-</td>
                 </tr>`;
+            }
+
+            let yellowGreenSection = '';
+            if (order.hasConsignment) {
+                let yellowItemsHtml = order.parsedItems.filter(i => i.isConsignment).map(item => {
+                    return `<tr class="border-b border-yellow-100">
+                        <td class="p-1 text-[11px] text-yellow-900 font-medium">${item.name}</td>
+                        <td class="p-1 text-[11px] text-center font-bold">x${item.qty}</td>
+                        <td class="p-1 text-[11px] text-right font-bold text-yellow-700">${item.costPrice.toLocaleString()}.-</td>
+                    </tr>`;
+                }).join('');
+
+                yellowGreenSection = `
+                    <div class="bg-yellow-50/80 border border-yellow-300 rounded-lg p-2 space-y-1">
+                        <div class="text-[11px] font-bold text-yellow-900 flex items-center gap-1">
+                            <span>🟡</span> <span>รายจ่าย (ซื้อของมาขายต่อ - ราคาต้นทุน):</span>
+                        </div>
+                        <table class="w-full text-left"><tbody>${yellowItemsHtml}</tbody></table>
+                        <div class="flex justify-between items-center text-[11px] font-extrabold text-yellow-900 pt-1 border-t border-yellow-200">
+                            <span>รวมรายจ่ายซื้อของ:</span>
+                            <span>฿${order.consignmentTotal.toLocaleString()}.-</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-emerald-50 border border-emerald-300 rounded-lg p-2 flex justify-between items-center text-xs">
+                        <span class="font-bold text-emerald-900 flex items-center gap-1"><span>🟢</span> <span>สรุปยอดรับสุทธิ:</span></span>
+                        <span class="font-black text-emerald-600 text-sm">฿${order.netProfitTotal.toLocaleString()}.-</span>
+                    </div>
+                `;
             }
 
             let orderId = order.order_id || order.id;
 
             container.innerHTML += `
-                <div onclick="goToEditOrder(${orderId})" class="bg-white border border-slate-200 hover:border-amber-400 rounded-xl p-3 shadow-xs space-y-2 cursor-pointer transition active:scale-95">
-                    <div class="flex justify-between border-b border-slate-100 pb-2">
+                <div onclick="goToEditOrder(${orderId})" class="bg-white border-2 border-red-500 rounded-xl p-3 shadow-md space-y-3 cursor-pointer transition active:scale-95">
+                    <div class="flex justify-between border-b border-slate-200 pb-2">
                         <span class="font-bold text-xs text-amber-900 bg-amber-100 px-2.5 py-0.5 rounded">${order.groupTypeName} ✏️</span>
-                        <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded truncate max-w-[200px]">👤 ${order.customer_name || order.groupTypeName}</span>
+                        <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded truncate max-w-[200px]">👤 ${order.displayCustomerName}</span>
                     </div>
-                    <table class="w-full text-left"><tbody>${itemsHtml}</tbody></table>
-                    <div class="flex justify-between pt-1 text-xs font-bold border-t border-slate-100">
-                        <span>ยอดรวม:</span>
-                        <span class="text-emerald-600 text-sm font-black">${order.computedTotal.toLocaleString()} บาท</span>
+
+                    <div class="border border-red-300 rounded-lg p-2 bg-red-50/20 shadow-xs">
+                        <div class="text-[11px] font-bold text-red-800 mb-1">🔴 รายรับทั้งหมด (ยอดขายในบิล):</div>
+                        <table class="w-full text-left"><tbody>${redItemsHtml}</tbody></table>
+                        <div class="flex justify-between items-center text-xs font-bold text-red-900 pt-1 border-t border-red-200 mt-1">
+                            <span>รวมรายรับ:</span>
+                            <span class="text-red-600">฿${order.computedTotal.toLocaleString()}.-</span>
+                        </div>
                     </div>
+
+                    ${yellowGreenSection}
                 </div>`;
         });
 
         document.getElementById('dailySummaryCount').textContent = `${filtered.length} บิล`;
-        document.getElementById('dailySummaryTotal').textContent = `${total.toLocaleString()} บาท`;
+        document.getElementById('dailySummaryTotal').innerHTML = `
+            <div class="text-[11px] text-emerald-800">รายรับ: <strong>฿${totalIncome.toLocaleString()}</strong></div>
+            <div class="text-[11px] text-yellow-800">รายจ่าย: <strong>฿${totalExpense.toLocaleString()}</strong></div>
+            <div class="text-xs font-black text-emerald-600 mt-0.5">สุทธิ: <strong>฿${totalNet.toLocaleString()} บาท</strong></div>
+        `;
     }
 
     function renderGroupSalesData() {
@@ -530,28 +624,43 @@
 
         let filteredOrders = allOrdersCache.filter(o => o.dateStr === currentSelectedDate);
         if (filteredOrders.length === 0) {
-            headerBox.innerHTML = `<div class="bg-slate-800 text-white p-3.5 rounded-xl shadow-xs"><div class="text-[11px] text-slate-300">ยอดขายรวม (${formatDateThai(currentSelectedDate)})</div><div class="text-xl font-black text-emerald-400">฿0.-</div><div class="text-[11px] text-slate-300 mt-1">จำนวนบิล: 0 บิล</div></div>`;
+            headerBox.innerHTML = `<div class="bg-slate-800 text-white p-3.5 rounded-xl shadow-xs"><div class="text-[11px] text-slate-300">ยอดรวมประจำวัน (${formatDateThai(currentSelectedDate)})</div><div class="text-lg font-black text-emerald-400">สุทธิ ฿0.-</div><div class="text-[10px] text-slate-300 mt-1">รายรับ: ฿0 | รายจ่าย: ฿0 (0 บิล)</div></div>`;
             container.innerHTML = `<div class="text-center text-slate-400 py-12 text-xs font-medium">📭 ไม่พบข้อมูลการขาย</div>`;
             return;
         }
 
         globalGroupData = {};
-        let grandTotalOrders = 0, grandTotalPrice = 0;
+        let grandTotalOrders = 0, grandTotalIncome = 0, grandTotalExpense = 0, grandTotalNet = 0;
 
         filteredOrders.forEach(order => {
             let groupKey = order.groupTypeName;
 
-            if (!globalGroupData[groupKey]) globalGroupData[groupKey] = { orderCount: 0, totalPrice: 0, orders: [] };
+            if (!globalGroupData[groupKey]) {
+                globalGroupData[groupKey] = { orderCount: 0, totalIncome: 0, totalExpense: 0, netTotal: 0, orders: [] };
+            }
 
             globalGroupData[groupKey].orderCount += 1;
-            globalGroupData[groupKey].totalPrice += order.computedTotal;
+            globalGroupData[groupKey].totalIncome += order.computedTotal;
+            globalGroupData[groupKey].totalExpense += order.consignmentTotal;
+            globalGroupData[groupKey].netTotal += order.netProfitTotal;
             globalGroupData[groupKey].orders.push(order);
 
             grandTotalOrders += 1;
-            grandTotalPrice += order.computedTotal;
+            grandTotalIncome += order.computedTotal;
+            grandTotalExpense += order.consignmentTotal;
+            grandTotalNet += order.netProfitTotal;
         });
 
-        headerBox.innerHTML = `<div class="bg-slate-800 text-white p-3.5 rounded-xl shadow-xs"><div class="text-[11px] text-slate-300">ยอดขายรวม (${formatDateThai(currentSelectedDate)})</div><div class="text-xl font-black text-emerald-400">฿${grandTotalPrice.toLocaleString()}.-</div><div class="text-[11px] text-slate-300 mt-1">จำนวนบิล: <span class="text-white font-bold">${grandTotalOrders} บิล</span></div></div>`;
+        headerBox.innerHTML = `
+            <div class="bg-slate-800 text-white p-3.5 rounded-xl shadow-xs">
+                <div class="text-[11px] text-slate-300">สรุปยอดรวมประจำวัน (${formatDateThai(currentSelectedDate)})</div>
+                <div class="text-xl font-black text-emerald-400">สุทธิ ฿${grandTotalNet.toLocaleString()}.-</div>
+                <div class="text-[11px] text-slate-300 mt-1 flex justify-between">
+                    <span>รายรับ: <strong class="text-red-400">฿${grandTotalIncome.toLocaleString()}</strong></span>
+                    <span>รายจ่าย: <strong class="text-yellow-400">฿${grandTotalExpense.toLocaleString()}</strong></span>
+                    <span>บิล: <strong class="text-white">${grandTotalOrders} บิล</strong></span>
+                </div>
+            </div>`;
 
         let html = '';
         for (let [groupName, data] of Object.entries(globalGroupData)) {
@@ -562,9 +671,13 @@
                             <span>👥 กลุ่ม:</span> <span class="text-blue-600 font-extrabold truncate max-w-[180px]">${groupName}</span>
                         </div>
                         <div class="text-[11px] text-slate-500 mt-1">จำนวนบิล: <span class="font-bold text-slate-700">${data.orderCount} บิล</span> <span class="text-blue-500 ml-1 font-semibold">(ดูรายละเอียด 🔍)</span></div>
+                        <div class="text-[10px] text-slate-500 mt-0.5 space-x-2">
+                            <span>รายรับ: <strong class="text-red-600">฿${data.totalIncome.toLocaleString()}</strong></span>
+                            <span>รายจ่าย: <strong class="text-yellow-700">฿${data.totalExpense.toLocaleString()}</strong></span>
+                        </div>
                     </div>
                     <div class="text-right">
-                        <div class="text-xs font-black text-emerald-600">฿${data.totalPrice.toLocaleString()}.-</div>
+                        <div class="text-xs font-black text-emerald-600">สุทธิ ฿${data.netTotal.toLocaleString()}.-</div>
                         <div class="text-[10px] text-slate-400 mt-0.5">กดเพื่อเปิดบิล</div>
                     </div>
                 </div>`;
@@ -577,37 +690,66 @@
         if (!group) return;
 
         document.getElementById('modalGroupName').textContent = `👥 กลุ่ม: ${groupName}`;
-        document.getElementById('modalGroupMeta').textContent = `จำนวนบิลทั้งหมด: ${group.orderCount} บิล`;
-        document.getElementById('modalGroupTotal').textContent = `฿${group.totalPrice.toLocaleString()}.-`;
+        document.getElementById('modalGroupMeta').textContent = `จำนวนบิลทั้งหมด: ${group.orderCount} บิล (รายรับ ฿${group.totalIncome.toLocaleString()} | รายจ่าย ฿${group.totalExpense.toLocaleString()})`;
+        document.getElementById('modalGroupTotal').textContent = `฿${group.netTotal.toLocaleString()}.-`;
 
         let listHtml = '';
         group.orders.forEach(o => {
-            let itemsHtml = '';
-            o.parsedItems.forEach(item => {
+            let redItemsHtml = o.parsedItems.map(item => {
                 let comment = item.note ? ` <span class="text-amber-800 font-semibold bg-amber-50 px-1.5 py-0.5 rounded text-[10px]">(${item.note})</span>` : '';
-                itemsHtml += `<div class="text-[11px] flex justify-between items-start text-slate-600 py-1 border-b border-slate-100 last:border-none">
-                    <div><span class="font-medium text-slate-800">• ${item.name}${comment}</span> <span class="text-blue-600 font-bold ml-1">x${item.qty}</span></div>
+                let badge = item.isConsignment ? ` <span class="text-[9px] bg-amber-100 text-amber-800 px-1 rounded font-bold">ฝากซื้อ</span>` : '';
+                return `<div class="text-[11px] flex justify-between items-start text-slate-600 py-1 border-b border-red-50 last:border-none">
+                    <div><span class="font-medium text-slate-800">• ${item.name}${badge}${comment}</span> <span class="text-red-600 font-bold ml-1">x${item.qty}</span></div>
                     <span class="font-bold text-slate-700 shrink-0 ml-2">฿${item.totalPrice.toLocaleString()}</span>
                 </div>`;
-            });
+            }).join('');
 
             if (o.deliveryFee > 0) {
-                itemsHtml += `<div class="text-[11px] flex justify-between items-center text-amber-900 py-1 bg-amber-50/60 px-1 rounded border-b border-slate-100">
+                redItemsHtml += `<div class="text-[11px] flex justify-between items-center text-red-900 py-1 bg-red-50/40 px-1 rounded border-b border-red-50">
                     <div><span class="font-bold">🛵 ค่าบริการจัดส่ง</span></div>
                     <span class="font-bold shrink-0 ml-2">฿${o.deliveryFee.toLocaleString()}</span>
                 </div>`;
             }
 
+            let yellowGreenSection = '';
+            if (o.hasConsignment) {
+                let yellowItemsHtml = o.parsedItems.filter(i => i.isConsignment).map(item => {
+                    return `<div class="text-[10px] flex justify-between items-center text-yellow-900 py-0.5">
+                        <span>• ${item.name} x${item.qty}</span>
+                        <span class="font-bold">฿${item.costPrice.toLocaleString()}</span>
+                    </div>`;
+                }).join('');
+
+                yellowGreenSection = `
+                    <div class="bg-yellow-50/80 border border-yellow-300 rounded-lg p-2 space-y-1 my-1">
+                        <div class="text-[10px] font-bold text-yellow-900">🟡 รายจ่าย (ซื้อของมาขายต่อ - ราคาต้นทุน):</div>
+                        ${yellowItemsHtml}
+                        <div class="flex justify-between items-center text-[10px] font-extrabold text-yellow-900 pt-1 border-t border-yellow-200">
+                            <span>รวมรายจ่ายซื้อของ:</span>
+                            <span>฿${o.consignmentTotal.toLocaleString()}.-</span>
+                        </div>
+                    </div>
+                    <div class="bg-emerald-50 border border-emerald-300 rounded-lg p-1.5 flex justify-between items-center text-[11px]">
+                        <span class="font-bold text-emerald-900">🟢 สรุปยอดรับสุทธิ:</span>
+                        <span class="font-black text-emerald-600">฿${o.netProfitTotal.toLocaleString()}.-</span>
+                    </div>
+                `;
+            }
+
             let orderId = o.order_id || o.id;
             listHtml += `
-                <div onclick="goToEditOrder(${orderId})" class="bg-white p-3 rounded-xl border border-slate-200 hover:border-amber-400 shadow-xs space-y-2 cursor-pointer transition active:scale-95">
-                    <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <div onclick="goToEditOrder(${orderId})" class="bg-white p-3 rounded-xl border-2 border-red-500 shadow-md space-y-3 cursor-pointer transition active:scale-95">
+                    <div class="flex justify-between items-center border-b border-slate-200 pb-2">
                         <span class="font-bold text-xs text-amber-900 bg-amber-100 px-2.5 py-0.5 rounded">${groupName} ✏️</span>
-                        <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded truncate max-w-[200px]">👤 ${o.customer_name || groupName}</span>
+                        <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded truncate max-w-[200px]">👤 ${o.displayCustomerName}</span>
                     </div>
-                    <div class="space-y-1">${itemsHtml}</div>
-                    <div class="flex justify-between pt-1 text-xs font-bold border-t border-slate-100">
-                        <span>ยอดรวม:</span>
+                    <div class="border border-red-300 rounded-lg p-2 bg-red-50/20 shadow-xs">
+                        <div class="text-[10px] font-bold text-red-800 mb-1">🔴 รายรับทั้งหมด:</div>
+                        <div class="space-y-1">${redItemsHtml}</div>
+                    </div>
+                    ${yellowGreenSection}
+                    <div class="flex justify-between pt-1 text-xs font-bold border-t border-slate-200">
+                        <span>ยอดรวมบิล:</span>
                         <span class="text-emerald-600 text-sm font-black">฿${o.computedTotal.toLocaleString()}.-</span>
                     </div>
                 </div>`;

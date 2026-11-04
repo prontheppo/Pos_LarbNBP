@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <script src="appInit.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <title>เพิ่มเมนูอาหารใหม่ - ลาบหนองบัวลำภู</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
+    
+    <style>
+        html, body { 
+            width: 100%; min-height: 100%;
+            background-color: #ffffff; color: #1e293b;
+            font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none;
+            display: flex; flex-direction: column; 
+            border-radius: 0 !important; 
+        }
+        .custom-label { font-size: 16px !important; font-weight: 700; }
+        input[type="number"], input[type="text"] { font-size: 16px !important; }
+        .back-btn { background-color: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; font-weight: 700; font-size: 14px !important; padding: 0.3rem 0.6rem; border-radius: 0.6rem; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <!-- ส่วนหัว (Header) -->
+    <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
+        <div class="flex items-center gap-1.5">
+            <span class="text-base text-blue-600 font-extrabold flex items-center justify-center">➕</span>
+            <span id="foodTitleHeader" class="font-extrabold text-sm text-slate-700 truncate px-1">เพิ่มเมนูอาหารใหม่</span>
+        </div>
+        <button type="button" onclick="closeModal()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
+    </div>
+
+    <!-- Content Body -->
+    <form id="addMenuForm" onsubmit="saveNewMenuData(event)" class="p-3.5 space-y-3 bg-white w-full">
+        
+        <!-- แถวบน: หมวดหมู่ และ ชื่อเมนูอาหาร -->
+        <div class="grid grid-cols-2 gap-2.5">
+            <div>
+                <label class="block custom-label text-slate-700 mb-1">หมวดหมู่</label>
+                <input type="text" id="addCategoryDisplay" readonly value="กำลังโหลด..." 
+                       class="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-600 outline-none truncate">
+            </div>
+            <div>
+                <label class="block custom-label text-slate-700 mb-1">
+                    ชื่อเมนู <span class="text-rose-500 font-bold">*</span>
+                </label>
+                <input type="text" id="addFoodNameInput" required placeholder="เช่น กะเพราไก่" 
+                       class="w-full border border-blue-400 focus:border-blue-600 rounded-xl px-3 py-2 font-bold text-slate-800 outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-slate-300 transition">
+            </div>
+        </div>
+
+        <!-- ส่วนราคา 3 เรท (ชาวบ้าน, นักท่องเที่ยว, สบายดี) -->
+        <div>
+            <label class="block custom-label text-slate-700 mb-1">ราคา (บาท)</label>
+            <div class="grid grid-cols-3 gap-2">
+                <div>
+                    <span class="block text-xs font-bold text-slate-500 text-center mb-1">ชาวบ้าน</span>
+                    <input type="number" id="addPrice1Input" min="0" step="any" placeholder="0" 
+                           class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 text-center font-extrabold text-slate-700 outline-none focus:bg-white focus:border-blue-500 transition">
+                </div>
+                <div>
+                    <span class="block text-xs font-bold text-slate-500 text-center mb-1">นักท่องเที่ยว</span>
+                    <input type="number" id="addPrice2Input" min="0" step="any" placeholder="0" 
+                           class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 text-center font-extrabold text-slate-700 outline-none focus:bg-white focus:border-blue-500 transition">
+                </div>
+                <div>
+                    <span class="block text-xs font-bold text-slate-500 text-center mb-1">สบายดี</span>
+                    <input type="number" id="addPrice3Input" min="0" step="any" placeholder="0" 
+                           class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 text-center font-extrabold text-slate-700 outline-none focus:bg-white focus:border-blue-500 transition">
+                </div>
+            </div>
+        </div>
+
+        <!-- ปุ่มยกเลิก และ บันทึก -->
+        <div class="pt-2 grid grid-cols-2 gap-2">
+            <button type="button" onclick="closeModal()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl text-base transition cursor-pointer">
+                ยกเลิก
+            </button>
+            <button type="submit" id="btnSubmitAddMenu" class="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-extrabold py-2.5 rounded-xl text-base flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md">
+                <span>✓</span> บันทึกเมนู
+            </button>
+        </div>
+    </form>
+
+    <script>
+        let db;
+        let currentGroupId = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            db = typeof window.supabaseClient !== 'undefined' ? window.supabaseClient : supabaseClient;
+
+            const urlParams = new URLSearchParams(window.location.search);
+            currentGroupId = urlParams.get('group_id');
+            const groupName = urlParams.get('group_name');
+
+            if (groupName) {
+                document.getElementById('addCategoryDisplay').value = decodeURIComponent(groupName);
+            }
+            
+            updateParentHeight();
+        });
+
+        function updateParentHeight() {
+            setTimeout(() => {
+                if (window.self !== window.top) {
+                    const totalHeight = document.body.scrollHeight + 30;
+                    window.top.postMessage({
+                        type: 'RESIZE_POPUP',
+                        height: totalHeight
+                    }, '*');
+                }
+            }, 100);
+        }
+
+        window.addEventListener('load', updateParentHeight);
+        window.addEventListener('resize', updateParentHeight);
+
+        function closeModal() {
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({ type: 'CLOSE_ADD_MENU' }, '*');
+            }
+        }
+
+        async function saveNewMenuData(e) {
+            if (e) e.preventDefault();
+
+            const foodName = document.getElementById('addFoodNameInput').value.trim();
+            const priceLocal = parseFloat(document.getElementById('addPrice1Input').value) || 0;
+            const priceTourist = parseFloat(document.getElementById('addPrice2Input').value) || 0;
+            const priceSabaidee = parseFloat(document.getElementById('addPrice3Input').value) || 0;
+
+            if (!foodName) return;
+
+            const btnSubmit = document.getElementById('btnSubmitAddMenu');
+            if (btnSubmit) btnSubmit.disabled = true;
+
+            try {
+                const { error } = await db.from('foods').insert([{
+                    food_name: foodName,
+                    food_group_id: currentGroupId,
+                    price_1: priceLocal,
+                    price_2: priceTourist,
+                    price_3: priceSabaidee
+                }]);
+                if (error) throw error;
+                closeModal();
+            } catch (err) {
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({ type: 'SHOW_ALERT', message: 'เกิดข้อผิดพลาด: ' + err.message, alertType: 'error' }, '*');
+                }
+            } finally {
+                if (btnSubmit) btnSubmit.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

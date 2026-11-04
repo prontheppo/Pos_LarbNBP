@@ -1,3 +1,8 @@
+<!-- 
+  ================================
+  FILE NAME: foodgroup.html  
+  ================================
+-->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -39,7 +44,7 @@
         .cat-nav-btn {
             position: relative; 
             background-color: #ffffff; 
-            border: 1.5px solid #9ca3af; 
+            border: 1.5px solid #10349542; /* ปรับเส้นขอบทุกปุ่มให้เป็นสีแดง */
             color: #1e293b;
             font-size: 1rem; 
             font-weight: 700; 
@@ -263,7 +268,6 @@
                             isSpecial: isSpecialCat
                         }, '*');
                     } else {
-                        // เปลี่ยนจาก alert() เดิมเป็น Custom Pop-up
                         showCustomModal(`เลือกหมวดหมู่: ${catName} (ID: ${cat.food_group_id})`);
                     }
                 };

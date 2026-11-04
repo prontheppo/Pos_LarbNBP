@@ -1,3 +1,8 @@
+<!-- 
+  ================================
+  FILE NAME: ordersystem.html  
+  ================================
+-->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -35,15 +40,16 @@
         .custom-modal-overlay.active { display: flex !important; }
         
         .popup-container {
-            background: #ffffff; 
+            background: transparent !important; 
             width: 100% !important; 
             max-width: 28rem !important;
-            max-height: 85vh !important; 
-            border-radius: 1.5rem !important; 
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+            height: auto !important;
+            max-height: 90vh !important; 
+            border-radius: 0 !important; 
+            box-shadow: none !important;
             display: flex; 
             flex-direction: column; 
-            overflow: hidden; 
+            overflow: visible !important;
             position: relative;
             animation: popupFadeIn 0.2s ease-out;
         }
@@ -53,7 +59,26 @@
             to { opacity: 1; transform: scale(1); }
         }
 
-        .popup-content-wrapper { width: 100%; background: #ffffff; overflow-y: auto; flex: 1; }
+        .popup-content-wrapper { 
+            width: 100%; 
+            background: #ffffff; 
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto; 
+            border-radius: 1.5rem !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+        }
+
+        #popupIframe {
+            width: 100%;
+            height: auto;
+            min-height: 200px;
+            max-height: calc(90vh - 2rem);
+            border: 0;
+            display: block;
+            transition: height 0.15s ease;
+        }
 
         .group-btn-v2 { background-color: #ffffff; border: 1.5px solid #fde68a; color: #334155; transition: all 0.2s ease; }
         .group-btn-v2.active { background-color: #f59e0b; border-color: #d97706; color: #ffffff; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3); }
@@ -74,32 +99,6 @@
         
         input[type="number"], input[type="text"] { font-size: 16px !important; }
         .custom-label { font-size: 16px !important; font-weight: 700; }
-        
-        .food-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0.5rem; }
-        .food-btn { 
-            position: relative; background: #ffffff; border: 1.5px solid #10b981; color: #047857; 
-            font-weight: 700; font-size: 16px !important; padding: 0.6rem 0.4rem; border-radius: 0.75rem; 
-            text-align: center; display: flex; align-items: center; justify-content: center; 
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.15s ease; cursor: pointer; min-height: 50px; width: 100%; 
-        }
-        .food-btn:active { background-color: #10b981; color: #ffffff; transform: scale(0.97); }
-        .special-preset-btn {
-            background-color: #ffffff; border: 1px solid #cbd5e1; color: #334155; font-weight: 700; font-size: 16px !important; 
-            padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: all 0.15s ease; text-align: center; 
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; min-height: 48px;
-        }
-        .badge-count { 
-            position: absolute; top: -0.35rem; right: -0.35rem; background-color: #ef4444; color: white; 
-            font-size: 13px !important; font-weight: 800; width: 1.5rem; height: 1.5rem; border-radius: 9999px; 
-            display: flex; align-items: center; justify-content: center; border: 2px solid #ffffff; z-index: 10;
-        }
-        .back-btn { background-color: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; font-weight: 700; font-size: 14px !important; padding: 0.3rem 0.6rem; border-radius: 0.6rem; cursor: pointer; }
-        .sub-popup-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(15, 23, 42, 0.6); z-index: 1050;
-            display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; visibility: hidden; transition: all 0.2s ease;
-        }
-        .sub-popup-overlay.active { opacity: 1; visibility: visible; }
-        .sub-popup-box { background: #ffffff; width: 100%; max-width: 400px; border-radius: 1.25rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); padding: 1.25rem; }
 
         @media print {
             body * { visibility: hidden; }
@@ -122,14 +121,15 @@
                 </div>
             </div>
             
-            <div class="w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden" style="height: 70vh; min-height: 480px;">
+            <div class="w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden" style="height: 65vh; min-height: 420px;">
                 <iframe id="foodGroupFrame" src="foodgroup.html" class="w-full h-full border-0"></iframe>
             </div>
 
-            <div class="pt-2 pb-4 flex gap-2 flex-shrink-0">
-                <button type="button" onclick="window.location.href='index.html'" class="bg-white text-slate-700 border border-slate-300 font-bold py-2.5 px-2 rounded-2xl text-xs flex-1 shadow active:scale-95 transition cursor-pointer">🏠 หน้าหลัก</button>
-                <button type="button" onclick="confirmClearCart()" class="bg-rose-50 text-rose-600 border border-rose-200 font-bold py-2.5 px-2 rounded-2xl text-xs flex-1 shadow active:scale-95 transition cursor-pointer">🗑️ ล้างตะกร้า</button>
-                <button type="button" onclick="switchTab(2)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-2 rounded-2xl text-xs flex-1 shadow active:scale-95 transition cursor-pointer">🔍 ไปตรวจสอบ</button>
+            <div class="pt-2 pb-4 grid grid-cols-2 gap-2 flex-shrink-0">
+                <button type="button" onclick="window.location.href='index.html'" class="bg-white text-slate-700 border border-slate-300 font-bold py-2.5 px-2 rounded-2xl text-xs flex items-center justify-center gap-1 shadow active:scale-95 transition cursor-pointer">🏠 หน้าหลัก</button>
+                <button type="button" onclick="confirmClearCart()" class="bg-rose-50 text-rose-600 border border-rose-200 font-bold py-2.5 px-2 rounded-2xl text-xs flex items-center justify-center gap-1 shadow active:scale-95 transition cursor-pointer">🗑️ ล้างตะกร้า</button>
+                <button type="button" onclick="switchTab(2)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-2 rounded-2xl text-xs flex items-center justify-center gap-1 shadow active:scale-95 transition cursor-pointer">🔍 ไปตรวจสอบ</button>
+                <button type="button" onclick="window.location.href='QuickOrder.html'" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 px-2 rounded-2xl text-xs flex items-center justify-center gap-1 shadow active:scale-95 transition cursor-pointer">⚡ สั่งด่วน</button>
             </div>
         </div>
 
@@ -197,150 +197,17 @@
 
     </div>
 
-    <!-- Modal Pop-up หลัก -->
-    <div id="dynamicPopupOverlay" class="custom-modal-overlay" onclick="closeDynamicPopup()">
+    <!-- Modal Pop-up กลางจอสำหรับแสดง Iframe -->
+    <div id="dynamicPopupOverlay" class="custom-modal-overlay" onclick="handleOverlayClick()">
         <div id="popupContainerBox" class="popup-container" onclick="event.stopPropagation()">
-            <div id="popupHeader" class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
-                <button type="button" id="popupBackBtn" class="back-btn hidden" onclick="handlePopupBack()">◀ ย้อนกลับ</button>
-                <span id="popupTitle" class="font-extrabold text-sm text-slate-700 truncate px-2">📌 เลือกรายการ</span>
-                <button type="button" onclick="closeDynamicPopup()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
-            </div>
-            <div class="popup-content-wrapper p-3.5">
-                <div id="popupInternalFoodView" class="hidden w-full">
-                    <div id="popupFoodGridContainer" class="food-grid"></div>
-                </div>
-                
-                <div id="popupInternalSpecialView" class="hidden w-full space-y-3">
-                    <button type="button" onclick="openAddSpecialPopup()" class="w-full bg-emerald-50 hover:bg-emerald-100 border-2 border-dashed border-emerald-500 text-emerald-700 font-bold py-2.5 px-4 rounded-xl text-base flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer shadow-xs">
-                        <span class="text-lg">➕</span>
-                        <span>เพิ่มรายการอาหารพิเศษใหม่</span>
-                    </button>
-                    <div class="border border-amber-300 rounded-xl p-3 space-y-2 bg-amber-50/30 shadow-xs">
-                        <div class="text-[16px] font-bold text-amber-800 mb-1">🔥 เลือกจากเมนูพิเศษยอดฮิต:</div>
-                        <div id="popupPresetButtonsContainer" class="grid grid-cols-2 gap-2">
-                            <div class="text-base text-slate-400 col-span-2 text-center py-3">กำลังโหลดรายการ...</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="popupInternalDetailView" class="hidden w-full space-y-3">
-                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                        <span id="foodTitleName" class="font-extrabold text-slate-900 text-base truncate pr-2">📌 รายการอาหาร</span>
-                        <button type="button" onclick="saveToCartFromPopup()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-base shadow-md active:scale-95 transition cursor-pointer flex items-center gap-1 shrink-0">
-                            <span>💾 บันทึก</span>
-                        </button>
-                    </div>
-                    <div id="selectedCartItemsBox" class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 hidden">
-                        <div class="flex justify-between items-center mb-1.5">
-                            <span id="cartBoxTitle" class="text-[15px] text-slate-600 font-bold">🛒 รายการที่เลือกไว้แล้ว:</span>
-                            <span id="selectedCartCountBadge" class="bg-emerald-600 text-white font-extrabold text-[13px] px-2.5 py-0.5 rounded-full">0 รายการ</span>
-                        </div>
-                        <div id="selectedCartList" class="space-y-1.5 text-[16px] text-slate-700 max-h-28 overflow-y-auto pr-0.5"></div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2.5 items-center">
-                        <div>
-                            <label class="block custom-label text-slate-700 mb-1">ราคาพิเศษ (ถ้ามี)</label>
-                            <input type="number" id="foodPrice" placeholder="ระบุราคา" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-800 text-center text-base">
-                        </div>
-                        <div>
-                            <label class="block custom-label text-slate-700 mb-1">จำนวน</label>
-                            <div class="flex items-center justify-between bg-slate-50 border border-slate-300 rounded-xl px-2 py-1.5">
-                                <button type="button" onclick="adjustQty(-1)" class="w-7 h-7 bg-white border border-slate-200 rounded-lg text-slate-600 font-bold flex items-center justify-center text-base">-</button>
-                                <span id="foodQty" class="font-extrabold text-base text-slate-800">1</span>
-                                <button type="button" onclick="adjustQty(1)" class="w-7 h-7 bg-white border border-slate-200 rounded-lg text-slate-600 font-bold flex items-center justify-center text-base">+</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="eggSection" class="grid grid-cols-2 gap-2 items-center hidden">
-                        <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl flex items-center justify-between">
-                            <span class="custom-label text-slate-700">ไข่ดาว</span>
-                            <div class="flex items-center gap-1.5">
-                                <button type="button" onclick="adjustExtra('friedEgg', -1)" class="w-6 h-6 bg-white border rounded-lg font-bold text-base">-</button>
-                                <span id="friedEggQty" class="font-bold text-base w-5 text-center">0</span>
-                                <button type="button" onclick="adjustExtra('friedEgg', 1)" class="w-6 h-6 bg-white border rounded-lg font-bold text-base">+</button>
-                            </div>
-                        </div>
-                        <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl flex items-center justify-between">
-                            <span class="custom-label text-slate-700">ไข่เจียว</span>
-                            <div class="flex items-center gap-1.5">
-                                <button type="button" onclick="adjustExtra('omelet', -1)" class="w-6 h-6 bg-white border rounded-lg font-bold text-base">-</button>
-                                <span id="omeletQty" class="font-bold text-base w-5 text-center">0</span>
-                                <button type="button" onclick="adjustExtra('omelet', 1)" class="w-6 h-6 bg-white border rounded-lg font-bold text-base">+</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block custom-label text-slate-700 mb-1">หมายเหตุ</label>
-                        <input type="text" id="foodNote" placeholder="(เช่น เผ็ดน้อย, ไม่ใส่ผัก)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-base">
-                    </div>
-                </div>
-
-                <div id="popupInternalLocationView" class="hidden w-full space-y-3">
-                    <div id="addLocationSection" class="bg-amber-50 p-2.5 rounded-2xl border border-amber-200 flex gap-2">
-                        <input type="text" id="newLocationInput" placeholder="➕ เพิ่มสถานที่ใหม่..." class="flex-1 h-9 px-3 text-xs rounded-xl border border-amber-300 bg-white outline-none">
-                        <button type="button" onclick="addNewLocation()" class="h-9 px-4 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-sm">+ เพิ่ม</button>
-                    </div>
-                    <div id="addZoneSection" class="bg-blue-50 p-2.5 rounded-2xl border border-blue-200 flex gap-2 hidden">
-                        <input type="text" id="newZoneInput" placeholder="➕ เพิ่มโซน/ห้องพักใหม่..." class="flex-1 h-9 px-3 text-xs rounded-xl border border-blue-300 bg-white outline-none">
-                        <button type="button" onclick="addNewZone()" class="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-sm">+ เพิ่ม</button>
-                    </div>
-                    <div id="selectionGrid" class="grid grid-cols-2 gap-2.5 pt-1">
-                        <span class="text-slate-400 text-xs py-8 text-center col-span-2 block">⏳ กำลังโหลดข้อมูล...</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal แจ้งเตือนสถานะสต็อกวัตถุดิบ (เฉพาะเมื่อเหลือ <= 5) -->
-    <div id="stockAlertModalOverlay" class="custom-modal-overlay" onclick="closeStockAlertModal()">
-        <div class="bg-white rounded-3xl max-w-sm w-full p-5 text-center border border-slate-200 shadow-2xl m-4" onclick="event.stopPropagation()">
-            <div id="stockAlertIcon" class="w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center text-2xl font-bold bg-amber-100 text-amber-600 shadow-inner">⚠️</div>
-            <h3 id="stockAlertTitle" class="text-base font-extrabold text-slate-800 mb-1">แจ้งเตือนสต็อกใกล้หมด</h3>
-            <p id="stockAlertMessage" class="text-xs sm:text-sm text-slate-600 mb-5 leading-relaxed">กำลังตรวจสอบสต็อก...</p>
-            <button type="button" onclick="closeStockAlertModal()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow cursor-pointer">รับทราบ / ตกลง</button>
-        </div>
-    </div>
-
-    <!-- SUB-POPUP: ฟอร์มเพิ่มเมนูพิเศษใหม่ -->
-    <div id="addSpecialPopupOverlay" class="sub-popup-overlay" onclick="closeAddSpecialPopup()">
-        <div class="sub-popup-box space-y-3" onclick="event.stopPropagation()">
-            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-                <div class="text-[16px] font-extrabold text-emerald-800 flex items-center gap-1">
-                    <span>➕ เพิ่มเมนูพิเศษใหม่ (ลง Supabase)</span>
-                </div>
-                <button type="button" onclick="closeAddSpecialPopup()" class="w-7 h-7 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center font-bold text-sm hover:bg-rose-100 hover:text-rose-600 transition">✕</button>
-            </div>
-            <div class="space-y-2.5">
-                <div class="flex items-center gap-2">
-                    <span class="custom-label text-slate-700 whitespace-nowrap w-24 flex-shrink-0">ชื่อเมนูใหม่</span>
-                    <input type="text" id="customFoodName" placeholder="เช่น ราดหน้าเส้นใหญ่..." autocomplete="off"
-                           class="flex-1 px-3 py-2 border border-slate-300 focus:border-emerald-500 rounded-xl text-base font-bold text-slate-800 focus:outline-none bg-white placeholder:text-slate-400">
-                </div>
-                <div class="space-y-1.5">
-                    <div class="grid grid-cols-3 gap-1.5 text-center">
-                        <span class="text-[14px] font-bold text-slate-700">ชาวบ้าน</span>
-                        <span class="text-[14px] font-bold text-slate-700">นักท่องเที่ยว</span>
-                        <span class="text-[14px] font-bold text-slate-700">สบายดี</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-1.5">
-                        <input type="number" id="price1Input" min="0" step="any" placeholder="ราคา" class="w-full px-2 py-2 border border-emerald-300 focus:border-emerald-500 rounded-xl text-center text-base font-bold text-slate-800 focus:outline-none bg-white">
-                        <input type="number" id="price2Input" min="0" step="any" placeholder="ราคา" class="w-full px-2 py-2 border border-emerald-300 focus:border-emerald-500 rounded-xl text-center text-base font-bold text-slate-800 focus:outline-none bg-white">
-                        <input type="number" id="price3Input" min="0" step="any" placeholder="ราคา" class="w-full px-2 py-2 border border-emerald-300 focus:border-emerald-500 rounded-xl text-center text-base font-bold text-slate-800 focus:outline-none bg-white">
-                    </div>
-                </div>
-            </div>
-            <div class="flex gap-2 pt-1">
-                <button type="button" onclick="closeAddSpecialPopup()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-xl text-base transition">ยกเลิก</button>
-                <button type="button" onclick="saveNewSpecialMenu()" class="flex-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-3 rounded-xl text-base shadow-md active:scale-95 transition cursor-pointer flex items-center justify-center gap-1">
-                    <span>💾 บันทึกและเลือก</span>
-                </button>
+            <div class="popup-content-wrapper">
+                <iframe id="popupIframe" src=""></iframe>
             </div>
         </div>
     </div>
 
     <!-- Modal ยืนยันการล้างตะกร้า -->
-    <div id="confirmClearModalOverlay" class="custom-modal-overlay" onclick="closeConfirmClearModal()" style="align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.65);">
+    <div id="confirmClearModalOverlay" class="custom-modal-overlay" onclick="closeConfirmClearModal()">
         <div class="bg-white rounded-3xl max-w-xs w-full p-5 text-center border border-slate-200 shadow-2xl m-4" onclick="event.stopPropagation()">
             <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-3 text-xl font-bold">🗑️</div>
             <h3 class="text-base font-extrabold text-slate-800 mb-1">ยืนยันการล้างตะกร้า?</h3>
@@ -353,6 +220,9 @@
     </div>
 
     <script>
+        /* ==========================================================
+           [📁 โฟลเดอร์บล็อกที่ 1] : ตัวแปรส่วนกลาง (Global Variables & State)
+           ========================================================== */
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
         let dbFoodsMap = {};
         let locationsData = [];
@@ -364,17 +234,10 @@
 
         let cachedCategories = [];
         let cachedFoods = [];
-        let currentCatId = null;
-        let currentCatName = '';
-        let selectedFoodId = null;
-        let selectedFoodName = '';
-        let currentQty = 1;
-        let friedEgg = 0;
-        let omelet = 0;
-        let currentPopupMode = 'food_list';
         let selectedLocationForZone = null;
+        let lastSelectedCategory = null;
 
-        const EGG_CATEGORY_IDS = ['1', '2'];
+        let previousPopupUrl = null;
 
         let locationData = {
             groupId: 1, groupName: 'ชาวบ้าน', phone: '', locationName: '', zoneName: '', locationId: null, zoneId: null
@@ -382,6 +245,10 @@
         let currentOrderSummary = { itemsCount: 0, totalQty: 0, subtotal: 0, deliveryFee: 0, grandTotal: 0, processedCart: [] };
         let processedItemsForDb = [];
 
+
+        /* ==========================================================
+           [📁 โฟลเดอร์บล็อกที่ 2] : เหตุการณ์เริ่มต้นการทำงาน (DOMContentLoaded)
+           ========================================================== */
         window.addEventListener('DOMContentLoaded', async () => {
             await Promise.all([
                 fetchLatestFoods(),
@@ -400,19 +267,106 @@
             }
         });
 
+
+        /* ==========================================================
+           [📁 โฟลเดอร์บล็อกที่ 3] : ระบบรับ-ส่งข้อความข้ามหน้าต่าง (Message Event Listener)
+           ========================================================== */
         window.addEventListener('message', (event) => {
-            const { type, catId, catName, isSpecial } = event.data || {};
+            const { type, catId, catName, food, height, locationObj, group_id, group_name } = event.data || {};
+            
+            /* [บล็อกย่อย 3.1] : ปรับขนาดความสูงของ Pop-up อัตโนมัติ */
+            if (type === 'RESIZE_POPUP' && height) {
+                const iframe = document.getElementById('popupIframe');
+                if (iframe) {
+                    iframe.style.height = `${height}px`;
+                }
+            }
+
+            /* [บล็อกย่อย 3.2] : เลือกสถานที่จัดส่ง */
+            if (type === 'SELECT_LOCATION' && locationObj) {
+                locationData.locationId = locationObj.location_id;
+                locationData.locationName = locationObj.location_name;
+                locationData.zoneId = locationObj.zone_id;
+                locationData.zoneName = locationObj.zone_name;
+                
+                const btnText = document.getElementById('locationBtnText-locationSelectorWrapper');
+                if (btnText) {
+                    btnText.textContent = locationObj.location_name;
+                }
+                closeDynamicPopup();
+                renderOrderSummary();
+            }
+
+            /* [บล็อกย่อย 3.3] : เลือกหมวดหมู่สินค้า */
             if (type === 'SELECT_CATEGORY') {
-                currentCatId = catId;
-                currentCatName = catName;
-                if (isSpecial) {
-                    openDynamicPopup('special_menu', '⭐ เมนูพิเศษ');
+                lastSelectedCategory = { catId, catName };
+                openDynamicPopup(`foodmenu.html?group_id=${catId}&name=${encodeURIComponent(catName)}`);
+            }
+            
+            /* [บล็อกย่อย 3.4] : เลือกรายการอาหารเฉพาะเจาะจง */
+            if (type === 'OPEN_FOOD_SELECT') {
+                openDynamicPopup(`foodselect.html?food_id=${food.food_id}&group_id=${catId}`);
+                setTimeout(() => {
+                    const iframe = document.getElementById('popupIframe');
+                    if (iframe && iframe.contentWindow) {
+                        iframe.contentWindow.postMessage({
+                            type: 'INIT_FOOD_SELECT',
+                            food: food,
+                            catId: catId
+                        }, '*');
+                    }
+                }, 150);
+            }
+
+            /* [บล็อกย่อย 3.5] : คำสั่งเปิดหน้าเพิ่มเมนู (OPEN_ADD_MENU) ไปที่ไฟล์ foodaddnew.html */
+            if (type === 'OPEN_ADD_MENU') {
+                const currentIframeSrc = document.getElementById('popupIframe').getAttribute('src');
+                if (currentIframeSrc && !currentIframeSrc.includes('foodaddnew.html')) {
+                    previousPopupUrl = currentIframeSrc;
+                }
+                
+                const overlay = document.getElementById('dynamicPopupOverlay');
+                const iframe = document.getElementById('popupIframe');
+                
+                iframe.src = '';
+                overlay.classList.remove('active');
+
+                setTimeout(() => {
+                    const addUrl = `foodaddnew.html?group_id=${group_id || ''}&group_name=${encodeURIComponent(group_name || '')}`;
+                    iframe.style.height = '200px';
+                    iframe.src = addUrl;
+                    overlay.classList.add('active');
+                }, 100);
+            }
+
+            /* [บล็อกย่อย 3.6] : กลับไปยังหน้าหมวดหมู่เดิม */
+            if (type === 'BACK_TO_CATEGORY') {
+                if (lastSelectedCategory) {
+                    openDynamicPopup(`foodmenu.html?group_id=${lastSelectedCategory.catId}&name=${encodeURIComponent(lastSelectedCategory.catName)}`);
                 } else {
-                    openDynamicPopup('food_list', catName, { catId: catId, catName: catName });
+                    closeDynamicPopup();
+                }
+            }
+
+            /* [บล็อกย่อย 3.7] : ปิดหน้าเพิ่มเมนู หรือ ปิด Popup ทั่วไป */
+            if (type === 'CLOSE_ADD_MENU' || type === 'CLOSE_POPUP' || type === 'UPDATE_CART') {
+                if (type === 'CLOSE_ADD_MENU' && previousPopupUrl) {
+                    const backUrl = previousPopupUrl;
+                    previousPopupUrl = null;
+                    openDynamicPopup(backUrl, true);
+                } else {
+                    if (type === 'CLOSE_POPUP' || type === 'CLOSE_ADD_MENU') {
+                        closeDynamicPopup();
+                    }
+                    updateCartUI();
                 }
             }
         });
 
+
+        /* ==========================================================
+           [📁 โฟลเดอร์บล็อกที่ 4] : ระบบจัดการหน้าจอและแท็บ (UI Control Functions)
+           ========================================================== */
         function sendDataToFoodGroupFrame() {
             const frame = document.getElementById('foodGroupFrame');
             if (frame && frame.contentWindow) {
@@ -467,64 +421,49 @@
             updateCartUI();
         }
 
-        function openDynamicPopup(mode, title = '📌 เลือกรายการ', extraData = {}) {
-            currentPopupMode = mode;
-            document.getElementById('popupTitle').textContent = title;
+        function openDynamicPopup(modeOrUrl, keepPrevious = false, maybeUrl = '') {
             const overlay = document.getElementById('dynamicPopupOverlay');
-            const backBtn = document.getElementById('popupBackBtn');
-            
-            document.getElementById('popupInternalFoodView').classList.add('hidden');
-            document.getElementById('popupInternalSpecialView').classList.add('hidden');
-            document.getElementById('popupInternalDetailView').classList.add('hidden');
-            document.getElementById('popupInternalLocationView').classList.add('hidden');
+            const iframe = document.getElementById('popupIframe');
+            let targetUrl = '';
 
-            if (mode === 'food_list') {
-                currentCatId = extraData.catId;
-                currentCatName = extraData.catName || 'รายการอาหาร';
-                document.getElementById('popupInternalFoodView').classList.remove('hidden');
-                document.getElementById('popupTitle').textContent = currentCatName;
-                backBtn.classList.add('hidden');
-                renderCategoryFoodGrid();
-            } else if (mode === 'special_menu') {
-                document.getElementById('popupInternalSpecialView').classList.remove('hidden');
-                document.getElementById('popupTitle').textContent = '⭐ เมนูพิเศษ';
-                backBtn.classList.add('hidden');
-                loadSpecialPresetButtons();
-            } else if (mode === 'select_item') {
-                selectedFoodId = extraData.food_id;
-                selectedFoodName = extraData.name;
-                document.getElementById('popupInternalDetailView').classList.remove('hidden');
-                document.getElementById('popupTitle').textContent = selectedFoodName;
-                backBtn.classList.remove('hidden');
-                backBtn.textContent = String(currentCatId) === '98' ? '◀ เมนูพิเศษ' : '◀ รายการ';
-                initItemDetail();
-            } else if (mode === 'location_zone') {
-                document.getElementById('popupInternalLocationView').classList.remove('hidden');
-                document.getElementById('popupTitle').textContent = '📍 เลือกสถานที่ / ที่พัก';
-                backBtn.classList.add('hidden');
-                renderLocationsView();
+            if (maybeUrl) {
+                targetUrl = maybeUrl;
+            } else if (modeOrUrl === 'location_zone') {
+                targetUrl = 'location_zone.html';
+            } else {
+                targetUrl = modeOrUrl;
             }
 
+            if (!keepPrevious) {
+                previousPopupUrl = null;
+            }
+
+            iframe.style.height = '200px';
+            iframe.src = targetUrl;
             overlay.classList.add('active');
         }
 
-        function handlePopupBack() {
-            if (currentPopupMode === 'select_item') {
-                if (String(currentCatId) === '98') {
-                    openDynamicPopup('special_menu', '⭐ เมนูพิเศษ');
-                } else {
-                    let catObj = cachedCategories.find(c => Number(c.food_group_id) === Number(currentCatId));
-                    let catName = catObj ? catObj.food_group_name : 'รายการอาหาร';
-                    openDynamicPopup('food_list', catName, { catId: currentCatId, catName: catName });
-                }
+        function handleOverlayClick() {
+            if (previousPopupUrl) {
+                const backUrl = previousPopupUrl;
+                previousPopupUrl = null;
+                openDynamicPopup(backUrl, true);
+            } else {
+                closeDynamicPopup();
             }
         }
 
         function closeDynamicPopup() {
+            previousPopupUrl = null;
             document.getElementById('dynamicPopupOverlay').classList.remove('active');
+            document.getElementById('popupIframe').src = '';
             updateCartUI();
         }
 
+
+        /* ==========================================================
+           [📁 โฟลเดอร์บล็อกที่ 5] : ระบบจัดการข้อมูลลูกค้าและสถานที่ (Customer & Location Functions)
+           ========================================================== */
         function removeDuplicateWords(text) {
             if (!text) return '';
             const parts = text.trim().split(/\s+/);
@@ -553,53 +492,6 @@
                     </div>
                 </div>
             `;
-        }
-
-        async function fetchLocationsAndZones() {
-            if (typeof supabaseClient !== 'undefined') {
-                const [locRes, zoneRes] = await Promise.all([
-                    supabaseClient.from('locations').select('*').order('location_name', { ascending: true }),
-                    supabaseClient.from('location_zone').select('*').order('zone_name', { ascending: true })
-                ]);
-                if (locRes.data) locationsData = locRes.data;
-                if (zoneRes.data) zonesData = zoneRes.data;
-            }
-        }
-
-        async function fetchLocationFoodPrices() {
-            if (typeof supabaseClient !== 'undefined') {
-                const { data } = await supabaseClient.from('location_food_prices').select('*');
-                if (data) {
-                    locationFoodPricesMap = {};
-                    data.forEach(item => { locationFoodPricesMap[`${item.location_id}_${item.food_id}`] = Number(item.custom_price || 0); });
-                }
-            }
-        }
-
-        async function fetchCustomersData() {
-            if (typeof supabaseClient !== 'undefined') {
-                const { data } = await supabaseClient.from('customers').select('*').order('customer_name', { ascending: true });
-                if (data) customersList = data;
-            }
-        }
-
-        async function fetchLatestFoods() {
-            if (typeof supabaseClient !== 'undefined') {
-                const [catRes, foodRes] = await Promise.all([
-                    supabaseClient.from('food_groups').select('*').order('food_group_id', { ascending: true }),
-                    supabaseClient.from('foods').select('*').order('food_id', { ascending: true })
-                ]);
-                if (catRes.data) {
-                    cachedCategories = catRes.data.filter(cat => cat.food_group_name !== 'importmain')
-                        .sort((a, b) => Number(a.food_group_id) - Number(b.food_group_id));
-                }
-                if (foodRes.data) {
-                    cachedFoods = foodRes.data;
-                    dbFoodsMap = {};
-                    foodRes.data.forEach(f => { dbFoodsMap[String(f.food_id || f.id)] = f; });
-                }
-                sendDataToFoodGroupFrame();
-            }
         }
 
         function handleCustomerInput(val) {
@@ -656,391 +548,74 @@
         }
 
         function openLocationZoneModal() {
-            openDynamicPopup('location_zone', '📍 เลือกสถานที่ / ที่พัก');
+            openDynamicPopup('location_zone');
         }
 
-        function renderCategoryFoodGrid() {
-            const container = document.getElementById('popupFoodGridContainer');
-            if (!container) return;
-            container.innerHTML = '';
 
-            const foodsInCat = (cachedFoods || []).filter(f => Number(f.food_group_id) === Number(currentCatId));
-            if (!foodsInCat || foodsInCat.length === 0) {
-                container.innerHTML = '<div class="col-span-2 text-center py-6 text-slate-400 font-bold text-base">ไม่มีรายการอาหารในหมวดนี้</div>';
-                return;
-            }
-
-            foodsInCat.sort((a, b) => (a.food_name || '').toString().localeCompare((b.food_name || '').toString(), ['th', 'en'], { numeric: true }));
-            const cart = JSON.parse(localStorage.getItem('cart')) || [];
-            
-            foodsInCat.forEach(food => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'food-btn';
-                const qtyInCart = cart.filter(item => Number(item.food_id) === Number(food.food_id)).reduce((sum, item) => sum + (Number(item.qty) || 1), 0);
-                const badgeHTML = qtyInCart > 0 ? `<span class="badge-count">${qtyInCart}</span>` : '';
-                btn.innerHTML = `<span>${food.food_name}</span>${badgeHTML}`;
-                btn.onclick = () => {
-                    selectedFoodId = food.food_id;
-                    selectedFoodName = food.food_name;
-                    openDynamicPopup('select_item', food.food_name, { food_id: food.food_id, name: food.food_name });
-                };
-                container.appendChild(btn);
-            });
-        }
-
-        function loadSpecialPresetButtons() {
-            const container = document.getElementById('popupPresetButtonsContainer');
-            if (!container) return;
-            container.innerHTML = '';
-
-            const specialFoods = (cachedFoods || []).filter(f => Number(f.food_group_id) === 98);
-            if (specialFoods.length === 0) {
-                container.innerHTML = '<div class="text-base text-slate-400 col-span-2 text-center py-2">ยังไม่มีเมนูพิเศษในระบบ</div>';
-                return;
-            }
-
-            specialFoods.forEach(item => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'special-preset-btn truncate';
-                btn.textContent = item.food_name || '';
-                btn.onclick = () => {
-                    selectedFoodId = item.food_id;
-                    selectedFoodName = item.food_name;
-                    openDynamicPopup('select_item', item.food_name, { food_id: item.food_id, name: item.food_name });
-                };
-                container.appendChild(btn);
-            });
-        }
-
-        function openAddSpecialPopup() {
-            document.getElementById('customFoodName').value = '';
-            document.getElementById('price1Input').value = '';
-            document.getElementById('price2Input').value = '';
-            document.getElementById('price3Input').value = '';
-            document.getElementById('addSpecialPopupOverlay').classList.add('active');
-        }
-
-        function closeAddSpecialPopup() {
-            document.getElementById('addSpecialPopupOverlay').classList.remove('active');
-        }
-
-        async function saveNewSpecialMenu() {
-            const nameInput = document.getElementById('customFoodName').value.trim();
-            const p1 = parseFloat(document.getElementById('price1Input').value) || 0;
-            const p2 = parseFloat(document.getElementById('price2Input').value) || p1;
-            const p3 = parseFloat(document.getElementById('price3Input').value) || p1;
-
-            if (!nameInput) { alert('กรุณาระบุชื่อเมนูใหม่'); return; }
-
-            try {
-                if (typeof supabaseClient !== 'undefined') {
-                    const { data, error } = await supabaseClient.from('foods').insert([{
-                        food_name: nameInput, food_group_id: 98, price_1: p1, price_2: p2, price_3: p3
-                    }]).select();
-                    if (error) throw error;
-                    closeAddSpecialPopup();
-                    await fetchLatestFoods();
-                    loadSpecialPresetButtons();
-                    selectedFoodId = data[0].food_id;
-                    selectedFoodName = nameInput;
-                    openDynamicPopup('select_item', nameInput, { food_id: data[0].food_id, name: nameInput });
-                }
-            } catch (err) { alert('บันทึกไม่สำเร็จ: ' + err.message); }
-        }
-
-        function initItemDetail() {
-            currentQty = 1; friedEgg = 0; omelet = 0;
-            document.getElementById('foodPrice').value = '';
-            document.getElementById('foodNote').value = '';
-            document.getElementById('foodQty').textContent = currentQty;
-            document.getElementById('friedEggQty').textContent = friedEgg;
-            document.getElementById('omeletQty').textContent = omelet;
-            document.getElementById('foodTitleName').textContent = `📌 ${selectedFoodName}`;
-            checkAndToggleEggSection();
-            renderSelectedCartList();
-        }
-
-        function checkAndToggleEggSection() {
-            const eggSection = document.getElementById('eggSection');
-            if (currentCatId && EGG_CATEGORY_IDS.includes(String(currentCatId))) {
-                eggSection.classList.remove('hidden');
-            } else {
-                eggSection.classList.add('hidden');
-                friedEgg = 0; omelet = 0;
-            }
-        }
-
-        function adjustQty(val) {
-            currentQty = Math.max(1, currentQty + val);
-            document.getElementById('foodQty').textContent = currentQty;
-        }
-
-        function adjustExtra(type, val) {
-            if (type === 'friedEgg') {
-                friedEgg = Math.max(0, friedEgg + val);
-                document.getElementById('friedEggQty').textContent = friedEgg;
-            } else if (type === 'omelet') {
-                omelet = Math.max(0, omelet + val);
-                document.getElementById('omeletQty').textContent = omelet;
-            }
-        }
-
-        function renderSelectedCartList() {
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
-            const boxContainer = document.getElementById('selectedCartItemsBox');
-            const listContainer = document.getElementById('selectedCartList');
-            const badge = document.getElementById('selectedCartCountBadge');
-            listContainer.innerHTML = '';
-
-            let rawFilteredItems = cart.filter(item => 
-                (selectedFoodId && String(item.food_id) === String(selectedFoodId)) || 
-                (selectedFoodName && String(item.name).trim() === String(selectedFoodName).trim())
-            );
-
-            if (rawFilteredItems.length === 0) {
-                boxContainer.classList.add('hidden');
-                return;
-            }
-
-            boxContainer.classList.remove('hidden');
-            badge.textContent = `${rawFilteredItems.length} รายการ`;
-
-            rawFilteredItems.forEach((item, index) => {
-                let eggText = '';
-                if (item.friedEggQty > 0) eggText += ` +ไข่ดาว ${item.friedEggQty}`;
-                if (item.omeletQty > 0) eggText += ` +ไข่เจียว ${item.omeletQty}`;
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center bg-white p-1.5 rounded-lg border border-slate-200';
-                div.innerHTML = `
-                    <div class="font-bold text-slate-700 truncate pr-1">
-                        <span class="text-emerald-600">${item.qty}x</span> ${item.name} ${item.base_price ? `(${item.base_price}฿)` : ''}${eggText}
-                        ${item.note ? `<br><span class="text-slate-400 font-normal text-[13px]">(${item.note})</span>` : ''}
-                    </div>
-                    <button type="button" onclick="deleteCartItemMatch(${index})" class="text-rose-500 font-bold px-2 py-1 text-sm cursor-pointer">✕</button>
-                `;
-                listContainer.appendChild(div);
-            });
-        }
-
-        function deleteCartItemMatch(index) {
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
-            cart.splice(index, 1);
-            localStorage.setItem('cart', JSON.stringify(cart));
-            renderSelectedCartList();
-            updateCartUI();
-        }
-
-        // =========================================================================
-        // ฟังก์ชันตัดสต็อกอัตโนมัติ (แจ้งเตือนเฉพาะเมื่อเหลือ <= 5)
-        // =========================================================================
-        async function checkAndDeductStock(foodId, orderedQty) {
-            if (typeof supabaseClient === 'undefined') return;
-            try {
-                // 1. ตรวจสอบว่าเมนูนี้ผูกสูตรกับวัตถุดิบตัวไหนบ้างในตาราง menu_food_stock
-                const { data: relations, error: relError } = await supabaseClient
-                    .from('menu_food_stock')
-                    .select('food_stock_id')
-                    .eq('food_id', foodId);
-
-                if (relError || !relations || relations.length === 0) return;
-
-                for (const rel of relations) {
-                    const stockId = rel.food_stock_id;
-
-                    // 2. ดึงข้อมูลสต็อกปัจจุบันจากตาราง food_stock
-                    const { data: stockData, error: stockError } = await supabaseClient
-                        .from('food_stock')
-                        .select('quantity, food_stock_name')
-                        .eq('food_stock_id', stockId)
-                        .single();
-
-                    if (stockError || !stockData) continue;
-
-                    const currentQty = parseFloat(stockData.quantity) || 0;
-                    let newQty = currentQty - orderedQty;
-                    if (newQty < 0) newQty = 0; // ถึงแม้จะติดลบหรือเหลือ 0 ก็ยังให้ขายต่อได้
-
-                    // 3. อัปเดตยอดคงเหลือใหม่ลงใน Supabase
-                    const { error: updateError } = await supabaseClient
-                        .from('food_stock')
-                        .update({ quantity: newQty, updated_at: new Date() })
-                        .eq('food_stock_id', stockId);
-
-                    if (updateError) {
-                        console.error('อัปเดตสต็อกไม่สำเร็จ:', updateError.message);
-                        continue;
-                    }
-
-                    // 4. เงื่อนไขการแจ้งเตือน: ถ้าน้อยกว่าหรือเท่ากับ 5 ค่อยเด้ง Pop-up (ถ้ามากกว่า 5 เงียบไว้ไม่ต้องแจ้ง)
-                    if (newQty <= 5) {
-                        showStockAlertModal(stockData.food_stock_name, newQty);
-                    }
-                }
-            } catch (err) {
-                console.error("เกิดข้อผิดพลาดในระบบตัดสต็อก:", err);
-            }
-        }
-
-        function showStockAlertModal(stockName, remainingQty) {
-            const titleEl = document.getElementById('stockAlertTitle');
-            const msgEl = document.getElementById('stockAlertMessage');
-            const iconEl = document.getElementById('stockAlertIcon');
-
-            if (remainingQty <= 0) {
-                iconEl.className = "w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center text-2xl font-bold bg-rose-100 text-rose-600 shadow-inner";
-                iconEl.textContent = "🚨";
-                titleEl.textContent = "วัตถุดิบหมดเกลี้ยงแล้ว!";
-                msgEl.innerHTML = `วัตถุดิบ <b>"${stockName}"</b> ถูกตัดสต็อกเรียบร้อยแล้ว<br><span class="text-rose-600 font-extrabold">ตอนนี้เหลือ 0 ชิ้น (หมดสต็อก)</span> แต่ยังสามารถขายและรับออเดอร์ต่อได้`;
-            } else {
-                iconEl.className = "w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center text-2xl font-bold bg-amber-100 text-amber-600 shadow-inner";
-                iconEl.textContent = "⚠️";
-                titleEl.textContent = "แจ้งเตือนสต็อกใกล้หมด!";
-                msgEl.innerHTML = `วัตถุดิบ <b>"${stockName}"</b> ถูกตัดสต็อกแล้ว<br>ตอนนี้<span class="text-amber-600 font-extrabold">เหลืออยู่เพียง ${remainingQty} ชิ้น</span> เท่านั้น`;
-            }
-
-            document.getElementById('stockAlertModalOverlay').classList.add('active');
-        }
-
-        function closeStockAlertModal() {
-            document.getElementById('stockAlertModalOverlay').classList.remove('active');
-        }
-
-        async function saveToCartFromPopup() {
-            const priceInput = document.getElementById('foodPrice').value;
-            const price = priceInput !== "" ? parseFloat(priceInput) : null;
-            const note = document.getElementById('foodNote').value.trim();
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
-
-            cart.push({
-                item_id: Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-                food_id: selectedFoodId,
-                name: selectedFoodName,
-                price: price,
-                base_price: price,
-                friedEggQty: friedEgg,
-                omeletQty: omelet,
-                qty: currentQty,
-                note: note,
-                food_group_id: currentCatId,
-                isSpecialMenu: (String(currentCatId) === '98')
-            });
-
-            localStorage.setItem('cart', JSON.stringify(cart));
-            
-            // เรียกใช้งานระบบเช็คและตัดสต็อกวัตถุดิบ (จะแจ้งเตือนเฉพาะเมื่อเหลือ <= 5 เท่านั้น)
-            await checkAndDeductStock(selectedFoodId, currentQty);
-
-            closeDynamicPopup();
-            updateCartUI();
-        }
-
-        function renderLocationsView() {
-            const grid = document.getElementById('selectionGrid');
-            document.getElementById('addLocationSection').classList.remove('hidden');
-            document.getElementById('addZoneSection').classList.add('hidden');
-            grid.innerHTML = '';
-
-            if (locationsData.length === 0) {
-                grid.innerHTML = '<span class="text-slate-400 text-xs py-8 text-center col-span-2 block">ไม่พบข้อมูลสถานที่</span>';
-                return;
-            }
-
-            locationsData.forEach(loc => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'py-3 px-3 bg-amber-50/60 hover:bg-amber-100 border border-amber-200/80 rounded-2xl text-center font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm truncate';
-                btn.innerHTML = `<div class="truncate">${loc.location_name}</div>`;
-                btn.onclick = () => {
-                    selectedLocationForZone = loc;
-                    renderZonesView(loc);
-                };
-                grid.appendChild(btn);
-            });
-        }
-
-        function renderZonesView(loc) {
-            document.getElementById('popupTitle').innerHTML = `🛋️ เลือกโซน <span class="text-amber-600 font-semibold text-xs block mt-0.5">สถานที่: ${loc.location_name}</span>`;
-            document.getElementById('addLocationSection').classList.add('hidden');
-            document.getElementById('addZoneSection').classList.remove('hidden');
-            const grid = document.getElementById('selectionGrid');
-            grid.innerHTML = '';
-
-            const filteredZones = zonesData.filter(z => String(z.location_id) === String(loc.location_id));
-            if (filteredZones.length === 0) {
-                selectLocationAndZone(loc.location_id, loc.location_name, null, '');
-                return;
-            }
-
-            const backBtn = document.createElement('button');
-            backBtn.type = 'button';
-            backBtn.className = 'py-2.5 px-3 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-2xl text-center font-bold text-xs transition active:scale-95 cursor-pointer col-span-2 text-slate-700 shadow-sm';
-            backBtn.innerHTML = `⬅️ กลับไปเลือกสถานที่อื่น`;
-            backBtn.onclick = () => renderLocationsView();
-            grid.appendChild(backBtn);
-
-            filteredZones.forEach(z => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'py-3 px-3 bg-blue-50/60 hover:bg-blue-100 border border-blue-200/80 rounded-2xl text-center font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm truncate';
-                btn.innerHTML = `<div class="truncate">${z.zone_name}</div>`;
-                btn.onclick = () => selectLocationAndZone(loc.location_id, loc.location_name, z.zone_id, z.zone_name);
-                grid.appendChild(btn);
-            });
-        }
-
-        async function addNewLocation() {
-            const input = document.getElementById('newLocationInput');
-            const name = input.value.trim();
-            if (!name) return;
+        /* ==========================================================
+           [📁 โฟลเดอร์บล็อกที่ 6] : ระบบดึงข้อมูลฐานข้อมูล (Database Fetch Functions)
+           ========================================================== */
+        async function fetchLocationsAndZones() {
             if (typeof supabaseClient !== 'undefined') {
-                const { data, error } = await supabaseClient.from('locations').insert([{ location_name: name, min_order_for_free_delivery: 300, delivery_fee: 20 }]).select().single();
-                if (!error && data) {
-                    locationsData.push(data);
-                    input.value = '';
-                    renderLocationsView();
-                }
+                const [locRes, zoneRes] = await Promise.all([
+                    supabaseClient.from('locations').select('*').order('location_name', { ascending: true }),
+                    supabaseClient.from('location_zone').select('*').order('zone_name', { ascending: true })
+                ]);
+                if (locRes.data) locationsData = locRes.data;
+                if (zoneRes.data) zonesData = zoneRes.data;
             }
         }
 
-        async function addNewZone() {
-            const input = document.getElementById('newZoneInput');
-            const name = input.value.trim();
-            if (!name || !selectedLocationForZone) return;
+        async function fetchLocationFoodPrices() {
             if (typeof supabaseClient !== 'undefined') {
-                const { data, error } = await supabaseClient.from('location_zone').insert([{ zone_name: name, location_id: selectedLocationForZone.location_id }]).select().single();
-                if (!error && data) {
-                    zonesData.push(data);
-                    input.value = '';
-                    renderZonesView(selectedLocationForZone);
+                const { data } = await supabaseClient.from('location_food_prices').select('*');
+                if (data) {
+                    locationFoodPricesMap = {};
+                    data.forEach(item => { locationFoodPricesMap[`${item.location_id}_${item.food_id}`] = Number(item.custom_price || 0); });
                 }
             }
         }
 
-        function selectLocationAndZone(locId, locName, zoneId, zoneName) {
-            locationData.locationId = locId;
-            locationData.locationName = locName;
-            locationData.zoneId = zoneId;
-            locationData.zoneName = zoneName;
-            isDeliveryFeeWaived = false;
-
-            const txtEl = document.getElementById(`locationBtnText-locationSelectorWrapper`);
-            if (txtEl) {
-                txtEl.innerText = `${locName}${zoneName ? ' - ' + zoneName : ''}`;
+        async function fetchCustomersData() {
+            if (typeof supabaseClient !== 'undefined') {
+                const { data } = await supabaseClient.from('customers').select('*').order('customer_name', { ascending: true });
+                if (data) customersList = data;
             }
-            closeDynamicPopup();
-            renderOrderSummary();
         }
 
+        async function fetchLatestFoods() {
+            if (typeof supabaseClient !== 'undefined') {
+                const [catRes, foodRes] = await Promise.all([
+                    supabaseClient.from('food_groups').select('*').order('food_group_id', { ascending: true }),
+                    supabaseClient.from('foods').select('*').order('food_id', { ascending: true })
+                ]);
+                if (catRes.data) {
+                    cachedCategories = catRes.data.filter(cat => cat.food_group_name !== 'importmain')
+                        .sort((a, b) => Number(a.food_group_id) - Number(b.food_group_id));
+                }
+                if (foodRes.data) {
+                    cachedFoods = foodRes.data;
+                    dbFoodsMap = {};
+                    foodRes.data.forEach(f => { dbFoodsMap[String(f.food_id || f.id)] = f; });
+                }
+                sendDataToFoodGroupFrame();
+            }
+        }
+
+
+        /* ==========================================================
+           [📁 โฟลเดอร์บล็อกที่ 7] : ระบบคำนวณราคาและแสดงผลสรุปออเดอร์ (Price & Order Calculation)
+           ========================================================== */
         function getGroupBasePrice(item, groupId) {
+            if (item.price !== undefined && item.price !== null && Number(item.price) > 0 && (item.is_buying_resell || Number(item.food_group_id) === 99)) {
+                return Number(item.price);
+            }
+
             const foodId = String(item.food_id || item.id || '');
             const currentLocId = locationData.locationId;
             if (currentLocId && foodId && locationFoodPricesMap[`${currentLocId}_${foodId}`] > 0) {
                 return Number(locationFoodPricesMap[`${currentLocId}_${foodId}`]);
             }
-            const hasCustomPrice = item.price !== undefined && item.price !== null;
-            if (hasCustomPrice && Number(item.price) > 0) return Number(item.price);
 
             const gId = Number(groupId) || 1;
             const foodObj = dbFoodsMap[foodId];
@@ -1052,6 +627,10 @@
                 if (gId === 2) return pTourist > 0 ? pTourist : (pLocal > 0 ? pLocal : Number(item.price || 0));
                 if (gId === 3) return pSabaidee > 0 ? pSabaidee : (pLocal > 0 ? pLocal : Number(item.price || 0));
             }
+
+            const hasCustomPrice = item.price !== undefined && item.price !== null;
+            if (hasCustomPrice && Number(item.price) > 0) return Number(item.price);
+
             return Number(item.price || item.unit_price || 0);
         }
 
@@ -1074,35 +653,66 @@
 
             let totalCartPrice = 0;
             listContainer.innerHTML = '';
-            processedItemsForDb = cart.map((item, index) => {
+            
+            let mappedItems = cart.map((item, index) => {
                 const basePrice = getGroupBasePrice(item, locationData.groupId);
                 const daoQty = Number(item.friedEggQty || 0);
                 const jiaoQty = Number(item.omeletQty || 0);
                 const unitPrice = basePrice + (daoQty * 10) + (jiaoQty * 10);
                 const itemQty = Number(item.qty) || 1;
                 const itemTotalPrice = unitPrice * itemQty;
-                totalCartPrice += itemTotalPrice;
+                
+                const costPrice = Number(item.cost_price || 0);
+
+                return { ...item, originalIndex: index, qty: itemQty, price: basePrice, unit_price: unitPrice, total_price: itemTotalPrice, cost_price: costPrice };
+            });
+
+            mappedItems.sort((a, b) => (a.name || '').localeCompare(b.name || 'th'));
+            processedItemsForDb = mappedItems;
+
+            processedItemsForDb.forEach((item) => {
+                totalCartPrice += item.total_price;
 
                 let details = [];
-                if (item.price !== undefined && item.price !== null && basePrice > 0) details.push(`⭐ ราคาพิเศษ ${basePrice}.-`);
+                let standardPrice = 0;
+                const foodObj = dbFoodsMap[String(item.food_id || item.id || '')];
+                if (foodObj) {
+                    const gId = Number(locationData.groupId) || 1;
+                    if (gId === 1) standardPrice = Number(foodObj.price_1 || 0);
+                    else if (gId === 2) standardPrice = Number(foodObj.price_2 || 0);
+                    else if (gId === 3) standardPrice = Number(foodObj.price_3 || 0);
+                }
+
+                const isConsignmentItem = item.is_buying_resell || item.isSpecialMenu || String(item.food_group_id || item.group_id) === '98' || String(item.food_group_id || item.group_id) === '99' || (item.name && item.name.includes('สินค้าฝากซื้อ'));
+
+                if (isConsignmentItem) {
+                    details.push(`สินค้าฝากซื้อ`);
+                } else {
+                    const hasCustomPriceTag = (item.price !== undefined && item.price !== null && item.price > 0 && standardPrice > 0 && Number(item.price) !== standardPrice);
+                    if (hasCustomPriceTag) {
+                        details.push(`⭐ ราคาพิเศษ ${item.price}.-`);
+                    }
+                }
+
+                const daoQty = Number(item.friedEggQty || 0);
+                const jiaoQty = Number(item.omeletQty || 0);
                 if (daoQty > 0) details.push(`ไข่ดาว ${daoQty}`);
                 if (jiaoQty > 0) details.push(`ไข่เจียว ${jiaoQty}`);
-                if (item.note) details.push(item.note);
+                if (item.note && !isConsignmentItem) details.push(item.note);
 
                 const row = document.createElement('div');
                 row.className = 'cart-item-row text-xs';
                 row.innerHTML = `
                     <div class="flex-1 pr-2">
                         <span class="font-bold">${item.name}</span> <span class="text-amber-600">${details.length ? '('+details.join(', ')+')' : ''}</span>
-                        <div class="text-[11px] text-slate-500">${unitPrice} x${itemQty}</div>
+                        <div class="text-[11px] text-slate-500">${item.unit_price} x${item.qty}</div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="font-extrabold">${itemTotalPrice}.-</span>
-                        <button type="button" onclick="removeCartItem(${index})" class="delete-btn">&times;</button>
+                        <span class="font-extrabold">${item.total_price}.-</span>
+                        <button type="button" onclick="removeCartItem(${item.originalIndex})" class="delete-btn">&times;</button>
                     </div>
                 `;
                 listContainer.appendChild(row);
-                return { ...item, qty: itemQty, price: basePrice, unit_price: unitPrice, total_price: itemTotalPrice };
             });
 
             let deliveryFee = 0;
@@ -1172,12 +782,29 @@
             let html = '';
             currentOrderSummary.processedCart.forEach(item => {
                 let details = [];
-                if (item.price > 0) details.push(`⭐ ราคาพิเศษ ${item.price}.-`);
+                let standardPrice = 0;
+                const foodObj = dbFoodsMap[String(item.food_id || item.id || '')];
+                if (foodObj) {
+                    const gId = Number(locationData.groupId) || 1;
+                    if (gId === 1) standardPrice = Number(foodObj.price_1 || 0);
+                    else if (gId === 2) standardPrice = Number(foodObj.price_2 || 0);
+                    else if (gId === 3) standardPrice = Number(foodObj.price_3 || 0);
+                }
+
+                const isConsignmentItem = item.is_buying_resell || item.isSpecialMenu || String(item.food_group_id || item.group_id) === '98' || String(item.food_group_id || item.group_id) === '99' || (item.name && item.name.includes('สินค้าฝากซื้อ'));
+
+                if (isConsignmentItem) {
+                    details.push(`สินค้าฝากซื้อ`);
+                } else {
+                    const hasCustomPriceTag = (item.price !== undefined && item.price !== null && item.price > 0 && standardPrice > 0 && Number(item.price) !== standardPrice);
+                    if (hasCustomPriceTag) details.push(`⭐ ราคาพิเศษ ${item.price}.-`);
+                }
+
                 const daoQty = Number(item.friedEggQty || 0);
                 if (daoQty > 0) details.push(`ไข่ดาว ${daoQty}`);
                 const jiaoQty = Number(item.omeletQty || 0);
                 if (jiaoQty > 0) details.push(`ไข่เจียว ${jiaoQty}`);
-                if (item.note) details.push(item.note);
+                if (item.note && !isConsignmentItem) details.push(item.note);
 
                 let detailStr = details.length > 0 ? ` <span class="text-amber-700 font-normal">(${details.join(', ')})</span>` : '';
                 html += `
@@ -1205,6 +832,10 @@
             document.getElementById('summaryTotal').textContent = currentOrderSummary.grandTotal.toLocaleString();
         }
 
+
+        /* ==========================================================
+           [📁 โฟลเดอร์บล็อกที่ 8] : ระบบบันทึกข้อมูลและเปลี่ยนหน้าไปหน้าพิมพ์ (Checkout & Print Navigation)
+           ========================================================== */
         async function ensureCustomerSaved(inputValue) {
             const val = removeDuplicateWords(inputValue);
             if (!val) return null;

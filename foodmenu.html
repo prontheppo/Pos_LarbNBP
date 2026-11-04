@@ -1,0 +1,257 @@
+<!-- 
+  ================================
+  FILE NAME: foodmenu.html  
+  ================================
+-->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <script src="appInit.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <title>Food Menu - ลาบหนองบัวลำภู</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
+
+    <style>
+        html, body {
+            width: 100%; height: auto;
+            background-color: #ffffff; color: #1e293b;
+            font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none;
+            display: flex; flex-direction: column; overflow: hidden;
+            border-radius: 1.5rem;
+        }
+        .food-btn {
+            position: relative;
+            border: 1.5px solid #ef4444;
+            color: #166534;
+            background-color: #ffffff;
+            transition: all 0.2s ease;
+        }
+        .food-btn:active { transform: scale(0.96); background-color: #fef2f2; }
+        
+        .item-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background-color: #ef4444;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 11px;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 5px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 2px solid #ffffff;
+            z-index: 10;
+        }
+
+        .add-item-bottom-btn {
+            background: #2563eb; color: white; border: none; padding: 12px;
+            border-radius: 1rem; font-weight: bold; cursor: pointer; font-size: 15px;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+            width: 100%; transition: all 0.15s ease;
+        }
+        .add-item-bottom-btn:hover { background: #1d4ed8; }
+        .add-item-bottom-btn:active { transform: scale(0.98); }
+
+        .custom-modal-overlay { 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+            background: rgba(15, 23, 42, 0.6); 
+            backdrop-filter: blur(4px);
+            display: none; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 2000; 
+            padding: 1rem; 
+        }
+        .custom-modal-overlay.active { display: flex !important; }
+        
+        .popup-container {
+            background: #ffffff; 
+            width: 100% !important; 
+            max-width: 24rem !important;
+            border-radius: 1.5rem !important; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+            overflow: hidden; 
+            position: relative;
+        }
+        #popupIframe {
+            width: 100%;
+            height: auto;
+            min-height: 250px;
+            border: 0;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ส่วนหัว (Header) แบบเดียวกับ foodselect.html -->
+    <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
+        <span id="groupTitleName" class="font-extrabold text-sm text-slate-700 truncate px-2">📌 หมวดหมู่เมนู</span>
+        <button type="button" onclick="closePopup()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
+    </div>
+
+    <!-- Content Body รูปแบบเดียวกับ foodselect.html (ใช้ p-3.5 space-y-3 bg-white w-full) -->
+    <div class="p-3.5 space-y-3 bg-white w-full">
+        <div id="foodListGrid" class="grid grid-cols-3 gap-2.5">
+            <div class="col-span-3 text-center text-slate-400 py-8 text-xs font-bold">กำลังโหลดข้อมูล...</div>
+        </div>
+    </div>
+
+    <!-- Dynamic Popup สำหรับหน้าเพิ่มเมนูใหม่ (foodaddnew) เฉพาะโหมดฝากซื้อ -->
+    <div id="dynamicPopupOverlay" class="custom-modal-overlay" onclick="closeAddMenuModal()">
+        <div class="popup-container" onclick="event.stopPropagation()">
+            <iframe id="popupIframe" src=""></iframe>
+        </div>
+    </div>
+
+    <script>
+        let currentGroupId = null;
+        let groupName = 'เมนูอาหาร';
+        let allFoods = [];
+        let currentCart = [];
+
+        const urlParams = new URLSearchParams(window.location.search);
+        currentGroupId = urlParams.get('group_id');
+        groupName = urlParams.get('name') ? decodeURIComponent(urlParams.get('name')) : 'เมนูอาหาร';
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('groupTitleName').textContent = `📌 ${groupName}`;
+            currentCart = JSON.parse(localStorage.getItem('cart')) || [];
+            
+            if (currentGroupId && typeof supabaseClient !== 'undefined') {
+                const { data } = await supabaseClient
+                    .from('foods')
+                    .select('*')
+                    .eq('food_group_id', currentGroupId)
+                    .order('food_id', { ascending: true });
+                
+                if (data) {
+                    allFoods = data;
+                    renderFoodButtons();
+                }
+            }
+        });
+
+        window.addEventListener('message', (event) => {
+            const { type, cart, foods, height } = event.data || {};
+            if (type === 'RENDER_FOOD_MENU' || cart) {
+                if (cart) currentCart = cart;
+                if (foods) allFoods = foods;
+                renderFoodButtons();
+            } else if (type === 'RESIZE_POPUP' && height) {
+                const popupIframe = document.getElementById('popupIframe');
+                if (popupIframe && document.getElementById('dynamicPopupOverlay').classList.contains('active')) {
+                    popupIframe.style.height = height + 'px';
+                }
+            }
+        });
+
+        // ส่งความสูงจริงตามเนื้อหา (Auto-height) กลับไปปรับขนาด Popup แม่ทันทีเหมือน foodselect.html
+        function updateParentHeight() {
+            setTimeout(() => {
+                if (window.self !== window.top) {
+                    const totalHeight = document.body.scrollHeight;
+                    window.top.postMessage({
+                        type: 'RESIZE_POPUP',
+                        height: totalHeight
+                    }, '*');
+                }
+            }, 50);
+        }
+
+        function renderFoodButtons() {
+            const grid = document.getElementById('foodListGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            const filteredFoods = allFoods.filter(f => String(f.food_group_id) === String(currentGroupId));
+
+            if (filteredFoods.length === 0) {
+                grid.innerHTML = '<div class="col-span-3 text-center text-slate-400 py-8 text-xs font-bold">ไม่พบรายการอาหารในหมวดหมู่นี้</div>';
+            } else {
+                filteredFoods.forEach(food => {
+                    const matchedItems = currentCart.filter(item => 
+                        String(item.food_id) === String(food.food_id) || 
+                        String(item.name).trim() === String(food.food_name).trim()
+                    );
+                    
+                    const totalQty = matchedItems.reduce((sum, item) => sum + (Number(item.qty) || 1), 0);
+
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'food-btn p-3 rounded-2xl flex flex-col items-center justify-center text-center font-bold text-sm h-18 shadow-sm cursor-pointer relative';
+                    btn.onclick = () => selectFood(food);
+
+                    let badgeHtml = totalQty > 0 ? `<span class="item-badge">${totalQty}</span>` : '';
+
+                    btn.innerHTML = `
+                        ${badgeHtml}
+                        <span class="line-clamp-2 leading-tight">${food.food_name}</span>
+                    `;
+                    grid.appendChild(btn);
+                });
+            }
+
+            // ถ้าเป็นกลุ่ม 99 (สินค้าฝากซื้อ) ให้เพิ่มปุ่ม "+ เพิ่ม" ไว้ท้ายสุด
+            if (String(currentGroupId) === '99') {
+                const addWrapper = document.createElement('div');
+                addWrapper.className = 'col-span-3 mt-1';
+                
+                const addBtn = document.createElement('button');
+                addBtn.type = 'button';
+                addBtn.className = 'add-item-bottom-btn';
+                addBtn.innerHTML = '+ เพิ่ม';
+                addBtn.onclick = openAddMenuModal;
+                
+                addWrapper.appendChild(addBtn);
+                grid.appendChild(addWrapper);
+            }
+
+            updateParentHeight();
+        }
+
+        function selectFood(food) {
+            if (window.self !== window.top) {
+                window.top.postMessage({
+                    type: 'OPEN_FOOD_SELECT',
+                    food: food,
+                    catId: currentGroupId
+                }, '*');
+            }
+        }
+
+        function openAddMenuModal() {
+            const iframe = document.getElementById('popupIframe');
+            iframe.src = `foodaddnew.html?group_id=99&group_name=${encodeURIComponent(groupName)}`;
+            document.getElementById('dynamicPopupOverlay').classList.add('active');
+        }
+
+        function closeAddMenuModal() {
+            document.getElementById('dynamicPopupOverlay').classList.remove('active');
+            document.getElementById('popupIframe').src = '';
+            if (currentGroupId && typeof supabaseClient !== 'undefined') {
+                supabaseClient.from('foods').select('*').eq('food_group_id', currentGroupId).order('food_id', { ascending: true }).then(({ data }) => {
+                    if (data) { allFoods = data; renderFoodButtons(); }
+                });
+            }
+        }
+
+        function closePopup() {
+            if (window.self !== window.top) {
+                window.top.postMessage({ type: 'CLOSE_POPUP' }, '*');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,342 @@
+<!-- 
+  ================================
+  FILE NAME: foodselect.html  
+  ================================
+-->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <script src="appInit.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <title>Food Select - ระบบจัดการออเดอร์</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
+
+    <style>
+        html, body {
+            width: 100%; height: auto;
+            background-color: #ffffff; color: #1e293b;
+            font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none;
+            display: flex; flex-direction: column; overflow: hidden;
+            border-radius: 1.5rem;
+        }
+        .custom-label { font-size: 16px !important; font-weight: 700; }
+        input[type="number"], input[type="text"] { font-size: 16px !important; }
+        .back-btn { background-color: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; font-weight: 700; font-size: 14px !important; padding: 0.3rem 0.6rem; border-radius: 0.6rem; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <!-- ส่วนหัว (Header) -->
+    <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
+        <button type="button" id="popupBackBtn" class="back-btn" onclick="goBackToCategory()">◀ รายการ</button>
+        <span id="foodTitleHeader" class="font-extrabold text-sm text-slate-700 truncate px-2">📌 เลือกรายการ</span>
+        <button type="button" onclick="closePopup()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
+    </div>
+
+    <!-- Content Body -->
+    <div class="p-3.5 space-y-3 bg-white w-full">
+        <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+            <span id="foodTitleName" class="font-extrabold text-slate-900 text-base truncate pr-2">📌 รายการสินค้า</span>
+            <button type="button" onclick="saveToCart()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-base shadow-md active:scale-95 transition cursor-pointer flex items-center gap-1 shrink-0">
+                <span>💾 บันทึก</span>
+            </button>
+        </div>
+
+        <!-- รายการที่เลือกไว้แล้ว (แสดงเฉพาะโหมดปกติ) -->
+        <div id="selectedCartItemsBox" class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 hidden">
+            <div class="flex justify-between items-center mb-1.5">
+                <span class="text-[15px] text-slate-600 font-bold">🛒 รายการที่เลือกไว้แล้ว:</span>
+                <span id="selectedCartCountBadge" class="bg-emerald-600 text-white font-extrabold text-[13px] px-2.5 py-0.5 rounded-full">0 รายการ</span>
+            </div>
+            <div id="selectedCartList" class="space-y-1.5 text-[16px] text-slate-700 max-h-36 overflow-y-auto pr-0.5"></div>
+        </div>
+
+        <!-- ราคา/ต้นทุน และจำนวน -->
+        <div class="grid grid-cols-2 gap-2.5 items-center">
+            <div>
+                <label id="priceLabel" class="block custom-label text-slate-700 mb-1">ราคาพิเศษ (ถ้ามี)</label>
+                <input type="number" id="foodPrice" placeholder="ระบุราคา" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-800 text-center text-base outline-none focus:border-emerald-500">
+            </div>
+            <div>
+                <label class="block custom-label text-slate-700 mb-1">จำนวน</label>
+                <div class="flex items-center justify-between bg-slate-50 border border-slate-300 rounded-xl px-2 py-1.5">
+                    <button type="button" onclick="adjustQty(-1)" class="w-7 h-7 bg-white border border-slate-200 rounded-lg text-slate-600 font-bold flex items-center justify-center text-base cursor-pointer">-</button>
+                    <span id="foodQty" class="font-extrabold text-base text-slate-800">1</span>
+                    <button type="button" onclick="adjustQty(1)" class="w-7 h-7 bg-white border border-slate-200 rounded-lg text-slate-600 font-bold flex items-center justify-center text-base cursor-pointer">+</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ส่วนเสริมไข่ (แสดงเฉพาะหมวดอาหารปกติ) -->
+        <div id="eggSection" class="grid grid-cols-2 gap-2 items-center hidden">
+            <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl flex items-center justify-between">
+                <span class="custom-label text-slate-700">ไข่ดาว</span>
+                <div class="flex items-center gap-1.5">
+                    <button type="button" onclick="adjustExtra('friedEgg', -1)" class="w-6 h-6 bg-white border rounded-lg font-bold text-base cursor-pointer">-</button>
+                    <span id="friedEggQty" class="font-bold text-base w-5 text-center">0</span>
+                    <button type="button" onclick="adjustExtra('friedEgg', 1)" class="w-6 h-6 bg-white border rounded-lg font-bold text-base cursor-pointer">+</button>
+                </div>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl flex items-center justify-between">
+                <span class="custom-label text-slate-700">ไข่เจียว</span>
+                <div class="flex items-center gap-1.5">
+                    <button type="button" onclick="adjustExtra('omelet', -1)" class="w-6 h-6 bg-white border rounded-lg font-bold text-base cursor-pointer">-</button>
+                    <span id="omeletQty" class="font-bold text-base w-5 text-center">0</span>
+                    <button type="button" onclick="adjustExtra('omelet', 1)" class="w-6 h-6 bg-white border rounded-lg font-bold text-base cursor-pointer">+</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- หมายเหตุ -->
+        <div>
+            <label class="block custom-label text-slate-700 mb-1">หมายเหตุ</label>
+            <input type="text" id="foodNote" placeholder="(เช่น เผ็ดน้อย, ไม่ใส่ผัก)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-base outline-none focus:border-emerald-500">
+        </div>
+    </div>
+
+    <script>
+        let currentFood = null;
+        let currentCatId = null;
+        let currentQty = 1;
+        let friedEgg = 0;
+        let omelet = 0;
+        const EGG_CATEGORY_IDS = ['1', '2'];
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlFoodId = urlParams.get('food_id');
+        const urlGroupId = urlParams.get('group_id');
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (urlFoodId && typeof supabaseClient !== 'undefined') {
+                currentCatId = urlGroupId;
+                const { data } = await supabaseClient.from('foods').select('*').eq('food_id', urlFoodId).single();
+                if (data) {
+                    currentFood = data;
+                    initDetail();
+                }
+            }
+        });
+
+        window.addEventListener('message', (event) => {
+            const { type, food, catId } = event.data || {};
+            if (type === 'INIT_FOOD_SELECT') {
+                currentFood = food;
+                currentCatId = catId;
+                initDetail();
+            }
+        });
+
+        function updateParentHeight() {
+            setTimeout(() => {
+                if (window.self !== window.top) {
+                    const totalHeight = document.body.scrollHeight;
+                    window.top.postMessage({ type: 'RESIZE_POPUP', height: totalHeight }, '*');
+                }
+            }, 50);
+        }
+
+        function initDetail() {
+            if (!currentFood) return;
+            currentQty = 1; friedEgg = 0; omelet = 0;
+            
+            let defaultVal = '';
+            if (String(currentCatId) === '99') {
+                let lastCostPrices = JSON.parse(localStorage.getItem('lastCostPrices_99') || '{}');
+                defaultVal = lastCostPrices[currentFood.food_name] !== undefined ? lastCostPrices[currentFood.food_name] : '';
+                document.getElementById('priceLabel').textContent = 'ต้นทุน (บาท)';
+                document.getElementById('foodPrice').placeholder = 'ระบุต้นทุน';
+            } else {
+                document.getElementById('priceLabel').textContent = 'ราคาพิเศษ (ถ้ามี)';
+                document.getElementById('foodPrice').placeholder = 'ระบุราคา';
+            }
+
+            document.getElementById('foodPrice').value = defaultVal;
+            document.getElementById('foodNote').value = '';
+            document.getElementById('foodQty').textContent = currentQty;
+            document.getElementById('friedEggQty').textContent = friedEgg;
+            document.getElementById('omeletQty').textContent = omelet;
+            document.getElementById('foodTitleHeader').textContent = currentFood.food_name;
+            document.getElementById('foodTitleName').textContent = `📌 ${currentFood.food_name}`;
+
+            const eggSection = document.getElementById('eggSection');
+            if (String(currentCatId) === '99') {
+                eggSection.classList.add('hidden');
+                document.getElementById('selectedCartItemsBox').classList.add('hidden');
+            } else {
+                if (currentCatId && EGG_CATEGORY_IDS.includes(String(currentCatId))) {
+                    eggSection.classList.remove('hidden');
+                } else {
+                    eggSection.classList.add('hidden');
+                }
+                renderSelectedCartList();
+            }
+            updateParentHeight();
+        }
+
+        function adjustQty(val) {
+            currentQty = Math.max(1, currentQty + val);
+            document.getElementById('foodQty').textContent = currentQty;
+        }
+
+        function adjustExtra(type, val) {
+            if (type === 'friedEgg') {
+                friedEgg = Math.max(0, friedEgg + val);
+                document.getElementById('friedEggQty').textContent = friedEgg;
+            } else if (type === 'omelet') {
+                omelet = Math.max(0, omelet + val);
+                document.getElementById('omeletQty').textContent = omelet;
+            }
+        }
+
+        function renderSelectedCartList() {
+            if (String(currentCatId) === '99') return;
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const boxContainer = document.getElementById('selectedCartItemsBox');
+            const listContainer = document.getElementById('selectedCartList');
+            const badge = document.getElementById('selectedCartCountBadge');
+            listContainer.innerHTML = '';
+
+            let rawFilteredItems = cart.filter(item => 
+                (currentFood && String(item.food_id) === String(currentFood.food_id)) || 
+                (currentFood && String(item.name).trim() === String(currentFood.food_name).trim())
+            );
+
+            if (rawFilteredItems.length === 0) {
+                boxContainer.classList.add('hidden');
+                updateParentHeight();
+                return;
+            }
+
+            boxContainer.classList.remove('hidden');
+            badge.textContent = `${rawFilteredItems.length} รายการ`;
+
+            rawFilteredItems.forEach((item) => {
+                let eggText = '';
+                if (item.friedEggQty > 0) eggText += ` +ไข่ดาว ${item.friedEggQty}`;
+                if (item.omeletQty > 0) eggText += ` +ไข่เจียว ${item.omeletQty}`;
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center bg-white p-1.5 rounded-lg border border-slate-200';
+                div.innerHTML = `
+                    <div class="font-bold text-slate-700 truncate pr-1">
+                        <span class="text-emerald-600">${item.qty}x</span> ${item.name} ${item.base_price ? `(${item.base_price}฿)` : ''}${eggText}
+                        ${item.note ? `<br><span class="text-slate-400 font-normal text-[13px]">(${item.note})</span>` : ''}
+                    </div>
+                    <button type="button" onclick="deleteCartItemMatch('${item.item_id}')" class="text-rose-500 font-bold px-2 py-1 text-sm cursor-pointer">✕</button>
+                `;
+                listContainer.appendChild(div);
+            });
+            updateParentHeight();
+        }
+
+        function deleteCartItemMatch(itemId) {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            cart = cart.filter(item => item.item_id !== itemId);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            renderSelectedCartList();
+            if (window.self !== window.top) {
+                window.top.postMessage({ type: 'UPDATE_CART' }, '*');
+            }
+        }
+
+        function saveToCart() {
+            if (!currentFood) {
+                alert('ไม่พบข้อมูลสินค้า กรุณาลองใหม่อีกครั้ง');
+                return;
+            }
+
+            const inputVal = document.getElementById('foodPrice').value;
+            const noteInput = document.getElementById('foodNote').value.trim();
+
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+            // ตรวจสอบว่าเป็นหมวดฝากซื้อ (Group 99) หรือไม่
+            if (String(currentCatId) === '99') {
+                const cost = parseFloat(inputVal);
+                if (isNaN(cost)) {
+                    alert('กรุณากรอกราคาต้นทุนให้ถูกต้อง');
+                    return;
+                }
+
+                // บันทึกความจำต้นทุนล่าสุด
+                let lastCostPrices = JSON.parse(localStorage.getItem('lastCostPrices_99') || '{}');
+                lastCostPrices[currentFood.food_name] = cost;
+                localStorage.setItem('lastCostPrices_99', JSON.stringify(lastCostPrices));
+
+                cart.push({
+                    item_id: Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+                    food_id: currentFood.food_id,
+                    name: currentFood.food_name,
+                    price: null,
+                    base_price: null,
+                    cost_price: cost,
+                    qty: currentQty,
+                    note: noteInput ? `สินค้าฝากซื้อ (${noteInput})` : 'สินค้าฝากซื้อ',
+                    food_group_id: 99,
+                    is_buying_resell: true
+                });
+                localStorage.setItem('cart', JSON.stringify(cart));
+                
+                // แจ้งหน้าแม่ (consignment.html) ให้ปิดป๊อปอัปและรีเฟรชหน้าหลักทันที
+                if (window.self !== window.top) {
+                    window.top.postMessage({ type: 'CLOSE_POPUP' }, '*');
+                    window.top.postMessage({ type: 'BACK_TO_CATEGORY' }, '*');
+                } else {
+                    window.location.href = 'ordersystem.html';
+                }
+                return;
+            }
+
+            // โหมดปกติทั่วไป
+            const price = inputVal !== "" ? parseFloat(inputVal) : null;
+            let existingItemIndex = cart.findIndex(item => {
+                const sameFoodId = String(item.food_id) === String(currentFood.food_id);
+                const samePrice = Number(item.price || 0) === Number(price || 0);
+                const sameFriedEgg = Number(item.friedEggQty || 0) === Number(friedEgg);
+                const sameOmelet = Number(item.omeletQty || 0) === Number(omelet);
+                const sameNote = (item.note || '').trim() === noteInput;
+                return sameFoodId && samePrice && sameFriedEgg && sameOmelet && sameNote;
+            });
+
+            if (existingItemIndex > -1) {
+                cart[existingItemIndex].qty = Number(cart[existingItemIndex].qty || 1) + Number(currentQty);
+            } else {
+                cart.push({
+                    item_id: Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+                    food_id: currentFood.food_id,
+                    name: currentFood.food_name,
+                    price: price,
+                    base_price: price,
+                    friedEggQty: friedEgg,
+                    omeletQty: omelet,
+                    qty: currentQty,
+                    note: noteInput,
+                    food_group_id: currentCatId,
+                    isSpecialMenu: (String(currentCatId) === '98')
+                });
+            }
+
+            localStorage.setItem('cart', JSON.stringify(cart));
+            if (window.self !== window.top) {
+                window.top.postMessage({ type: 'CLOSE_POPUP' }, '*');
+            }
+        }
+
+        function goBackToCategory() {
+            if (window.self !== window.top) {
+                window.top.postMessage({ type: 'BACK_TO_CATEGORY' }, '*');
+            }
+        }
+
+        function closePopup() {
+            if (window.self !== window.top) {
+                window.top.postMessage({ type: 'CLOSE_POPUP' }, '*');
+            }
+        }
+    </script>
+</body>
+</html>
