@@ -1,7 +1,10 @@
 <!-- 
-  ================================
-  FILE NAME: ordersystem.html  
-  ================================
+  ========================================================================
+  FILE NAME: ordersystem.html
+  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 8 บล็อกย่อย ดังนี้
+   - [บล็อกที่ 1] UI Components & Layout (3 บล็อกย่อย: โครงสร้างแท็บสั่งอาหาร, แท็บตรวจสอบข้อมูลตะกร้า, แท็บสรุปและพิมพ์)
+   - [บล็อกที่ 2] Logic & Database Operations (5 บล็อกย่อย: โหลดข้อมูลพื้นฐานและการตั้งค่า, จัดการเหตุการณ์ Message ข้ามหน้าต่าง, ฟังก์ชันคำนวณราคาตามกลุ่มลูกค้าและพื้นที่, ระบบจัดการตะกร้าสินค้า, ฟังก์ชันบันทึกและส่งข้อมูลไปหน้าพิมพ์)
+  ========================================================================
 -->
 <!DOCTYPE html>
 <html lang="th">
@@ -112,7 +115,11 @@
 
     <div class="flex-1 w-full max-w-xl mx-auto p-3 flex flex-col relative">
         
-        <!-- TAB 1: เลือกรายการอาหาร -->
+        <!-- ==========================================================
+           [📁 บล็อกที่ 1] : ส่วนแสดงผลหน้าจอผู้ใช้ (UI Components & Layout)
+           ========================================================== -->
+
+        <!-- [บล็อกย่อย 1.1] : TAB 1: เลือกรายการอาหาร -->
         <div id="tabContent1" class="flex flex-col w-full">
             <div class="pb-1 flex-shrink-0">
                 <div class="bg-white p-2.5 px-4 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
@@ -133,7 +140,7 @@
             </div>
         </div>
 
-        <!-- TAB 2: ตรวจสอบและระบุลูกค้า -->
+        <!-- [บล็อกย่อย 1.2] : TAB 2: ตรวจสอบและระบุลูกค้า -->
         <div id="tabContent2" class="flex flex-col w-full hidden">
             <div id="locationSelectorWrapper" class="flex-shrink-0 mb-2"></div>
             <div class="flex-1 flex flex-col min-h-0 gap-2 mb-4">
@@ -148,7 +155,7 @@
                     </div>
                     <div class="flex-1 overflow-y-auto pr-1">
                         <div id="cartPreviewList" class="flex flex-col">
-                            <span class="text-gray-400 text-xs py-4 text-center block">⏳ กำลังโหลดรายการ...</span>
+                            <span class="text-gray-400 text-xs py-8 text-center block">⏳ กำลังโหลดรายการ...</span>
                         </div>
                     </div>
                 </div>
@@ -159,7 +166,7 @@
             </div>
         </div>
 
-        <!-- TAB 3: สรุปและพิมพ์ -->
+        <!-- [บล็อกย่อย 1.3] : TAB 3: สรุปและพิมพ์ -->
         <div id="tabContent3" class="flex flex-col w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-4 hidden mb-4">
             <div class="text-center mb-2 pb-1 flex-shrink-0">
                 <h2 class="font-extrabold text-slate-800 text-base leading-tight">ลาบหนองบัวลำภู @เขื่อนขุนด่าน</h2>
@@ -197,7 +204,7 @@
 
     </div>
 
-    <!-- Modal Pop-up กลางจอสำหรับแสดง Iframe -->
+    <!-- [บล็อกย่อย 1.4] : Modal Pop-up กลางจอสำหรับแสดง Iframe -->
     <div id="dynamicPopupOverlay" class="custom-modal-overlay" onclick="handleOverlayClick()">
         <div id="popupContainerBox" class="popup-container" onclick="event.stopPropagation()">
             <div class="popup-content-wrapper">
@@ -206,7 +213,7 @@
         </div>
     </div>
 
-    <!-- Modal ยืนยันการล้างตะกร้า -->
+    <!-- [บล็อกย่อย 1.5] : Modal ยืนยันการล้างตะกร้า -->
     <div id="confirmClearModalOverlay" class="custom-modal-overlay" onclick="closeConfirmClearModal()">
         <div class="bg-white rounded-3xl max-w-xs w-full p-5 text-center border border-slate-200 shadow-2xl m-4" onclick="event.stopPropagation()">
             <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-3 text-xl font-bold">🗑️</div>
@@ -221,7 +228,7 @@
 
     <script>
         /* ==========================================================
-           [📁 โฟลเดอร์บล็อกที่ 1] : ตัวแปรส่วนกลาง (Global Variables & State)
+           [📁 บล็อกที่ 2] : ระบบการทำงานและตรรกะระบบรับออเดอร์ (Logic & Database Operations)
            ========================================================== */
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
         let dbFoodsMap = {};
@@ -245,10 +252,7 @@
         let currentOrderSummary = { itemsCount: 0, totalQty: 0, subtotal: 0, deliveryFee: 0, grandTotal: 0, processedCart: [] };
         let processedItemsForDb = [];
 
-
-        /* ==========================================================
-           [📁 โฟลเดอร์บล็อกที่ 2] : เหตุการณ์เริ่มต้นการทำงาน (DOMContentLoaded)
-           ========================================================== */
+        /* [บล็อกย่อย 2.1] : เหตุการณ์เริ่มต้นการทำงาน (DOMContentLoaded) */
         window.addEventListener('DOMContentLoaded', async () => {
             await Promise.all([
                 fetchLatestFoods(),
@@ -267,14 +271,10 @@
             }
         });
 
-
-        /* ==========================================================
-           [📁 โฟลเดอร์บล็อกที่ 3] : ระบบรับ-ส่งข้อความข้ามหน้าต่าง (Message Event Listener)
-           ========================================================== */
+        /* [บล็อกย่อย 2.2] : ระบบรับ-ส่งข้อความข้ามหน้าต่าง (Message Event Listener) */
         window.addEventListener('message', (event) => {
             const { type, catId, catName, food, height, locationObj, group_id, group_name } = event.data || {};
             
-            /* [บล็อกย่อย 3.1] : ปรับขนาดความสูงของ Pop-up อัตโนมัติ */
             if (type === 'RESIZE_POPUP' && height) {
                 const iframe = document.getElementById('popupIframe');
                 if (iframe) {
@@ -282,7 +282,6 @@
                 }
             }
 
-            /* [บล็อกย่อย 3.2] : เลือกสถานที่จัดส่ง */
             if (type === 'SELECT_LOCATION' && locationObj) {
                 locationData.locationId = locationObj.location_id;
                 locationData.locationName = locationObj.location_name;
@@ -297,13 +296,11 @@
                 renderOrderSummary();
             }
 
-            /* [บล็อกย่อย 3.3] : เลือกหมวดหมู่สินค้า */
             if (type === 'SELECT_CATEGORY') {
                 lastSelectedCategory = { catId, catName };
                 openDynamicPopup(`foodmenu.html?group_id=${catId}&name=${encodeURIComponent(catName)}`);
             }
             
-            /* [บล็อกย่อย 3.4] : เลือกรายการอาหารเฉพาะเจาะจง */
             if (type === 'OPEN_FOOD_SELECT') {
                 openDynamicPopup(`foodselect.html?food_id=${food.food_id}&group_id=${catId}`);
                 setTimeout(() => {
@@ -318,28 +315,26 @@
                 }, 150);
             }
 
-            /* [บล็อกย่อย 3.5] : คำสั่งเปิดหน้าเพิ่มเมนู (OPEN_ADD_MENU) ไปที่ไฟล์ foodaddnew.html */
             if (type === 'OPEN_ADD_MENU') {
                 const currentIframeSrc = document.getElementById('popupIframe').getAttribute('src');
-                if (currentIframeSrc && !currentIframeSrc.includes('foodaddnew.html')) {
+                if (currentIframeSrc && !currentIframeSrc.includes('food_add_new.html')) {
                     previousPopupUrl = currentIframeSrc;
                 }
                 
                 const overlay = document.getElementById('dynamicPopupOverlay');
                 const iframe = document.getElementById('popupIframe');
                 
-                iframe.src = '';
                 overlay.classList.remove('active');
+                iframe.src = '';
 
                 setTimeout(() => {
-                    const addUrl = `foodaddnew.html?group_id=${group_id || ''}&group_name=${encodeURIComponent(group_name || '')}`;
-                    iframe.style.height = '200px';
+                    const addUrl = `food_add_new.html?group_id=${group_id || ''}&group_name=${encodeURIComponent(group_name || '')}`;
+                    iframe.style.height = '550px'; 
                     iframe.src = addUrl;
                     overlay.classList.add('active');
-                }, 100);
+                }, 150);
             }
 
-            /* [บล็อกย่อย 3.6] : กลับไปยังหน้าหมวดหมู่เดิม */
             if (type === 'BACK_TO_CATEGORY') {
                 if (lastSelectedCategory) {
                     openDynamicPopup(`foodmenu.html?group_id=${lastSelectedCategory.catId}&name=${encodeURIComponent(lastSelectedCategory.catName)}`);
@@ -348,7 +343,6 @@
                 }
             }
 
-            /* [บล็อกย่อย 3.7] : ปิดหน้าเพิ่มเมนู หรือ ปิด Popup ทั่วไป */
             if (type === 'CLOSE_ADD_MENU' || type === 'CLOSE_POPUP' || type === 'UPDATE_CART') {
                 if (type === 'CLOSE_ADD_MENU' && previousPopupUrl) {
                     const backUrl = previousPopupUrl;
@@ -363,10 +357,7 @@
             }
         });
 
-
-        /* ==========================================================
-           [📁 โฟลเดอร์บล็อกที่ 4] : ระบบจัดการหน้าจอและแท็บ (UI Control Functions)
-           ========================================================== */
+        /* [บล็อกย่อย 2.3] : ระบบจัดการหน้าจอและแท็บ (UI Control Functions) */
         function sendDataToFoodGroupFrame() {
             const frame = document.getElementById('foodGroupFrame');
             if (frame && frame.contentWindow) {
@@ -460,10 +451,7 @@
             updateCartUI();
         }
 
-
-        /* ==========================================================
-           [📁 โฟลเดอร์บล็อกที่ 5] : ระบบจัดการข้อมูลลูกค้าและสถานที่ (Customer & Location Functions)
-           ========================================================== */
+        /* [บล็อกย่อย 2.4] : ระบบจัดการข้อมูลลูกค้าและสถานที่ (Customer & Location Functions) */
         function removeDuplicateWords(text) {
             if (!text) return '';
             const parts = text.trim().split(/\s+/);
@@ -551,10 +539,7 @@
             openDynamicPopup('location_zone');
         }
 
-
-        /* ==========================================================
-           [📁 โฟลเดอร์บล็อกที่ 6] : ระบบดึงข้อมูลฐานข้อมูล (Database Fetch Functions)
-           ========================================================== */
+        /* [บล็อกย่อย 2.5] : ระบบดึงข้อมูลฐานข้อมูล (Database Fetch Functions) */
         async function fetchLocationsAndZones() {
             if (typeof supabaseClient !== 'undefined') {
                 const [locRes, zoneRes] = await Promise.all([
@@ -602,10 +587,7 @@
             }
         }
 
-
-        /* ==========================================================
-           [📁 โฟลเดอร์บล็อกที่ 7] : ระบบคำนวณราคาและแสดงผลสรุปออเดอร์ (Price & Order Calculation)
-           ========================================================== */
+        /* [บล็อกย่อย 2.6] : ระบบคำนวณราคาและแสดงผลสรุปออเดอร์ (Price & Order Calculation) */
         function getGroupBasePrice(item, groupId) {
             if (item.price !== undefined && item.price !== null && Number(item.price) > 0 && (item.is_buying_resell || Number(item.food_group_id) === 99)) {
                 return Number(item.price);
@@ -832,10 +814,7 @@
             document.getElementById('summaryTotal').textContent = currentOrderSummary.grandTotal.toLocaleString();
         }
 
-
-        /* ==========================================================
-           [📁 โฟลเดอร์บล็อกที่ 8] : ระบบบันทึกข้อมูลและเปลี่ยนหน้าไปหน้าพิมพ์ (Checkout & Print Navigation)
-           ========================================================== */
+        /* [บล็อกย่อย 2.7] : ระบบบันทึกข้อมูลและเปลี่ยนหน้าไปหน้าพิมพ์ (Checkout & Print Navigation) */
         async function ensureCustomerSaved(inputValue) {
             const val = removeDuplicateWords(inputValue);
             if (!val) return null;

@@ -1,7 +1,10 @@
 <!-- 
-  ================================
-  FILE NAME: location_zone.html  
-  ================================
+  ========================================================================
+  FILE NAME: location_zone.html
+  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 8 บล็อกย่อย ดังนี้
+   - [บล็อกที่ 1] UI Components & Layout (3 บล็อกย่อย: ช่องเพิ่มสถานที่ใหม่, ช่องเพิ่มโซน/ห้องพักใหม่, ตารางแสดงรายการ Locations/Zones)
+   - [บล็อกย่อย 2.2] Logic & Database Operations (5 บล็อกย่อย: โหลดข้อมูลสถานที่และโซน, ปรับขนาดความสูง Popup อัตโนมัติ, เรนเดอร์หน้าจอสถานที่และโซน, ฟังก์ชันเพิ่มสถานที่/โซนใหม่, ฟังก์ชันเลือกสถานที่และส่งข้อมูลกลับ)
+  ========================================================================
 -->
 <!DOCTYPE html>
 <html lang="th">
@@ -25,36 +28,43 @@
 </head>
 <body class="flex flex-col h-full bg-white">
 
+    <!-- ==========================================================
+       [📁 บล็อกที่ 1] : ส่วนแสดงผลหน้าจอผู้ใช้ (UI Components & Layout)
+       ========================================================== -->
     <div class="flex flex-col space-y-3 p-1">
-        <!-- ช่องเพิ่มสถานที่ใหม่ -->
+        <!-- [บล็อกย่อย 1.1] : ช่องเพิ่มสถานที่ใหม่ -->
         <div id="addLocationSection" class="bg-amber-50 p-2.5 rounded-2xl border border-amber-200 flex gap-2">
             <input type="text" id="newLocationInput" placeholder="➕ เพิ่มสถานที่ใหม่..." class="flex-1 h-9 px-3 text-xs rounded-xl border border-amber-300 bg-white outline-none">
             <button type="button" onclick="addNewLocation()" class="h-9 px-4 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-sm">+ เพิ่ม</button>
         </div>
 
-        <!-- ช่องเพิ่มโซน/ห้องพักใหม่ -->
+        <!-- [บล็อกย่อย 1.2] : ช่องเพิ่มโซน/ห้องพักใหม่ -->
         <div id="addZoneSection" class="bg-blue-50 p-2.5 rounded-2xl border border-blue-200 flex gap-2 hidden">
             <input type="text" id="newZoneInput" placeholder="➕ เพิ่มโซน/ห้องพักใหม่..." class="flex-1 h-9 px-3 text-xs rounded-xl border border-blue-300 bg-white outline-none">
             <button type="button" onclick="addNewZone()" class="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-sm">+ เพิ่ม</button>
         </div>
 
-        <!-- ตารางแสดงรายการ Locations / Zones -->
+        <!-- [บล็อกย่อย 1.3] : ตารางแสดงรายการ Locations / Zones -->
         <div id="selectionGrid" class="grid grid-cols-2 gap-2.5 pt-1">
             <span class="text-slate-400 text-xs py-8 text-center col-span-2 block">⏳ กำลังโหลดข้อมูล...</span>
         </div>
     </div>
 
     <script>
+        /* ==========================================================
+           [📁 บล็อกที่ 2] : ระบบการทำงานและตรรกะหน้าเลือกสถานที่และโซน (Logic & Database Operations)
+           ========================================================== */
         let locationsData = [];
         let zonesData = [];
         let selectedLocationForZone = null;
 
+        /* [บล็อกย่อย 2.1] : ฟังก์ชันเริ่มต้นการทำงานเมื่อโหลดหน้าเว็บ */
         window.addEventListener('DOMContentLoaded', async () => {
             await fetchLocationsAndZonesFromSupabase();
             updateParentHeight();
         });
 
-        // ส่งความสูงจริงกลับไปปรับกรอบ Pop-up ในหน้าหลักอัตโนมัติ
+        /* [บล็อกย่อย 2.2] : ฟังก์ชันส่งความสูงจริงกลับไปปรับกรอบ Pop-up ในหน้าหลักอัตโนมัติ */
         function updateParentHeight() {
             setTimeout(() => {
                 if (window.self !== window.top) {
@@ -67,6 +77,7 @@
             }, 50);
         }
 
+        /* [บล็อกย่อย 2.3] : ฟังก์ชันดึงข้อมูล Locations และ Zones จาก Supabase */
         async function fetchLocationsAndZonesFromSupabase() {
             try {
                 if (typeof supabaseClient !== 'undefined') {
@@ -90,6 +101,7 @@
             }
         }
 
+        /* [บล็อกย่อย 2.4] : ฟังก์ชันเรนเดอร์หน้าจอเลือกสถานที่ */
         function renderLocationsView() {
             document.getElementById('addLocationSection').classList.remove('hidden');
             document.getElementById('addZoneSection').classList.add('hidden');
@@ -121,6 +133,7 @@
             updateParentHeight();
         }
 
+        /* [บล็อกย่อย 2.5] : ฟังก์ชันเรนเดอร์หน้าจอเลือกโซนประจำสถานที่ */
         function renderZonesView(loc) {
             window.parent.postMessage({ 
                 type: 'UPDATE_POPUP_TITLE', 
@@ -159,6 +172,7 @@
             updateParentHeight();
         }
 
+        /* [บล็อกย่อย 2.6] : ฟังก์ชันเพิ่มสถานที่ใหม่ลงฐานข้อมูล */
         async function addNewLocation() {
             const input = document.getElementById('newLocationInput');
             const name = input.value.trim();
@@ -176,6 +190,7 @@
             } catch (err) { console.error('Add location error:', err); }
         }
 
+        /* [บล็อกย่อย 2.7] : ฟังก์ชันเพิ่มโซนใหม่ลงฐานข้อมูล */
         async function addNewZone() {
             const input = document.getElementById('newZoneInput');
             const name = input.value.trim();
@@ -193,8 +208,8 @@
             } catch (err) { console.error('Add zone error:', err); }
         }
 
+        /* [บล็อกย่อย 2.8] : ฟังก์ชันเลือกสถานที่และส่งข้อมูลกลับหน้าต่างแม่ */
         function selectLocationAndZone(locId, locName, zoneId, zoneName) {
-            // ปรับชื่อประเภท Event ให้ตรงกับที่ ordersystem.html รอรับ เพื่อให้บันทึกค่าและปิดป๊อปอัพกลับหน้าตรวจสอบทันที
             window.parent.postMessage({
                 type: 'SELECT_LOCATION',
                 locationObj: {

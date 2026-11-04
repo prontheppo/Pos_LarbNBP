@@ -1,7 +1,10 @@
 <!-- 
-  ================================
-  FILE NAME: calendar.html  
-  ================================
+  ========================================================================
+  FILE NAME: calendar.html
+  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 9 บล็อกย่อย ดังนี้
+   - [บล็อกที่ 1] UI Components & Layout (4 บล็อกย่อย: Header เดือน/ปี, หัววันในสัปดาห์, ตารางวัน, ปุ่มควบคุมด้านล่าง)
+   - [บล็อกที่ 2] Calendar Logic & State (7 บล็อกย่อย: Init, Fetch Order Counts, Change Month, Select Today, Send Date, Close, Render Calendar)
+  ========================================================================
 -->
 <!DOCTYPE html>
 <html lang="th">
@@ -23,26 +26,29 @@
 </head>
 <body class="flex items-center justify-center p-1">
 
+    <!-- ==========================================================
+       [📁 บล็อกที่ 1] : ส่วนแสดงผลหน้าจอผู้ใช้ (UI Components & Layout)
+       ========================================================== -->
     <div class="bg-white rounded-2xl max-w-sm w-full p-4 shadow-sm flex flex-col space-y-4">
         
-        <!-- หัวข้อเดือน/ปี และปุ่มเปลี่ยนเดือน -->
+        <!-- [บล็อกย่อย 1.1] : หัวข้อเดือน/ปี และปุ่มเปลี่ยนเดือน -->
         <div class="flex justify-between items-center px-2">
             <button type="button" onclick="CalendarSystem.changeMonth(-1)" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 font-bold flex items-center justify-center text-sm cursor-pointer">❮</button>
             <h2 id="calMonthYearTitle" class="font-bold text-sm text-slate-800">เดือน ปี</h2>
             <button type="button" onclick="CalendarSystem.changeMonth(1)" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 font-bold flex items-center justify-center text-sm cursor-pointer">❯</button>
         </div>
 
-        <!-- หัวตารางวันในสัปดาห์ -->
+        <!-- [บล็อกย่อย 1.2] : หัวตารางวันในสัปดาห์ -->
         <div class="grid grid-cols-7 text-center text-[11px] font-bold text-slate-400">
             <div>อา</div><div>จ</div><div>อ</div><div>พ</div><div>พฤ</div><div>ศ</div><div>ส</div>
         </div>
 
-        <!-- ตารางแสดงวัน -->
+        <!-- [บล็อกย่อย 1.3] : ตารางแสดงวันในปฏิทิน -->
         <div id="calDaysGrid" class="grid grid-cols-7 gap-1 text-center text-xs">
             <div class="col-span-7 text-slate-400 py-6 text-xs font-medium">กำลังโหลดปฏิทิน...</div>
         </div>
 
-        <!-- ปุ่มล่าง -->
+        <!-- [บล็อกย่อย 1.4] : ปุ่มควบคุมด้านล่าง (วันนี้ / ปิด) -->
         <div class="flex gap-2 pt-2 border-t">
             <button type="button" onclick="CalendarSystem.selectToday()" class="flex-1 bg-emerald-50 text-emerald-700 font-bold py-2 rounded-xl text-xs hover:bg-emerald-100 border border-emerald-200 cursor-pointer">📅 วันนี้</button>
             <button type="button" onclick="CalendarSystem.close()" class="flex-1 bg-slate-100 text-slate-700 font-bold py-2 rounded-xl text-xs hover:bg-slate-200 cursor-pointer">ปิด</button>
@@ -50,6 +56,9 @@
     </div>
 
     <script>
+        /* ==========================================================
+           [📁 บล็อกที่ 2] : ระบบการทำงานและตรรกะของปฏิทิน (Calendar Logic & State)
+           ========================================================== */
         let db = null;
 
         const CalendarSystem = {
@@ -57,6 +66,7 @@
             activeMonth: new Date().getMonth(),
             eventsData: {}, // เก็บข้อมูลจำนวนออร์เดอร์แยกตามวันที่ เช่น { '2026-08-27': 10 }
 
+            /* [บล็อกย่อย 2.1] : ฟังก์ชันเริ่มต้นการทำงาน (Init) */
             async init() {
                 // เชื่อมต่อ Supabase Client จากไฟล์ supabaseClient.js
                 if (typeof window.supabaseClient !== 'undefined') {
@@ -69,7 +79,7 @@
                 this.render();
             },
 
-            // ดึงข้อมูลออร์เดอร์จาก Supabase เพื่อนำมานับจำนวนต่อวัน
+            /* [บล็อกย่อย 2.2] : ฟังก์ชันดึงข้อมูลออร์เดอร์จาก Supabase เพื่อนำมานับจำนวนต่อวัน */
             async fetchOrderCounts() {
                 if (!db) {
                     console.error("Supabase client not found in calendar!");
@@ -112,6 +122,7 @@
                 }
             },
 
+            /* [บล็อกย่อย 2.3] : ฟังก์ชันเปลี่ยนเดือน (ก่อนหน้า / ถัดไป) */
             async changeMonth(dir) {
                 this.activeMonth += dir;
                 if (this.activeMonth > 11) { 
@@ -124,24 +135,28 @@
                 this.render();
             },
 
+            /* [บล็อกย่อย 2.4] : ฟังก์ชันเลือกวันปัจจุบัน (วันนี้) */
             selectToday() {
                 let d = new Date();
                 let dStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
                 this.sendDateToParent(dStr);
             },
 
+            /* [บล็อกย่อย 2.5] : ฟังก์ชันส่งข้อมูลวันที่กลับไปยังหน้าต่างแม่ (Parent Window) */
             sendDateToParent(dStr) {
                 if (window.parent !== window) {
                     window.parent.postMessage({ action: 'SELECT_DATE', selectedDate: dStr }, '*');
                 }
             },
 
+            /* [บล็อกย่อย 2.6] : ฟังก์ชันปิดหน้าต่างปฏิทิน */
             close() {
                 if (window.parent !== window) {
                     window.parent.postMessage({ action: 'CLOSE_MODAL' }, '*');
                 }
             },
 
+            /* [บล็อกย่อย 2.7] : ฟังก์ชันเรนเดอร์หน้าตาปฏิทินและตัวนับจำนวนออเดอร์ */
             render() {
                 const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
                 document.getElementById('calMonthYearTitle').textContent = `${thaiMonths[this.activeMonth]} ${this.activeYear + 543}`;

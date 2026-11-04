@@ -1,7 +1,10 @@
 <!-- 
-  ================================
-  FILE NAME: foodmenu.html  
-  ================================
+  ========================================================================
+  FILE NAME: foodmenu.html
+  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 10 บล็อกย่อย ดังนี้
+   - [บล็อกที่ 1] UI Components & Layout (4 บล็อกย่อย: ส่วนหัว Header, Content Body แสดงตารางอาหาร, Dynamic Popup Modal สำหรับเพิ่มเมนูใหม่, CSS Styles)
+   - [บล็อกย่อย 2.2] Logic & Database Operations (6 บล็อกย่อย: โหลดหน้าเว็บและดึงข้อมูลจาก Supabase, รับข้อความ PostMessage, อัปเดตความสูง Popup อัตโนมัติ, เรนเดอร์ปุ่มอาหารและปุ่มเพิ่มเมนู, ฟังก์ชันเลือกอาหาร, ฟังก์ชันเปิด/ปิด Modal เพิ่มเมนูอาหาร)
+  ========================================================================
 -->
 <!DOCTYPE html>
 <html lang="th">
@@ -95,20 +98,24 @@
 </head>
 <body>
 
-    <!-- ส่วนหัว (Header) แบบเดียวกับ foodselect.html -->
+    <!-- ==========================================================
+       [📁 บล็อกที่ 1] : ส่วนแสดงผลหน้าจอผู้ใช้ (UI Components & Layout)
+       ========================================================== -->
+
+    <!-- [บล็อกย่อย 1.1] : ส่วนหัว (Header) แบบเดียวกับ foodselect.html -->
     <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
         <span id="groupTitleName" class="font-extrabold text-sm text-slate-700 truncate px-2">📌 หมวดหมู่เมนู</span>
         <button type="button" onclick="closePopup()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
     </div>
 
-    <!-- Content Body รูปแบบเดียวกับ foodselect.html (ใช้ p-3.5 space-y-3 bg-white w-full) -->
+    <!-- [บล็อกย่อย 1.2] : Content Body รูปแบบเดียวกับ foodselect.html -->
     <div class="p-3.5 space-y-3 bg-white w-full">
         <div id="foodListGrid" class="grid grid-cols-3 gap-2.5">
             <div class="col-span-3 text-center text-slate-400 py-8 text-xs font-bold">กำลังโหลดข้อมูล...</div>
         </div>
     </div>
 
-    <!-- Dynamic Popup สำหรับหน้าเพิ่มเมนูใหม่ (foodaddnew) เฉพาะโหมดฝากซื้อ -->
+    <!-- [บล็อกย่อย 1.3] : Dynamic Popup สำหรับหน้าเพิ่มเมนูใหม่เฉพาะโหมดฝากซื้อ -->
     <div id="dynamicPopupOverlay" class="custom-modal-overlay" onclick="closeAddMenuModal()">
         <div class="popup-container" onclick="event.stopPropagation()">
             <iframe id="popupIframe" src=""></iframe>
@@ -116,6 +123,9 @@
     </div>
 
     <script>
+        /* ==========================================================
+           [📁 บล็อกที่ 2] : ระบบการทำงานและตรรกะของหน้าเมนูอาหาร (Logic & Database Operations)
+           ========================================================== */
         let currentGroupId = null;
         let groupName = 'เมนูอาหาร';
         let allFoods = [];
@@ -125,6 +135,7 @@
         currentGroupId = urlParams.get('group_id');
         groupName = urlParams.get('name') ? decodeURIComponent(urlParams.get('name')) : 'เมนูอาหาร';
 
+        /* [บล็อกย่อย 2.1] : ฟังก์ชันเริ่มต้นการทำงานเมื่อโหลดหน้าเว็บ (DOMContentLoaded) */
         window.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('groupTitleName').textContent = `📌 ${groupName}`;
             currentCart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -143,6 +154,7 @@
             }
         });
 
+        /* [บล็อกย่อย 2.2] : ฟังก์ชันรับข้อความ PostMessage จากหน้าต่างอื่นหรือ Iframe */
         window.addEventListener('message', (event) => {
             const { type, cart, foods, height } = event.data || {};
             if (type === 'RENDER_FOOD_MENU' || cart) {
@@ -157,7 +169,7 @@
             }
         });
 
-        // ส่งความสูงจริงตามเนื้อหา (Auto-height) กลับไปปรับขนาด Popup แม่ทันทีเหมือน foodselect.html
+        /* [บล็อกย่อย 2.3] : ฟังก์ชันส่งความสูงจริงตามเนื้อหา (Auto-height) กลับไปปรับขนาด Popup แม่ */
         function updateParentHeight() {
             setTimeout(() => {
                 if (window.self !== window.top) {
@@ -170,6 +182,7 @@
             }, 50);
         }
 
+        /* [บล็อกย่อย 2.4] : ฟังก์ชันเรนเดอร์ปุ่มรายการอาหารและปุ่มเพิ่มเมนู */
         function renderFoodButtons() {
             const grid = document.getElementById('foodListGrid');
             if (!grid) return;
@@ -221,6 +234,7 @@
             updateParentHeight();
         }
 
+        /* [บล็อกย่อย 2.5] : ฟังก์ชันเลือกรายการอาหารเพื่อส่งข้อมูลไปยังหน้าต่างแม่ */
         function selectFood(food) {
             if (window.self !== window.top) {
                 window.top.postMessage({
@@ -231,12 +245,14 @@
             }
         }
 
+        /* [บล็อกย่อย 2.6] : ฟังก์ชันเปิด Modal เพิ่มเมนูอาหารใหม่ผ่าน Iframe */
         function openAddMenuModal() {
             const iframe = document.getElementById('popupIframe');
             iframe.src = `foodaddnew.html?group_id=99&group_name=${encodeURIComponent(groupName)}`;
             document.getElementById('dynamicPopupOverlay').classList.add('active');
         }
 
+        /* [บล็อกย่อย 2.7] : ฟังก์ชันปิด Modal เพิ่มเมนูอาหารใหม่และรีเฟรชข้อมูล */
         function closeAddMenuModal() {
             document.getElementById('dynamicPopupOverlay').classList.remove('active');
             document.getElementById('popupIframe').src = '';
@@ -247,6 +263,7 @@
             }
         }
 
+        /* [บล็อกย่อย 2.8] : ฟังก์ชันปิด Popup หลักส่งสัญญาณกลับหน้าแม่ */
         function closePopup() {
             if (window.self !== window.top) {
                 window.top.postMessage({ type: 'CLOSE_POPUP' }, '*');

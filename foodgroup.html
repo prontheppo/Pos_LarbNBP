@@ -1,7 +1,10 @@
 <!-- 
-  ================================
-  FILE NAME: foodgroup.html  
-  ================================
+  ========================================================================
+  FILE NAME: foodgroup.html
+  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 8 บล็อกย่อย ดังนี้
+   - [บล็อกที่ 1] UI Components & Layout (2 บล็อกย่อย: Container สำหรับปุ่มหมวดหมู่, Custom Popup Modal สำหรับแจ้งเตือน)
+   - [บล็อกที่ 2] Logic & Database Operations (6 บล็อกย่อย: ฟังก์ชันเปิด Modal, ฟังก์ชันปิด Modal, ตรวจสอบและโหลดข้อมูล Standalone, ดึงข้อมูลจาก Supabase, รับข้อความ PostMessage, เรนเดอร์ปุ่มหมวดหมู่และคำนวณจำนวนชิ้นในตะกร้า)
+  ========================================================================
 -->
 <!DOCTYPE html>
 <html lang="th">
@@ -101,7 +104,11 @@
 </head>
 <body class="bg-slate-50 text-slate-800 flex flex-col items-center justify-start p-2">
 
-    <!-- Container แบบ Single Frame -->
+    <!-- ==========================================================
+       [📁 บล็อกที่ 1] : ส่วนแสดงผลหน้าจอผู้ใช้ (UI Components & Layout)
+       ========================================================== -->
+
+    <!-- [บล็อกย่อย 1.1] : Container แบบ Single Frame สำหรับแสดงปุ่มหมวดหมู่ -->
     <div class="w-full max-w-xl mx-auto flex flex-col">
         <div id="categoryView" class="w-full">
             <div id="quickNavContainer" class="category-nav-wrap">
@@ -110,7 +117,7 @@
         </div>
     </div>
 
-    <!-- Custom Popup Modal -->
+    <!-- [บล็อกย่อย 1.2] : Custom Popup Modal สำหรับแสดงการแจ้งเตือน -->
     <div id="customModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-opacity duration-200 opacity-0">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-xs p-5 text-center transform scale-95 transition-transform duration-200 border border-slate-100 flex flex-col items-center" id="modalBox">
             <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-2xl mb-3 shadow-inner">
@@ -125,12 +132,15 @@
     </div>
 
     <script>
+        /* ==========================================================
+           [📁 บล็อกที่ 2] : ระบบการทำงานและตรรกะของหมวดหมู่ (Logic & Database Operations)
+           ========================================================== */
         const categoryIcons = ['🍱', '🍲', '🍳', '🍚', '🥩', '⭐', '🥗', '🛍️', '🍽️', '🥢', '🍹'];
         let cachedCategories = [];
         let cachedFoods = [];
         let currentCart = [];
 
-        // ฟังก์ชันเปิด/ปิด Custom Modal
+        /* [บล็อกย่อย 2.1] : ฟังก์ชันเปิด Custom Modal แจ้งเตือน */
         function showCustomModal(message) {
             const modal = document.getElementById('customModal');
             const modalBox = document.getElementById('modalBox');
@@ -145,6 +155,7 @@
             }, 10);
         }
 
+        /* [บล็อกย่อย 2.2] : ฟังก์ชันปิด Custom Modal */
         function closeCustomModal() {
             const modal = document.getElementById('customModal');
             const modalBox = document.getElementById('modalBox');
@@ -158,13 +169,14 @@
             }, 200);
         }
 
-        // กรณีรันไฟล์เดี่ยว ให้โหลดข้อมูลจาก Supabase ทันที
+        /* [บล็อกย่อย 2.3] : ตรวจสอบและโหลดข้อมูลแบบ Standalone ทันทีถ้าเปิดไฟล์เดี่ยว */
         window.addEventListener('DOMContentLoaded', async () => {
             if (window.self === window.top) {
                 await fetchStandaloneData();
             }
         });
 
+        /* [บล็อกย่อย 2.4] : ฟังก์ชันดึงข้อมูลหมวดหมู่และอาหารจาก Supabase โดยตรง */
         async function fetchStandaloneData() {
             const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
             if (!client) {
@@ -189,7 +201,7 @@
             }
         }
 
-        // คอยรับข้อมูลหมวดหมู่ อาหาร และตะกร้า จากหน้าอื่นผ่าน Iframe
+        /* [บล็อกย่อย 2.5] : รับข้อความ PostMessage จากหน้าต่างแม่ (Parent Window) เพื่ออัปเดตข้อมูล */
         window.addEventListener('message', (event) => {
             const { type, categories, foods, cart } = event.data || {};
             if (type === 'RENDER_CATEGORIES') {
@@ -200,6 +212,7 @@
             }
         });
 
+        /* [บล็อกย่อย 2.6] : ฟังก์ชันเรนเดอร์ปุ่มหมวดหมู่อาหารและคำนวณจำนวนชิ้นในตะกร้า */
         function renderCategories(categories, foods, cart) {
             const navContainer = document.getElementById('quickNavContainer');
             if (!navContainer) return;

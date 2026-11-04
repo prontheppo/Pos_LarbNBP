@@ -1,3 +1,11 @@
+<!-- 
+  ========================================================================
+  FILE NAME: foodaddnew.html
+  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 6 บล็อกย่อย ดังนี้
+   - [บล็อกที่ 1] UI Components & Layout (2 บล็อกย่อย: Header ส่วนหัว, ฟอร์มกรอกข้อมูลเมนูอาหารใหม่)
+   - [บล็อกที่ 2] Logic & Database Operations (4 บล็อกย่อย: โหลดหน้าเว็บ, ปรับขนาด Popup, ปิด Modal, บันทึกข้อมูล)
+  ========================================================================
+-->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -26,7 +34,11 @@
 </head>
 <body>
 
-    <!-- ส่วนหัว (Header) -->
+    <!-- ==========================================================
+       [📁 บล็อกที่ 1] : ส่วนแสดงผลหน้าจอผู้ใช้ (UI Components & Layout)
+       ========================================================== -->
+
+    <!-- [บล็อกย่อย 1.1] : ส่วนหัว (Header) -->
     <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
         <div class="flex items-center gap-1.5">
             <span class="text-base text-blue-600 font-extrabold flex items-center justify-center">➕</span>
@@ -35,7 +47,7 @@
         <button type="button" onclick="closeModal()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
     </div>
 
-    <!-- Content Body -->
+    <!-- [บล็อกย่อย 1.2] : ฟอร์มกรอกข้อมูลเมนูอาหารใหม่ (Content Body) -->
     <form id="addMenuForm" onsubmit="saveNewMenuData(event)" class="p-3.5 space-y-3 bg-white w-full">
         
         <!-- แถวบน: หมวดหมู่ และ ชื่อเมนูอาหาร -->
@@ -88,9 +100,13 @@
     </form>
 
     <script>
+        /* ==========================================================
+           [📁 บล็อกที่ 2] : ระบบการทำงานและตรรกะของหน้าเพิ่มเมนู (Logic & Database Operations)
+           ========================================================== */
         let db;
         let currentGroupId = null;
 
+        /* [บล็อกย่อย 2.1] : ฟังก์ชันเริ่มต้นการทำงานเมื่อโหลดหน้าเว็บ */
         window.addEventListener('DOMContentLoaded', () => {
             db = typeof window.supabaseClient !== 'undefined' ? window.supabaseClient : supabaseClient;
 
@@ -105,6 +121,7 @@
             updateParentHeight();
         });
 
+        /* [บล็อกย่อย 2.2] : ฟังก์ชันปรับขนาดความสูงของ Popup อัตโนมัติ */
         function updateParentHeight() {
             setTimeout(() => {
                 if (window.self !== window.top) {
@@ -120,12 +137,14 @@
         window.addEventListener('load', updateParentHeight);
         window.addEventListener('resize', updateParentHeight);
 
+        /* [บล็อกย่อย 2.3] : ฟังก์ชันปิดหน้าต่าง Modal / ส่งสัญญาณกลับหน้าแม่ */
         function closeModal() {
             if (window.parent && window.parent !== window) {
                 window.parent.postMessage({ type: 'CLOSE_ADD_MENU' }, '*');
             }
         }
 
+        /* [บล็อกย่อย 2.4] : ฟังก์ชันบันทึกข้อมูลเมนูอาหารใหม่ลง Supabase */
         async function saveNewMenuData(e) {
             if (e) e.preventDefault();
 

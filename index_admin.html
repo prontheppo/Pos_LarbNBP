@@ -1,7 +1,10 @@
 <!-- 
-  ================================
-  FILE NAME: index_admin.html  
-  ================================
+  ========================================================================
+  FILE NAME: index_admin.html
+  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 6 บล็อกย่อย ดังนี้
+   - [บล็อกที่ 1] UI Components & Layout (3 บล็อกย่อย: โครงสร้างหลัก Layout, ส่วนหัว Header เมนูผู้ดูแลระบบ, รายการปุ่มเมนู Admin)
+   - [บล็อกที่ 2] Logic & Event Handlers (3 บล็อกย่อย: ป้องกันการซูมด้วย Gesture & Touch, ฟังก์ชันเปลี่ยนหน้าเว็บ goToPage)
+  ========================================================================
 -->
 <!DOCTYPE html>
 <html lang="th">
@@ -117,9 +120,14 @@
 <body>
 <div class="app-layout">
 
-    <!-- หน้าผู้ดูแลระบบ -->
+    <!-- ==========================================================
+       [📁 บล็อกที่ 1] : ส่วนแสดงผลหน้าจอผู้ใช้ (UI Components & Layout)
+       ========================================================== -->
+
+    <!-- [บล็อกย่อย 1.1] : โครงสร้างหลัก (Main Card สำหรับ Admin) -->
     <div id="adminView" class="main-card">
 
+        <!-- [บล็อกย่อย 1.2] : ส่วนหัว (Header) หัวข้อผู้ดูแลระบบ -->
         <div class="header-section">
             <div class="text-2xl mb-0.5">🔓</div>
 
@@ -132,6 +140,7 @@
             </p>
         </div>
 
+        <!-- [บล็อกย่อย 1.3] : รายการปุ่มเมนูผู้ดูแลระบบ (Menu List) -->
         <div class="menu-list">
 
             <button type="button"
@@ -171,7 +180,11 @@
 </div>
 
 <script>
-    // ป้องกัน Gesture Zoom
+    /* ==========================================================
+       [📁 บล็อกที่ 2] : ระบบการทำงานและตรรกะหน้าผู้ดูแลระบบ (Logic & Event Handlers)
+       ========================================================== */
+
+    /* [บล็อกย่อย 2.1] : ป้องกันการซูมหน้าจอด้วย Gesture (iOS/Android) */
     document.addEventListener('gesturestart', function (e) {
         e.preventDefault();
     }, { passive: false });
@@ -186,6 +199,7 @@
 
     let lastTouchEnd = 0;
 
+    /* [บล็อกย่อย 2.2] : ป้องกัน Double Tap Zoom และการแตะหลายนิ้ว */
     document.addEventListener('touchend', function (event) {
         const now = new Date().getTime();
 
@@ -202,6 +216,7 @@
         }
     }, { passive: false });
 
+    /* [บล็อกย่อย 2.3] : ฟังก์ชันเปลี่ยนหน้าเว็บไปยัง URL ที่กำหนด */
     function goToPage(url) {
         window.location.href = url;
     }

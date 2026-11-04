@@ -1,7 +1,10 @@
 <!-- 
-  ================================
-  FILE NAME: salereport.html  
-  ================================
+  ========================================================================
+  FILE NAME: salereport.html
+  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 8 บล็อกย่อย ดังนี้
+   - [บล็อกที่ 1] UI Components & Layout (4 บล็อกย่อย: ส่วนหัวและแถบสลับแท็บเมนู, แท็บสรุปยอดขายย้อนหลัง, แท็บรายงานออร์เดอร์รายวัน, แท็บยอดขายแยกตามกลุ่มลูกค้าพร้อม Modal รายละเอียด)
+   - [บล็อกที่ 2] Logic & Database Operations (4 บล็อกย่อย: โครงสร้างข้อมูลและฟังก์ชันเริ่มต้นการทำงาน, ระบบดึงข้อมูลจาก Supabase และแคชข้อมูล, ระบบจัดการแสดงผลแต่ละแท็บ, ระบบปฏิทินและตัวเลือกวันที่)
+  ========================================================================
 -->
 <!DOCTYPE html>
 <html lang="th">
@@ -50,7 +53,11 @@
 <body class="bg-slate-100 flex items-center justify-center antialiased">
 
 <div class="app-container shadow-2xl w-full border border-slate-100">
-    <!-- TOP HEADER & TAB BAR -->
+    <!-- ==========================================================
+       [📁 บล็อกที่ 1] : ส่วนแสดงผลหน้าจอผู้ใช้ (UI Components & Layout)
+       ========================================================== -->
+
+    <!-- [บล็อกย่อย 1.1] : ส่วนหัว (Header) และแถบสลับแท็บเมนู (Tab Bar) -->
     <header class="bg-white border-b border-slate-200 shrink-0">
         <div class="px-4 pt-3 pb-2 flex justify-between items-center">
             <div class="flex items-center gap-2">
@@ -78,7 +85,7 @@
         </div>
     </header>
 
-    <!-- TAB 0: สรุปยอดขายแยกตามวัน -->
+    <!-- [บล็อกย่อย 1.2] : TAB 0: สรุปยอดขายแยกตามวัน (Overview Tab) -->
     <div id="tabOverview" class="tab-content">
         <div class="p-3 bg-slate-50 border-b border-slate-100 shrink-0">
             <div class="bg-purple-50 p-2.5 rounded-xl border border-purple-100 flex justify-between items-center">
@@ -91,7 +98,7 @@
         </div>
     </div>
 
-    <!-- TAB 1: รายงานออร์เดอร์รายวัน -->
+    <!-- [บล็อกย่อย 1.3] : TAB 1: รายงานออร์เดอร์รายวัน (Daily Orders Tab) -->
     <div id="tabDaily" class="tab-content">
         <div class="p-3 bg-slate-50 border-b border-slate-100 space-y-2 shrink-0">
             <div class="bg-blue-50 p-2 rounded-xl border border-blue-100 flex items-center justify-between">
@@ -114,7 +121,7 @@
         <div class="p-3 overflow-y-auto space-y-3 bg-slate-100 flex-1" id="dailyOrdersContainer" style="-webkit-overflow-scrolling: touch;"></div>
     </div>
 
-    <!-- TAB 2: ยอดขายแยกตามกลุ่มลูกค้า -->
+    <!-- [บล็อกย่อย 1.4] : TAB 2: ยอดขายแยกตามกลุ่มลูกค้า (Group Sales Tab) -->
     <div id="tabGroupSales" class="tab-content">
         <div class="p-3 bg-slate-50 border-b border-slate-100 shrink-0 space-y-2.5">
             <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100 flex items-center justify-between">
@@ -131,7 +138,7 @@
     </div>
 </div>
 
-<!-- MODAL: รายละเอียดกลุ่มในแท็บกลุ่มลูกค้า -->
+<!-- [บล็อกย่อย 1.5] : MODAL: รายละเอียดกลุ่มในแท็บกลุ่มลูกค้า -->
 <div id="groupDetailModal" onclick="handleOutsideModalClick(event)" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
     <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl flex flex-col max-h-[80vh] overflow-hidden transform scale-95 transition-transform duration-200" id="groupDetailBox">
         <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
@@ -149,7 +156,7 @@
     </div>
 </div>
 
-<!-- MODAL: ปฏิทินเลือกวันที่ -->
+<!-- [บล็อกย่อย 1.6] : MODAL: ปฏิทินเลือกวันที่ -->
 <div id="calendarModal" onclick="handleCalendarOutsideClick(event)" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
     <div class="bg-white w-full max-w-xs rounded-2xl shadow-2xl overflow-hidden relative flex flex-col transform scale-95 transition-transform duration-200" id="calendarBox">
         <div class="bg-slate-800 text-white p-3 flex justify-between items-center">
@@ -161,6 +168,9 @@
 </div>
 
 <script>
+    /* ==========================================================
+       [📁 บล็อกที่ 2] : ระบบการทำงานและตรรกะรายงานการขาย (Logic & Database Operations)
+       ========================================================== */
     let db;
     let allOrdersCache = [];
     let locationsCache = [];
@@ -169,6 +179,7 @@
     let currentSelectedDate = '';
     let globalGroupData = {};
 
+    /* [บล็อกย่อย 2.1] : ฟังก์ชันจัดการวันที่และโครงสร้างข้อมูลพื้นฐาน */
     function getTodayString() {
         const d = new Date();
         const year = d.getFullYear();
@@ -304,7 +315,6 @@
             groupTypeName = "สบายดี";
         }
 
-        // ปรับปรุงชื่อฝั่งขวา: ดึงเฉพาะข้อความในวงเล็บหรือตัดชื่อรีสอร์ทออกให้เหลือแต่ชื่อโซนแบบโล่งๆ ไม่มีวงเล็บ
         let rawCustomerName = order.customer_name || '';
         let zoneOnly = rawCustomerName;
         if (rawCustomerName.includes('(') && rawCustomerName.includes(')')) {
@@ -334,6 +344,7 @@
         };
     }
 
+    /* [บล็อกย่อย 2.2] : ฟังก์ชันดึงข้อมูลจาก Supabase และแคชข้อมูล */
     async function fetchMasterData() {
         if (!db) return;
         try {
@@ -400,6 +411,7 @@
         if (document.getElementById('txtGroupDate')) document.getElementById('txtGroupDate').textContent = text;
     }
 
+    /* [บล็อกย่อย 2.3] : ฟังก์ชันจัดการแสดงผลแต่ละแท็บและการสลับหน้าจอ */
     async function switchTab(tabName, btnEl) {
         currentActiveTab = tabName;
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active-tab'));
@@ -516,6 +528,7 @@
         switchTab('daily', document.querySelector('.tab-btn.tab-daily'));
     }
 
+    /* [บล็อกย่อย 2.4] : ฟังก์ชันเรนเดอร์รายการออร์เดอร์รายวันและกลุ่มลูกค้า */
     function filterDailyOrders() {
         const container = document.getElementById('dailyOrdersContainer');
         if (!container) return;
