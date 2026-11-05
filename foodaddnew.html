@@ -1,9 +1,16 @@
-<!-- 
+
+<!--
   ========================================================================
   FILE NAME: foodaddnew.html
-  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 6 บล็อกย่อย ดังนี้
-   - [บล็อกที่ 1] UI Components & Layout (2 บล็อกย่อย: Header ส่วนหัว, ฟอร์มกรอกข้อมูลเมนูอาหารใหม่)
-   - [บล็อกที่ 2] Logic & Database Operations (4 บล็อกย่อย: โหลดหน้าเว็บ, ปรับขนาด Popup, ปิด Modal, บันทึกข้อมูล)
+  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 6 หัวข้อย่อย ดังนี้
+   - [บล็อก 1] ส่วนแสดงผลหน้าจอผู้ใช้ (2 หัวข้อย่อย)
+     - [บล็อก 1.1] ส่วนหัว (Header)
+     - [บล็อก 1.2] ฟอร์มกรอกข้อมูลเมนูอาหารใหม่
+   - [บล็อก 2] ระบบการทำงานและการจัดการฐานข้อมูล (4 หัวข้อย่อย)
+     - [บล็อก 2.1] เริ่มต้นการทำงานเมื่อโหลดหน้าเว็บ
+     - [บล็อก 2.2] ปรับขนาดความสูงของ Popup
+     - [บล็อก 2.3] ปิด Modal และส่งสัญญาณกลับหน้าแม่
+     - [บล็อก 2.4] บันทึกข้อมูลเมนูอาหารใหม่ลง Supabase
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -35,10 +42,10 @@
 <body>
 
     <!-- ==========================================================
-       [📁 บล็อกที่ 1] : ส่วนแสดงผลหน้าจอผู้ใช้ (UI Components & Layout)
-       ========================================================== -->
+         BLOCK 1: UI COMPONENTS & LAYOUT
+         ========================================================== -->
 
-    <!-- [บล็อกย่อย 1.1] : ส่วนหัว (Header) -->
+    <!-- BLOCK 1.1: HEADER -->
     <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
         <div class="flex items-center gap-1.5">
             <span class="text-base text-blue-600 font-extrabold flex items-center justify-center">➕</span>
@@ -47,10 +54,10 @@
         <button type="button" onclick="closeModal()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
     </div>
 
-    <!-- [บล็อกย่อย 1.2] : ฟอร์มกรอกข้อมูลเมนูอาหารใหม่ (Content Body) -->
+    <!-- BLOCK 1.2: NEW FOOD MENU INPUT FORM -->
     <form id="addMenuForm" onsubmit="saveNewMenuData(event)" class="p-3.5 space-y-3 bg-white w-full">
         
-        <!-- แถวบน: หมวดหมู่ และ ชื่อเมนูอาหาร -->
+        <!-- Category and food name input fields -->
         <div class="grid grid-cols-2 gap-2.5">
             <div>
                 <label class="block custom-label text-slate-700 mb-1">หมวดหมู่</label>
@@ -66,7 +73,7 @@
             </div>
         </div>
 
-        <!-- ส่วนราคา 3 เรท (ชาวบ้าน, นักท่องเที่ยว, สบายดี) -->
+        <!-- Three pricing tiers: local, tourist, and Sabaidee -->
         <div>
             <label class="block custom-label text-slate-700 mb-1">ราคา (บาท)</label>
             <div class="grid grid-cols-3 gap-2">
@@ -88,7 +95,7 @@
             </div>
         </div>
 
-        <!-- ปุ่มยกเลิก และ บันทึก -->
+        <!-- Cancel and save buttons -->
         <div class="pt-2 grid grid-cols-2 gap-2">
             <button type="button" onclick="closeModal()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl text-base transition cursor-pointer">
                 ยกเลิก
@@ -101,12 +108,12 @@
 
     <script>
         /* ==========================================================
-           [📁 บล็อกที่ 2] : ระบบการทำงานและตรรกะของหน้าเพิ่มเมนู (Logic & Database Operations)
+           BLOCK 2: LOGIC & DATABASE OPERATIONS
            ========================================================== */
         let db;
         let currentGroupId = null;
 
-        /* [บล็อกย่อย 2.1] : ฟังก์ชันเริ่มต้นการทำงานเมื่อโหลดหน้าเว็บ */
+        /* BLOCK 2.1: PAGE INITIALIZATION */
         window.addEventListener('DOMContentLoaded', () => {
             db = typeof window.supabaseClient !== 'undefined' ? window.supabaseClient : supabaseClient;
 
@@ -121,7 +128,7 @@
             updateParentHeight();
         });
 
-        /* [บล็อกย่อย 2.2] : ฟังก์ชันปรับขนาดความสูงของ Popup อัตโนมัติ */
+        /* BLOCK 2.2: AUTOMATIC POPUP HEIGHT ADJUSTMENT */
         function updateParentHeight() {
             setTimeout(() => {
                 if (window.self !== window.top) {
@@ -137,14 +144,14 @@
         window.addEventListener('load', updateParentHeight);
         window.addEventListener('resize', updateParentHeight);
 
-        /* [บล็อกย่อย 2.3] : ฟังก์ชันปิดหน้าต่าง Modal / ส่งสัญญาณกลับหน้าแม่ */
+        /* BLOCK 2.3: CLOSE MODAL AND NOTIFY PARENT WINDOW */
         function closeModal() {
             if (window.parent && window.parent !== window) {
                 window.parent.postMessage({ type: 'CLOSE_ADD_MENU' }, '*');
             }
         }
 
-        /* [บล็อกย่อย 2.4] : ฟังก์ชันบันทึกข้อมูลเมนูอาหารใหม่ลง Supabase */
+        /* BLOCK 2.4: SAVE NEW FOOD MENU TO SUPABASE */
         async function saveNewMenuData(e) {
             if (e) e.preventDefault();
 

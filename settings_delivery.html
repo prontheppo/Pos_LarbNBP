@@ -1,8 +1,20 @@
-<!-- 
+
+<!--
   ================================
-  FILE NAME: settings_delivery.html  
+  FILE NAME: settings_delivery.html
   ================================
+
+  [บล็อก 1] ส่วนประกอบและการจัดวางหน้าจอ (3 บล็อกย่อย)
+  [บล็อก 1.1] ส่วนหัว ชื่อหน้า และปุ่มกลับหน้าผู้ดูแลระบบ
+  [บล็อก 1.2] ข้อความแสดงสถานะระหว่างโหลดข้อมูล
+  [บล็อก 1.3] ตารางตั้งค่ายอดขั้นต่ำและค่าส่งของแต่ละสถานที่
+
+  [บล็อก 2] ระบบโหลดข้อมูลและบันทึกเงื่อนไขการจัดส่ง (3 บล็อกย่อย)
+  [บล็อก 2.1] เริ่มต้นระบบและตรวจสอบการเชื่อมต่อ Supabase
+  [บล็อก 2.2] โหลดข้อมูลสถานที่และแสดงผลในตาราง
+  [บล็อก 2.3] บันทึกยอดขั้นต่ำและค่าส่งของแต่ละสถานที่
 -->
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -23,7 +35,8 @@
             height: 100vh;
             overflow: hidden;
         }
-        /* สไตล์ตารางแบบ Excel: เส้นตารางติดกัน */
+
+        /* BLOCK 1.3: Excel-style table with collapsed grid borders */
         .excel-table {
             border-collapse: collapse;
             width: 100%;
@@ -45,7 +58,8 @@
             top: 0;
             z-index: 10;
         }
-        /* ช่องกรอกข้อมูลแบบ Excel ไร้กรอบตอนปกติ กลมกลืนกับตาราง */
+
+        /* BLOCK 1.3: Excel-style input fields with no default border */
         .excel-input {
             border: none;
             background: transparent;
@@ -65,7 +79,11 @@
 </head>
 <body class="p-2 max-w-2xl mx-auto h-full flex flex-col">
 
+    <!-- BLOCK 1: UI COMPONENTS & LAYOUT -->
+
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 flex flex-col h-full overflow-hidden">
+
+        <!-- BLOCK 1.1: HEADER AND ADMIN NAVIGATION -->
         <div class="flex justify-between items-center mb-2 pb-2 border-b shrink-0">
             <div>
                 <h1 class="font-extrabold text-sm text-slate-800 flex items-center gap-1.5">⚙️ ตั้งค่าเรทค่าส่ง & ยอดขั้นต่ำ</h1>
@@ -76,9 +94,11 @@
             </a>
         </div>
 
+        <!-- BLOCK 1.2: LOADING STATUS -->
         <div id="loadingText" class="text-center text-xs text-slate-400 py-6">⏳ กำลังโหลดข้อมูล...</div>
 
-        <!-- ตารางสไตล์ Excel ล็อกหัวตารางและเลื่อนได้ภายในหน้าจอ -->
+        <!-- BLOCK 1.3: LOCATION DELIVERY SETTINGS TABLE -->
+        <!-- Excel-style table with a sticky header and internal scrolling -->
         <div class="flex-1 overflow-y-auto relative rounded border border-slate-200">
             <table id="locationTable" class="excel-table text-xs hidden">
                 <thead>
@@ -90,13 +110,16 @@
                     </tr>
                 </thead>
                 <tbody id="locationTableBody" class="text-xs">
-                    <!-- ข้อมูลจะถูกแทรกด้วย JavaScript -->
+                    <!-- Location rows are inserted by JavaScript -->
                 </tbody>
             </table>
         </div>
     </div>
 
+    <!-- BLOCK 2: DATABASE & DELIVERY SETTINGS LOGIC -->
+
     <script>
+        // BLOCK 2.1: INITIALIZATION AND SUPABASE CLIENT CONNECTION
         window.addEventListener('DOMContentLoaded', async () => {
             await fetchAndRenderLocations();
         });
@@ -107,6 +130,7 @@
             return null;
         }
 
+        // BLOCK 2.2: FETCH AND RENDER LOCATION DATA
         async function fetchAndRenderLocations() {
             const _db = getSupabaseClient();
             const loadingText = document.getElementById('loadingText');
@@ -119,7 +143,7 @@
             }
 
             try {
-                // แก้ไขจาก .order('name') เป็น .order('location_name') ตามโครงสร้างตารางจริง
+                // Use location_name to sort according to the actual table structure
                 const { data, error } = await _db
                     .from('locations')
                     .select('*')
@@ -164,6 +188,7 @@
             }
         }
 
+        // BLOCK 2.3: SAVE LOCATION DELIVERY SETTINGS
         async function saveLocationRule(locId) {
             const _db = getSupabaseClient();
             if (!_db) return;

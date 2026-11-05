@@ -1,9 +1,20 @@
-<!-- 
+
+<!--
   ========================================================================
   FILE NAME: index_admin.html
-  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 6 บล็อกย่อย ดังนี้
-   - [บล็อกที่ 1] UI Components & Layout (3 บล็อกย่อย: โครงสร้างหลัก Layout, ส่วนหัว Header เมนูผู้ดูแลระบบ, รายการปุ่มเมนู Admin)
-   - [บล็อกที่ 2] Logic & Event Handlers (3 บล็อกย่อย: ป้องกันการซูมด้วย Gesture & Touch, ฟังก์ชันเปลี่ยนหน้าเว็บ goToPage)
+  SUMMARY:
+  มีทั้งหมด 2 บล็อกหลัก | 7 บล็อกย่อย ดังนี้
+
+  [บล็อก 1] ส่วนแสดงผลหน้าจอผู้ดูแลระบบ (UI Components & Layout)
+    - [บล็อก 1.1] โครงสร้างหลัก Main Card สำหรับ Admin
+    - [บล็อก 1.2] ส่วนหัว Header และชื่อผู้ดูแลระบบ
+    - [บล็อก 1.3] รายการปุ่มเมนูผู้ดูแลระบบ
+    - [บล็อก 1.4] รูปแบบการแสดงผล CSS
+
+  [บล็อก 2] ระบบการทำงานและจัดการเหตุการณ์ (Logic & Event Handlers)
+    - [บล็อก 2.1] ป้องกันการซูมหน้าจอด้วย Gesture
+    - [บล็อก 2.2] ป้องกัน Double Tap Zoom และการแตะหลายนิ้ว
+    - [บล็อก 2.3] ฟังก์ชันเปลี่ยนหน้าเว็บ goToPage
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -18,6 +29,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="supabaseClient.js"></script>
 
+    <!-- ==========================================================
+         BLOCK 1.4: CSS STYLES
+         ========================================================== -->
     <style>
         html, body {
             height: 100%;
@@ -121,13 +135,13 @@
 <div class="app-layout">
 
     <!-- ==========================================================
-       [📁 บล็อกที่ 1] : ส่วนแสดงผลหน้าจอผู้ใช้ (UI Components & Layout)
-       ========================================================== -->
+         BLOCK 1: UI COMPONENTS & LAYOUT
+         ========================================================== -->
 
-    <!-- [บล็อกย่อย 1.1] : โครงสร้างหลัก (Main Card สำหรับ Admin) -->
+    <!-- BLOCK 1.1: MAIN ADMIN CARD LAYOUT -->
     <div id="adminView" class="main-card">
 
-        <!-- [บล็อกย่อย 1.2] : ส่วนหัว (Header) หัวข้อผู้ดูแลระบบ -->
+        <!-- BLOCK 1.2: ADMIN HEADER -->
         <div class="header-section">
             <div class="text-2xl mb-0.5">🔓</div>
 
@@ -140,7 +154,7 @@
             </p>
         </div>
 
-        <!-- [บล็อกย่อย 1.3] : รายการปุ่มเมนูผู้ดูแลระบบ (Menu List) -->
+        <!-- BLOCK 1.3: ADMIN MENU BUTTONS -->
         <div class="menu-list">
 
             <button type="button"
@@ -167,7 +181,7 @@
                 <span>📦 จัดการสต็อกวัตถุดิบ</span>
             </button>
 
-            <!-- กลับไปยังหน้าหลัก -->
+            <!-- Return to the main page -->
             <button type="button"
                 onclick="goToPage('index.html')"
                 class="menu-btn btn-rose">
@@ -181,10 +195,10 @@
 
 <script>
     /* ==========================================================
-       [📁 บล็อกที่ 2] : ระบบการทำงานและตรรกะหน้าผู้ดูแลระบบ (Logic & Event Handlers)
+       BLOCK 2: LOGIC & EVENT HANDLERS
        ========================================================== */
 
-    /* [บล็อกย่อย 2.1] : ป้องกันการซูมหน้าจอด้วย Gesture (iOS/Android) */
+    /* BLOCK 2.1: PREVENT GESTURE-BASED ZOOM */
     document.addEventListener('gesturestart', function (e) {
         e.preventDefault();
     }, { passive: false });
@@ -199,7 +213,7 @@
 
     let lastTouchEnd = 0;
 
-    /* [บล็อกย่อย 2.2] : ป้องกัน Double Tap Zoom และการแตะหลายนิ้ว */
+    /* BLOCK 2.2: PREVENT DOUBLE-TAP ZOOM AND MULTI-TOUCH */
     document.addEventListener('touchend', function (event) {
         const now = new Date().getTime();
 
@@ -216,7 +230,7 @@
         }
     }, { passive: false });
 
-    /* [บล็อกย่อย 2.3] : ฟังก์ชันเปลี่ยนหน้าเว็บไปยัง URL ที่กำหนด */
+    /* BLOCK 2.3: NAVIGATE TO THE SPECIFIED PAGE */
     function goToPage(url) {
         window.location.href = url;
     }

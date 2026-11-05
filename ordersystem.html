@@ -1,9 +1,23 @@
+
 <!-- 
   ========================================================================
   FILE NAME: ordersystem.html
-  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 8 บล็อกย่อย ดังนี้
-   - [บล็อกที่ 1] UI Components & Layout (3 บล็อกย่อย: โครงสร้างแท็บสั่งอาหาร, แท็บตรวจสอบข้อมูลตะกร้า, แท็บสรุปและพิมพ์)
-   - [บล็อกที่ 2] Logic & Database Operations (5 บล็อกย่อย: โหลดข้อมูลพื้นฐานและการตั้งค่า, จัดการเหตุการณ์ Message ข้ามหน้าต่าง, ฟังก์ชันคำนวณราคาตามกลุ่มลูกค้าและพื้นที่, ระบบจัดการตะกร้าสินค้า, ฟังก์ชันบันทึกและส่งข้อมูลไปหน้าพิมพ์)
+  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 13 บล็อกย่อย ดังนี้
+   - [บล็อก 1] UI Components & Layout (6 บล็อกย่อย)
+     - [บล็อก 1.1] TAB 1: เลือกรายการอาหาร
+     - [บล็อก 1.2] TAB 2: ตรวจสอบและระบุลูกค้า
+     - [บล็อก 1.3] TAB 3: สรุปและพิมพ์
+     - [บล็อก 1.4] Modal Pop-up สำหรับแสดง Iframe
+     - [บล็อก 1.5] Modal ยืนยันการล้างตะกร้า
+     - [บล็อก 1.6] CSS Styles
+   - [บล็อก 2] Logic & Database Operations (7 บล็อกย่อย)
+     - [บล็อก 2.1] Initialization and DOMContentLoaded
+     - [บล็อก 2.2] Cross-Window Message Handling
+     - [บล็อก 2.3] Screen, Tab, Cart, and Popup Controls
+     - [บล็อก 2.4] Customer and Location Management
+     - [บล็อก 2.5] Database Fetch Functions
+     - [บล็อก 2.6] Price Calculation and Order Summary
+     - [บล็อก 2.7] Checkout and Print Navigation
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -14,6 +28,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>ระบบรับออเดอร์ - ลาบหนองบัวลำภู</title>
     
+    <!-- BLOCK 1.6: CSS STYLES -->
     <!-- Supabase JS Client & Tailwind CSS & SweetAlert2 & FontAwesome -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -115,11 +130,9 @@
 
     <div class="flex-1 w-full max-w-xl mx-auto p-3 flex flex-col relative">
         
-        <!-- ==========================================================
-           [📁 บล็อกที่ 1] : ส่วนแสดงผลหน้าจอผู้ใช้ (UI Components & Layout)
-           ========================================================== -->
+        <!-- BLOCK 1: UI COMPONENTS & LAYOUT -->
 
-        <!-- [บล็อกย่อย 1.1] : TAB 1: เลือกรายการอาหาร -->
+        <!-- BLOCK 1.1: TAB 1 - FOOD SELECTION -->
         <div id="tabContent1" class="flex flex-col w-full">
             <div class="pb-1 flex-shrink-0">
                 <div class="bg-white p-2.5 px-4 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
@@ -140,7 +153,7 @@
             </div>
         </div>
 
-        <!-- [บล็อกย่อย 1.2] : TAB 2: ตรวจสอบและระบุลูกค้า -->
+        <!-- BLOCK 1.2: TAB 2 - CART REVIEW AND CUSTOMER DETAILS -->
         <div id="tabContent2" class="flex flex-col w-full hidden">
             <div id="locationSelectorWrapper" class="flex-shrink-0 mb-2"></div>
             <div class="flex-1 flex flex-col min-h-0 gap-2 mb-4">
@@ -166,7 +179,7 @@
             </div>
         </div>
 
-        <!-- [บล็อกย่อย 1.3] : TAB 3: สรุปและพิมพ์ -->
+        <!-- BLOCK 1.3: TAB 3 - ORDER SUMMARY AND PRINT PREVIEW -->
         <div id="tabContent3" class="flex flex-col w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-4 hidden mb-4">
             <div class="text-center mb-2 pb-1 flex-shrink-0">
                 <h2 class="font-extrabold text-slate-800 text-base leading-tight">ลาบหนองบัวลำภู @เขื่อนขุนด่าน</h2>
@@ -204,7 +217,7 @@
 
     </div>
 
-    <!-- [บล็อกย่อย 1.4] : Modal Pop-up กลางจอสำหรับแสดง Iframe -->
+    <!-- BLOCK 1.4: IFRAME POPUP MODAL -->
     <div id="dynamicPopupOverlay" class="custom-modal-overlay" onclick="handleOverlayClick()">
         <div id="popupContainerBox" class="popup-container" onclick="event.stopPropagation()">
             <div class="popup-content-wrapper">
@@ -213,7 +226,7 @@
         </div>
     </div>
 
-    <!-- [บล็อกย่อย 1.5] : Modal ยืนยันการล้างตะกร้า -->
+    <!-- BLOCK 1.5: CLEAR CART CONFIRMATION MODAL -->
     <div id="confirmClearModalOverlay" class="custom-modal-overlay" onclick="closeConfirmClearModal()">
         <div class="bg-white rounded-3xl max-w-xs w-full p-5 text-center border border-slate-200 shadow-2xl m-4" onclick="event.stopPropagation()">
             <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-3 text-xl font-bold">🗑️</div>
@@ -227,8 +240,9 @@
     </div>
 
     <script>
+        <!-- BLOCK 2: LOGIC & DATABASE OPERATIONS -->
         /* ==========================================================
-           [📁 บล็อกที่ 2] : ระบบการทำงานและตรรกะระบบรับออเดอร์ (Logic & Database Operations)
+           BLOCK 2: LOGIC & DATABASE OPERATIONS
            ========================================================== */
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
         let dbFoodsMap = {};
@@ -252,7 +266,7 @@
         let currentOrderSummary = { itemsCount: 0, totalQty: 0, subtotal: 0, deliveryFee: 0, grandTotal: 0, processedCart: [] };
         let processedItemsForDb = [];
 
-        /* [บล็อกย่อย 2.1] : เหตุการณ์เริ่มต้นการทำงาน (DOMContentLoaded) */
+        /* BLOCK 2.1: INITIALIZATION AND DOMCONTENTLOADED */
         window.addEventListener('DOMContentLoaded', async () => {
             await Promise.all([
                 fetchLatestFoods(),
@@ -271,7 +285,7 @@
             }
         });
 
-        /* [บล็อกย่อย 2.2] : ระบบรับ-ส่งข้อความข้ามหน้าต่าง (Message Event Listener) */
+        /* BLOCK 2.2: CROSS-WINDOW MESSAGE HANDLING */
         window.addEventListener('message', (event) => {
             const { type, catId, catName, food, height, locationObj, group_id, group_name } = event.data || {};
             
@@ -357,7 +371,7 @@
             }
         });
 
-        /* [บล็อกย่อย 2.3] : ระบบจัดการหน้าจอและแท็บ (UI Control Functions) */
+        /* BLOCK 2.3: SCREEN, TAB, CART, AND POPUP CONTROLS */
         function sendDataToFoodGroupFrame() {
             const frame = document.getElementById('foodGroupFrame');
             if (frame && frame.contentWindow) {
@@ -451,7 +465,7 @@
             updateCartUI();
         }
 
-        /* [บล็อกย่อย 2.4] : ระบบจัดการข้อมูลลูกค้าและสถานที่ (Customer & Location Functions) */
+        /* BLOCK 2.4: CUSTOMER AND LOCATION MANAGEMENT */
         function removeDuplicateWords(text) {
             if (!text) return '';
             const parts = text.trim().split(/\s+/);
@@ -539,7 +553,7 @@
             openDynamicPopup('location_zone');
         }
 
-        /* [บล็อกย่อย 2.5] : ระบบดึงข้อมูลฐานข้อมูล (Database Fetch Functions) */
+        /* BLOCK 2.5: DATABASE FETCH FUNCTIONS */
         async function fetchLocationsAndZones() {
             if (typeof supabaseClient !== 'undefined') {
                 const [locRes, zoneRes] = await Promise.all([
@@ -587,7 +601,7 @@
             }
         }
 
-        /* [บล็อกย่อย 2.6] : ระบบคำนวณราคาและแสดงผลสรุปออเดอร์ (Price & Order Calculation) */
+        /* BLOCK 2.6: PRICE CALCULATION AND ORDER SUMMARY */
         function getGroupBasePrice(item, groupId) {
             if (item.price !== undefined && item.price !== null && Number(item.price) > 0 && (item.is_buying_resell || Number(item.food_group_id) === 99)) {
                 return Number(item.price);
@@ -814,7 +828,7 @@
             document.getElementById('summaryTotal').textContent = currentOrderSummary.grandTotal.toLocaleString();
         }
 
-        /* [บล็อกย่อย 2.7] : ระบบบันทึกข้อมูลและเปลี่ยนหน้าไปหน้าพิมพ์ (Checkout & Print Navigation) */
+        /* BLOCK 2.7: CHECKOUT AND PRINT NAVIGATION */
         async function ensureCustomerSaved(inputValue) {
             const val = removeDuplicateWords(inputValue);
             if (!val) return null;

@@ -1,10 +1,22 @@
-<!-- 
+
+<!--
   ========================================================================
   FILE NAME: set_location_pricing.html
-  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 8 บล็อกย่อย ดังนี้
-   - [บล็อกที่ 1] UI Components & Layout (4 บล็อกย่อย: ส่วนหัว Header พร้อมคำอธิบาย, ส่วนเลือกสถานที่/รีสอร์ต, ส่วนแสดงตาราง Iframe หมวดหมู่อาหาร, ส่วนท้าย Footer พร้อมปุ่มนำทาง)
-   - [บล็อกย่อย 2.1] Modal & Utility Management (2 บล็อกย่อย: Modal เลือกสถานที่, Modal แก้ไขราคาอาหารพิเศษแบบ Excel)
-   - [บล็อกย่อย 2.2] Database & Price Operations (2 บล็อกย่อย: โหลดข้อมูลสถานที่และกลุ่มอาหาร, ระบบบันทึกและลบราคาพิเศษตามสถานที่ผ่าน Supabase)
+  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 12 บล็อกย่อย ดังนี้
+   - [บล็อก 1] UI Components & Layout (7 บล็อกย่อย)
+     - [บล็อก 1.1] Header Section
+     - [บล็อก 1.2] Location Selector Section
+     - [บล็อก 1.3] Content Section (Iframe for foodgroup.html)
+     - [บล็อก 1.4] Footer Navigation Section
+     - [บล็อก 1.5] Location Selection Modal
+     - [บล็อก 1.6] Category Price Editor Modal
+     - [บล็อก 1.7] Custom Alert Modal
+   - [บล็อก 2] Logic & Database Operations (5 บล็อกย่อย)
+     - [บล็อก 2.1] Initialization and Supabase Client
+     - [บล็อก 2.2] Iframe Messaging and Modal Utilities
+     - [บล็อก 2.3] Location Data and Selection Management
+     - [บล็อก 2.4] Food Group and Category Price Data Loading
+     - [บล็อก 2.5] Food Table Rendering and Custom Price Operations
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -18,7 +30,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Supabase JS Client (CDN) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- เรียกไฟล์ Initialization ของ Supabase -->
+    <!-- Supabase Initialization -->
     <script src="supabaseClient.js"></script>
     
     <style>
@@ -64,7 +76,7 @@
           touch-action: pan-y;
       }
 
-      /* สไตล์ตารางแบบ Excel: เส้นตารางติดกัน */
+      /* Excel-style table with collapsed borders */
       .excel-table {
           border-collapse: collapse;
           width: 100%;
@@ -110,10 +122,10 @@
     <div class="app-container shadow-2xl w-full border border-slate-100">
         
         <!-- ==========================================================
-           [📁 บล็อกที่ 1] : ส่วนแสดงผลหน้าจอผู้ใช้ (UI Components & Layout)
+           BLOCK 1: UI COMPONENTS & LAYOUT
            ========================================================== -->
 
-        <!-- [บล็อกย่อย 1.1] : Header Section -->
+        <!-- BLOCK 1.1: HEADER SECTION -->
         <div class="py-3 px-4 bg-white border-b border-slate-100 text-center shrink-0 shadow-2xs">
             <h1 class="font-black text-lg text-slate-800 tracking-tight flex items-center justify-center gap-1.5">
                 🏷️ จัดการราคาพิเศษตามสถานที่
@@ -121,7 +133,7 @@
             <p class="text-[11px] text-slate-400 font-medium mt-0.5">เลือกสถานที่ด้านบน แล้วเลือกกลุ่มอาหารเพื่อกำหนดราคาเฉพาะจุดที่ต่างจากปกติ</p>
         </div>
 
-        <!-- [บล็อกย่อย 1.2] : Location Selector Section -->
+        <!-- BLOCK 1.2: LOCATION SELECTOR SECTION -->
         <div class="p-3 bg-slate-50 border-b border-slate-200 shrink-0">
             <div class="bg-amber-50/50 border border-amber-200/80 rounded-2xl p-3 shadow-sm">
                 <button type="button" onclick="openLocationModal()" class="w-full h-[46px] bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition cursor-pointer">
@@ -131,14 +143,14 @@
             </div>
         </div>
 
-        <!-- [บล็อกย่อย 1.3] : Content Section (Iframe for foodgroup.html) -->
+        <!-- BLOCK 1.3: CONTENT SECTION (IFRAME FOR FOODGROUP.HTML) -->
         <div class="p-3 overflow-hidden bg-slate-100 flex flex-col">
             <div class="w-full h-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1">
                 <iframe id="foodGroupFrame" src="foodgroup.html" class="w-full h-full border-0"></iframe>
             </div>
         </div>
 
-        <!-- [บล็อกย่อย 1.4] : Footer Navigation Section -->
+        <!-- BLOCK 1.4: FOOTER NAVIGATION SECTION -->
         <div class="p-3 bg-white border-t border-slate-100 shrink-0 grid grid-cols-2 gap-2">
             <button type="button" onclick="resetToHome()" 
                class="bg-slate-700 hover:bg-slate-800 active:scale-95 text-white font-bold py-3 px-2 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md transition cursor-pointer">
@@ -152,7 +164,7 @@
 
     </div>
 
-    <!-- [บล็อกย่อย 1.5] : Modal: Location Selection Popup -->
+    <!-- BLOCK 1.5: LOCATION SELECTION MODAL -->
     <div id="locationModal" class="custom-modal-overlay" onclick="handleOutsideClick(event, 'locationModal')">
         <div class="custom-modal-box border-t-4 border-amber-500" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-3 pb-2 border-b">
@@ -163,7 +175,7 @@
         </div>
     </div>
 
-    <!-- [บล็อกย่อย 1.6] : Modal: Category Price Editor Popup -->
+    <!-- BLOCK 1.6: CATEGORY PRICE EDITOR MODAL -->
     <div id="popupModalWrapper" class="custom-modal-overlay" onclick="handleOutsideClick(event, 'popupModalWrapper')">
         <div class="custom-modal-box border-t-4 border-blue-600 max-w-lg p-0 overflow-hidden" onclick="event.stopPropagation()">
             
@@ -202,7 +214,7 @@
         </div>
     </div>
 
-    <!-- [บล็อกย่อย 1.7] : Custom Alert Modal -->
+    <!-- BLOCK 1.7: CUSTOM ALERT MODAL -->
     <div id="customAlertModal" class="custom-modal-overlay" onclick="handleOutsideClick(event, 'customAlertModal')">
         <div class="custom-modal-box max-w-xs text-center space-y-3" onclick="event.stopPropagation()">
             <div id="alertIconContainer" class="w-12 h-12 rounded-full flex items-center justify-center mx-auto text-2xl">⚠️</div>
@@ -220,7 +232,7 @@
 
     <script>
         /* ==========================================================
-           [📁 บล็อกที่ 2] : ระบบการทำงานและตรรกะจัดการราคาพิเศษตามสถานที่ (Logic & Database Operations)
+           BLOCK 2: LOGIC & DATABASE OPERATIONS
            ========================================================== */
         let db;
         let foodGroups = [];
@@ -233,7 +245,7 @@
         let cachedCategories = [];
         let cachedFoods = [];
 
-        /* [บล็อกย่อย 2.1] : ฟังก์ชันเริ่มต้นการทำงานและเชื่อมต่อ Supabase Client */
+        /* BLOCK 2.1: INITIALIZATION AND SUPABASE CLIENT */
         function getDbClient() {
             if (db) return db;
             if (typeof window.supabaseClient !== 'undefined') db = window.supabaseClient;
@@ -251,7 +263,8 @@
             }
         });
 
-        // รับค่าสั่งการคลิกหมวดหมู่จาก Iframe (foodgroup.html)
+        /* BLOCK 2.2: IFRAME MESSAGING AND MODAL UTILITIES */
+        // Receive category selection messages from the foodgroup.html iframe.
         window.addEventListener('message', (event) => {
             const { type, catName } = event.data || {};
             if (type === 'SELECT_CATEGORY') {
@@ -298,7 +311,7 @@
             openModal('customAlertModal');
         }
 
-        /* [บล็อกย่อย 2.2] : ฟังก์ชันโหลดข้อมูลสถานที่และกลุ่มอาหารจาก Supabase */
+        /* BLOCK 2.3: LOCATION DATA AND SELECTION MANAGEMENT */
         async function loadLocations() {
             try {
                 const { data, error } = await db.from('locations').select('*');
@@ -359,6 +372,7 @@
             await loadCustomPricesForLocation(selectedLocationId);
         }
 
+        /* BLOCK 2.4: FOOD GROUP AND CATEGORY PRICE DATA LOADING */
         async function loadFoodGroups() {
             try {
                 const [catRes, foodRes] = await Promise.all([
@@ -434,7 +448,7 @@
             }
         }
 
-        /* [บล็อกย่อย 2.3] : ฟังก์ชันเรนเดอร์ตาราง Excel และบันทึกราคาพิเศษตามสถานที่ */
+        /* BLOCK 2.5: FOOD TABLE RENDERING AND CUSTOM PRICE OPERATIONS */
         function renderFoodRows(foods) {
             const container = document.getElementById('foodListContainer');
             container.innerHTML = '';

@@ -1,16 +1,70 @@
-<!-- 
+
+<!--
   ========================================================================
   FILE NAME: editorder.html
-  SUMMARY: มีทั้งหมด 8 บล็อกหลัก | 29 บล็อกย่อย ดังนี้
-   - [บล็อกที่ 1] Main UI Header & Structure (6 บล็อกย่อย)
-   - [บล็อกย่อย 1.1 - 1.6] โครงสร้างหน้าจอหลัก, รายการอาหาร, ปุ่ม Footer, Modal วันที่, Modal สถานที่, Modal เลือกอาหาร, Alert Modal
-   - [บล็อกที่ 2] Global Variables & Configs (ตัวแปรส่วนกลางและค่าคงที่ทั้งหมด)
-   - [บล็อกที่ 3] Utility Functions (3 บล็อกย่อย: กรองคำซ้ำ, เปิด-ปิด Modal, แสดง Alert)
-   - [บล็อกที่ 4] Initialization & Fetch Order (4 บล็อกย่อย: โหลดหน้าเว็บ, ย้อนกลับ, แปลงวันที่, ดึงข้อมูลออเดอร์)
-   - [บล็อกที่ 5] Customer & Location Component (14 บล็อกย่อย: จัดการลูกค้า, Time Wheels, สถานที่, โซน)
-   - [บล็อกที่ 6] Cart & Pricing Logic (2 บล็อกย่อย: คำนวณราคา, เรนเดอร์ตะกร้า)
-   - [บล็อกที่ 7] Food Selection Modal & Iframe (10 บล็อกย่อย: เลือกหมวดหมู่, รายการอาหาร, จำนวน, หมายเหตุ)
-   - [บล็อกที่ 8] Save & Delete Operations (4 บล็อกย่อย: บันทึกข้อมูลลูกค้า, รับ Event ปฏิทิน, บันทึกแก้ไข, ลบออเดอร์)
+
+  SUMMARY:
+  มีทั้งหมด 8 บล็อกหลัก | 43 หัวข้อย่อย ดังนี้
+
+  [บล็อก 1] Main UI Header & Structure
+    [บล็อก 1.1] Main Content Area and Food Items
+    [บล็อก 1.2] Footer Actions
+    [บล็อก 1.3] Calendar Selection Modal
+    [บล็อก 1.4] Location and Zone Selection Modal
+    [บล็อก 1.5] Food Selection Modal and Iframe
+    [บล็อก 1.6] Custom Alert and Confirmation Modal
+
+  [บล็อก 2] Global Variables & Configs
+    ตัวแปรส่วนกลาง สถานะการทำงาน และค่าคงที่
+
+  [บล็อก 3] Utility Functions
+    [บล็อก 3.1] Duplicate Word Removal
+    [บล็อก 3.2] Modal Toggle
+    [บล็อก 3.3] Alert and Confirmation Display
+
+  [บล็อก 4] Initialization & Fetch Order
+    [บล็อก 4.1] Page Initialization
+    [บล็อก 4.2] Return to Report
+    [บล็อก 4.3] Thai Date Formatting
+    [บล็อก 4.4] Fetch Master Data and Order
+
+  [บล็อก 5] Customer & Location Component
+    [บล็อก 5.1] Customer and Time Component Rendering
+    [บล็อก 5.2] Customer Autocomplete
+    [บล็อก 5.3] Time Wheel Initialization
+    [บล็อก 5.4] Time Wheel Item Generation
+    [บล็อก 5.5] Time Wheel Scroll Listener
+    [บล็อก 5.6] Scroll to Selected Time
+    [บล็อก 5.7] Open Calendar Modal
+    [บล็อก 5.8] Select Customer Group
+    [บล็อก 5.9] Open Location Modal
+    [บล็อก 5.10] Render Location List
+    [บล็อก 5.11] Render Zone List
+    [บล็อก 5.12] Add New Location
+    [บล็อก 5.13] Add New Zone
+    [บล็อก 5.14] Confirm Location and Zone
+
+  [บล็อก 6] Cart & Pricing Logic
+    [บล็อก 6.1] Customer Group Base Price Calculation
+    [บล็อก 6.2] Cart Rendering and Total Calculation
+
+  [บล็อก 7] Food Selection Modal & Iframe
+    [บล็อก 7.1] Open Category Modal
+    [บล็อก 7.2] Send Data to Food Group Iframe
+    [บล็อก 7.3] Receive Category Selection Event
+    [บล็อก 7.4] Open Food List
+    [บล็อก 7.5] Open Food Detail
+    [บล็อก 7.6] Popup Back Navigation
+    [บล็อก 7.7] Close Food Popup
+    [บล็อก 7.8] Adjust Food Quantity
+    [บล็อก 7.9] Adjust Egg Extras
+    [บล็อก 7.10] Save Food to Temporary Cart
+
+  [บล็อก 8] Save & Delete Operations
+    [บล็อก 8.1] Ensure Customer Is Saved
+    [บล็อก 8.2] Receive Calendar Events
+    [บล็อก 8.3] Save Order Changes
+    [บล็อก 8.4] Delete Order
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -20,7 +74,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>แก้ไขออร์เดอร์ - ลาบหนองบัวลำภู</title>
-    <!-- Tailwind CSS & Supabase JS -->
+    <!-- Tailwind CSS and Supabase JavaScript Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
@@ -31,12 +85,12 @@
       html, body { height: 100dvh; margin: 0; padding: 0; font-family: 'Sarabun', system-ui, -apple-system, sans-serif; background-color: var(--bg-color); touch-action: pan-y; -webkit-user-select: none; user-select: none; }
       .app-container { max-width: 500px; margin: 0 auto; height: 100dvh; background: #ffffff; display: flex; flex-direction: column; overflow: hidden; }
       ::-webkit-scrollbar { display: none; }
-      
-      /* สไตล์ปุ่มเลือกประเภทลูกค้า จาก ordersystem.html */
+
+      /* Customer Group Button Styles */
       .group-btn-v2 { background-color: #ffffff; border: 1.5px solid #fde68a; color: #334155; transition: all 0.2s ease; }
       .group-btn-v2.active { background-color: #f59e0b; border-color: #d97706; color: #ffffff; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3); }
 
-      /* สไตล์ Dropdown ค้นหาชื่อ/เบอร์โทรลูกค้า จาก ordersystem.html */
+      /* Customer Name and Phone Autocomplete Dropdown Styles */
       .customer-autocomplete-wrapper { position: relative; width: 100%; }
       .customer-dropdown {
           position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #ffffff;
@@ -53,29 +107,29 @@
       .cart-item-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
       .delete-btn { color: #ef4444; font-weight: bold; font-size: 18px; padding: 0 6px; cursor: pointer; background: transparent; border: none; }
 
-      /* Pop-up Modal ลอยตรงกลางจอ ขอบมน ทรงสวยงาม สไตล์ Order System */
-      .custom-modal-overlay { 
-          position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-          background: rgba(15, 23, 42, 0.6); 
+      /* Centered Floating Modal Styles */
+      .custom-modal-overlay {
+          position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(15, 23, 42, 0.6);
           backdrop-filter: blur(4px);
-          display: none; 
-          align-items: center; 
-          justify-content: center; 
-          z-index: 9999; 
-          padding: 1rem; 
+          display: none;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+          padding: 1rem;
       }
       .custom-modal-overlay.active { display: flex !important; }
-      
+
       .popup-container {
-          background: #ffffff; 
-          width: 100% !important; 
-          max-width: 28rem !important; 
-          max-height: 85vh !important; 
-          border-radius: 1.5rem !important; 
+          background: #ffffff;
+          width: 100% !important;
+          max-width: 28rem !important;
+          max-height: 85vh !important;
+          border-radius: 1.5rem !important;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
-          display: flex; 
-          flex-direction: column; 
-          overflow: hidden; 
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
           position: relative;
           animation: popupFadeIn 0.2s ease-out;
       }
@@ -87,19 +141,19 @@
 
       .popup-content-wrapper { width: 100%; background: #ffffff; overflow-y: auto; flex: 1; }
 
-      /* CSS สำหรับส่วน Time Wheel Picker */
+      /* Time Wheel Picker Styles */
       .wheel::-webkit-scrollbar { display: none; }
       .wheel { -ms-overflow-style: none; scrollbar-width: none; scroll-snap-type: y mandatory; }
-      
-      .wheel-item { 
-          height: 36px; 
-          scroll-snap-align: center; 
-          display: flex; 
-          align-items: center; 
-          justify-content: center; 
-          font-size: 0.875rem; 
-          font-weight: 800; 
-          color: #1e293b; 
+
+      .wheel-item {
+          height: 36px;
+          scroll-snap-align: center;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.875rem;
+          font-weight: 800;
+          color: #1e293b;
           transition: color 0.15s ease;
       }
 
@@ -111,11 +165,11 @@
       }
 
       .food-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0.5rem; }
-      .food-btn { 
-          position: relative; background: #ffffff; border: 1.5px solid #10b981; color: #047857; 
-          font-weight: 700; font-size: 16px !important; padding: 0.6rem 0.4rem; border-radius: 0.75rem; 
-          text-align: center; display: flex; align-items: center; justify-content: center; 
-          box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.15s ease; cursor: pointer; min-height: 50px; width: 100%; 
+      .food-btn {
+          position: relative; background: #ffffff; border: 1.5px solid #10b981; color: #047857;
+          font-weight: 700; font-size: 16px !important; padding: 0.6rem 0.4rem; border-radius: 0.75rem;
+          text-align: center; display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.15s ease; cursor: pointer; min-height: 50px; width: 100%;
       }
       .food-btn:active { background-color: #10b981; color: #ffffff; transform: scale(0.97); }
   </style>
@@ -123,9 +177,12 @@
 <body class="bg-slate-100 flex items-center justify-center">
 
 <div class="app-container shadow-2xl w-full border border-slate-100 flex flex-col">
+
     <!-- ==========================================================
-       [📁 บล็อกที่ 1] : ส่วนหัวและโครงสร้างหน้าจอหลัก (Main UI Header & Structure)
-       ========================================================== -->
+         BLOCK 1: MAIN UI HEADER & STRUCTURE
+         ========================================================== -->
+
+    <!-- BLOCK 1.1: MAIN CONTENT AREA AND FOOD ITEMS -->
     <div class="p-4 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
         <div class="flex items-center gap-2">
             <button type="button" onclick="goBackToReport()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold active:scale-95 transition">
@@ -139,9 +196,8 @@
         <button type="button" onclick="goBackToReport()" class="text-slate-400 hover:text-slate-600 font-bold text-base px-2">✕</button>
     </div>
 
-    <!-- [บล็อกย่อย 1.1] : พื้นที่เนื้อหาหลักและรายการอาหาร -->
     <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-white flex flex-col">
-        <!-- ส่วนเลือกประเภทลูกค้า / เบอร์โทร / สถานที่ -->
+        <!-- Customer Type, Phone, and Location Selection -->
         <div id="editLocationSelectorWrapper" class="shrink-0"></div>
 
         <div class="space-y-1.5 flex-1 flex flex-col min-h-0">
@@ -156,7 +212,7 @@
         </button>
     </div>
 
-    <!-- [บล็อกย่อย 1.2] : ส่วนท้ายหน้าจอ ปุ่มดำเนินการต่างๆ (Footer Actions) -->
+    <!-- BLOCK 1.2: FOOTER ACTIONS -->
     <div class="p-4 bg-white border-t border-slate-100 space-y-3 shrink-0 shadow-lg">
         <div class="flex justify-between items-end">
             <span class="text-xs text-slate-500 font-bold" id="editCartCountText">0 รายการ | 0 ชิ้น</span>
@@ -174,9 +230,9 @@
     </div>
 </div>
 
-<!-- ================= MODAL ทั้งหมดแบบ Center Floating (Single File) ================= -->
+<!-- Modal Collection: Centered Floating Dialogs -->
 
-<!-- [บล็อกย่อย 1.3] : MODAL เลือกวันที่ -->
+<!-- BLOCK 1.3: CALENDAR SELECTION MODAL -->
 <div id="calendarModalOverlay" class="custom-modal-overlay" onclick="toggleModal('calendarModalOverlay','calendarModalBox',false)">
     <div id="calendarModalBox" class="popup-container" onclick="event.stopPropagation()">
         <div class="flex justify-between items-center px-4 py-3 bg-slate-50 border-b border-slate-100 shrink-0">
@@ -190,7 +246,7 @@
     </div>
 </div>
 
-<!-- [บล็อกย่อย 1.4] : MODAL เลือกสถานที่ / โซนย่อย -->
+<!-- BLOCK 1.4: LOCATION AND ZONE SELECTION MODAL -->
 <div id="subLocZoneModal" class="custom-modal-overlay" onclick="toggleModal('subLocZoneModal','subLocZoneBox',false)">
     <div id="subLocZoneBox" class="popup-container" onclick="event.stopPropagation()">
         <div id="popupHeader" class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
@@ -217,7 +273,7 @@
     </div>
 </div>
 
-<!-- [บล็อกย่อย 1.5] : MODAL หน้าจอเลือกหมวดหมู่ผ่าน Iframe และเมนูอาหาร -->
+<!-- BLOCK 1.5: FOOD SELECTION MODAL AND IFRAME -->
 <div id="dynamicPopupOverlay" class="custom-modal-overlay" onclick="closeDynamicPopup()">
     <div id="popupContainerBox" class="popup-container" onclick="event.stopPropagation()">
         <div id="popupHeader" class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 shrink-0">
@@ -226,15 +282,15 @@
             <button type="button" onclick="closeDynamicPopup()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
         </div>
         <div class="popup-content-wrapper p-3.5">
-            <!-- 1. หมวดหมู่อาหารผ่าน Iframe -->
+            <!-- Food Category Iframe -->
             <div id="popupInternalCategoryView" class="w-full h-full min-h-[360px]">
                 <iframe id="foodGroupFrame" src="foodgroup.html" class="w-full h-full border-0 min-h-[360px]"></iframe>
             </div>
-            <!-- 2. รายการอาหารในหมวด -->
+            <!-- Food List View -->
             <div id="popupInternalFoodView" class="hidden w-full">
                 <div id="popupFoodGridContainer" class="food-grid"></div>
             </div>
-            <!-- 3. หน้าจอระบุจำนวน/หมายเหตุ -->
+            <!-- Food Quantity and Note View -->
             <div id="popupInternalDetailView" class="hidden w-full space-y-3">
                 <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                     <span id="foodTitleName" class="font-extrabold text-slate-900 text-base truncate pr-2">📌 รายการอาหาร</span>
@@ -283,7 +339,7 @@
     </div>
 </div>
 
-<!-- [บล็อกย่อย 1.6] : CUSTOM ALERT / CONFIRM MODAL -->
+<!-- BLOCK 1.6: CUSTOM ALERT AND CONFIRMATION MODAL -->
 <div id="customAlertModal" class="custom-modal-overlay" onclick="toggleModal('customAlertModal','customAlertBox',false)">
     <div class="popup-container max-w-xs p-5 text-center" onclick="event.stopPropagation()" id="customAlertBox">
         <div id="customAlertIcon" class="text-3xl mb-2">🎉</div>
@@ -295,8 +351,9 @@
 
 <script>
     /* ==========================================================
-       [📁 บล็อกที่ 2] : ตัวแปรส่วนกลางและค่าคงที่ (Global Variables & State)
+       BLOCK 2: GLOBAL VARIABLES & CONFIGS
        ========================================================== */
+
     let db = null, targetOrderId = null, currentEditingOrder = null;
     let currentEditingOrderItems = [], locationsCache = [], zonesCache = [], foodsCache = [], categoriesCache = [], customersList = [];
     let selectedCustomerObj = null, selectedLocationForZone = null;
@@ -310,10 +367,10 @@
 
 
     /* ==========================================================
-       [📁 บล็อกที่ 3] : ฟังก์ชันยูทิลิตี้พื้นฐาน (Utility Functions)
+       BLOCK 3: UTILITY FUNCTIONS
        ========================================================== */
 
-    /* [บล็อกย่อย 3.1] : ฟังก์ชันกรองคำซ้ำ */
+    /* BLOCK 3.1: DUPLICATE WORD REMOVAL */
     function removeDuplicateWords(text) {
         if (!text) return '';
         const parts = text.trim().split(/\s+/);
@@ -321,7 +378,7 @@
         return text.trim();
     }
 
-    /* [บล็อกย่อย 3.2] : ฟังก์ชันเปิด-ปิด Modal ทั่วไป */
+    /* BLOCK 3.2: GENERAL MODAL TOGGLE */
     function toggleModal(modalId, boxId, show = true) {
         const m = document.getElementById(modalId), b = document.getElementById(boxId);
         if(!m || !b) return;
@@ -329,13 +386,13 @@
         else m.classList.remove('active');
     }
 
-    /* [บล็อกย่อย 3.3] : ฟังก์ชันแสดง Alert / Confirm แจ้งเตือนสวยงาม */
+    /* BLOCK 3.3: ALERT AND CONFIRMATION DISPLAY */
     function showAlert(title, message, icon = '🎉', onOk = null, isConfirm = false) {
         document.getElementById('customAlertTitle').textContent = title;
         document.getElementById('customAlertMessage').textContent = message;
         document.getElementById('customAlertIcon').textContent = icon;
         const btns = document.getElementById('customAlertButtons');
-        
+
         if(!isConfirm) {
             btns.innerHTML = `<button type="button" class="w-full py-2.5 bg-amber-500 text-white font-bold text-xs rounded-xl shadow-md">ตกลง</button>`;
             btns.firstElementChild.onclick = () => { toggleModal('customAlertModal','customAlertBox',false); if(onOk) onOk(); };
@@ -351,10 +408,10 @@
 
 
     /* ==========================================================
-       [📁 บล็อกที่ 4] : ระบบเริ่มต้นการทำงานและดึงข้อมูลออเดอร์ (Initialization & Fetch Order)
+       BLOCK 4: INITIALIZATION & FETCH ORDER
        ========================================================== */
 
-    /* [บล็อกย่อย 4.1] : เหตุการณ์เมื่อโหลดหน้าเว็บสำเร็จ */
+    /* BLOCK 4.1: PAGE INITIALIZATION */
     window.onload = async function() {
         targetOrderId = new URLSearchParams(window.location.search).get('order_id');
         if (!targetOrderId) return showAlert('แจ้งเตือน', 'ไม่พบรหัสออร์เดอร์', '⚠️', goBackToReport);
@@ -364,13 +421,13 @@
         await fetchMasterDataAndOrder();
     };
 
-    /* [บล็อกย่อย 4.2] : ฟังก์ชันย้อนกลับไปยังหน้ารายงาน */
+    /* BLOCK 4.2: RETURN TO REPORT PAGE */
     function goBackToReport() {
         if (document.referrer && document.referrer.includes(window.location.host)) window.history.back();
         else window.location.href = 'salesreport.html';
     }
 
-    /* [บล็อกย่อย 4.3] : ฟังก์ชันแปลงรูปแบบวันที่เป็นภาษาไทย */
+    /* BLOCK 4.3: THAI DATE FORMATTING */
     function formatThaiDateDisplay(dateStr) {
         if (!dateStr) return 'เลือกวันที่';
         const [y, m, d] = dateStr.split('-');
@@ -378,7 +435,7 @@
         return `${parseInt(d)} ${thaiMonthsShort[parseInt(m)-1]} ${parseInt(y)+543}`;
     }
 
-    /* [บล็อกย่อย 4.4] : ฟังก์ชันดึงข้อมูล Master Data และรายละเอียดออเดอร์จาก Supabase */
+    /* BLOCK 4.4: FETCH MASTER DATA AND ORDER */
     async function fetchMasterDataAndOrder() {
         if (!db) return;
         try {
@@ -409,7 +466,7 @@
                 selectedOrderDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
                 curH = String(d.getHours()).padStart(2,'0');
                 curM = String(d.getMinutes()).padStart(2,'0');
-                
+
                 document.getElementById('editOrderDateBtnText').textContent = formatThaiDateDisplay(selectedOrderDate);
 
                 const wheelH = document.getElementById('wheelH');
@@ -453,10 +510,10 @@
 
 
     /* ==========================================================
-       [📁 บล็อกที่ 5] : ระบบจัดการข้อมูลลูกค้า สถานที่ และเวลา (Customer & Location Component)
+       BLOCK 5: CUSTOMER & LOCATION COMPONENT
        ========================================================== */
 
-    /* [บล็อกย่อย 5.1] : ฟังก์ชันเรนเดอร์คอมโพเนนต์เลือกประเภทลูกค้าและเวลา */
+    /* BLOCK 5.1: CUSTOMER AND TIME COMPONENT RENDERING */
     function renderEditLocationComponent(containerId) {
         document.getElementById(containerId).innerHTML = `
             <div class="bg-amber-50/50 border border-amber-200 rounded-2xl p-3 shadow-sm space-y-2">
@@ -506,7 +563,7 @@
         initTimeWheels();
     }
 
-    /* [บล็อกย่อย 5.2] : ฟังก์ชันจัดการ Input ค้นหาลูกค้า (Autocomplete) */
+    /* BLOCK 5.2: CUSTOMER AUTOCOMPLETE */
     function handleCustomerInput(val) {
         document.querySelectorAll('.customer-input-field').forEach(inp => {
             if (inp.value !== val) inp.value = val;
@@ -534,7 +591,7 @@
         dropdown.classList.add('active');
     }
 
-    /* [บล็อกย่อย 5.3] : ฟังก์ชันเริ่มต้น Time Wheel Picker */
+    /* BLOCK 5.3: TIME WHEEL INITIALIZATION */
     function initTimeWheels() {
         const wheelH = document.getElementById('wheelH');
         const wheelM = document.getElementById('wheelM');
@@ -552,7 +609,7 @@
         setupScrollListener(wheelM, 59, (val) => curM = val);
     }
 
-    /* [บล็อกย่อย 5.4] : ฟังก์ชันสร้างรายการใน Wheel */
+    /* BLOCK 5.4: TIME WHEEL ITEM GENERATION */
     function buildWheel(container, count) {
         container.innerHTML = '';
         for (let i = 0; i < count; i++) {
@@ -563,7 +620,7 @@
         }
     }
 
-    /* [บล็อกย่อย 5.5] : ฟังก์ชันจับการเลื่อน Wheel */
+    /* BLOCK 5.5: TIME WHEEL SCROLL LISTENER */
     function setupScrollListener(container, maxIdx, onSelect) {
         let timer = null;
         container.onscroll = () => {
@@ -578,18 +635,18 @@
         };
     }
 
-    /* [บล็อกย่อย 5.6] : ฟังก์ชันเลื่อน Wheel ไปยังตำแหน่งที่กำหนด */
+    /* BLOCK 5.6: SCROLL TO SELECTED TIME */
     function scrollToValue(container, index) {
         container.scrollTop = index * ITEM_HEIGHT;
     }
 
-    /* [บล็อกย่อย 5.7] : ฟังก์ชันเปิด Modal ปฏิทิน */
+    /* BLOCK 5.7: OPEN CALENDAR MODAL */
     function openCalendarModal() {
         document.getElementById('calendarFrame').src = 'calendar.html';
         toggleModal('calendarModalOverlay', 'calendarModalBox', true);
     }
 
-    /* [บล็อกย่อย 5.8] : ฟังก์ชันเลือกกลุ่มประเภทลูกค้า */
+    /* BLOCK 5.8: SELECT CUSTOMER GROUP */
     function selectEditCustomerGroup(groupId) {
         document.getElementById('editCustomerGroupSelect').value = groupId;
         document.querySelectorAll('.group-btn-v2').forEach(b => b.classList.remove('active'));
@@ -605,19 +662,19 @@
         if (currentEditingOrderItems.length > 0) renderEditOrderModalItems();
     }
 
-    /* [บล็อกย่อย 5.9] : ฟังก์ชันเปิด Modal เลือกสถานที่ */
+    /* BLOCK 5.9: OPEN LOCATION MODAL */
     function openSubLocationModal() {
         document.getElementById('subLocZoneTitle').innerText = '📍 เลือกสถานที่ / ที่พัก';
         renderLocationsView();
         toggleModal('subLocZoneModal', 'subLocZoneBox', true);
     }
 
-    /* [บล็อกย่อย 5.10] : ฟังก์ชันเรนเดอร์รายชื่อสถานที่ */
+    /* BLOCK 5.10: RENDER LOCATION LIST */
     function renderLocationsView() {
         document.getElementById('subLocZoneTitle').innerText = '📍 เลือกสถานที่ / ที่พัก';
         document.getElementById('addLocationSection').classList.remove('hidden');
         document.getElementById('addZoneSection').classList.add('hidden');
-        
+
         const grid = document.getElementById('subLocZoneGrid');
         grid.innerHTML = '';
 
@@ -639,7 +696,7 @@
         });
     }
 
-    /* [บล็อกย่อย 5.11] : ฟังก์ชันเรนเดอร์รายชื่อโซน */
+    /* BLOCK 5.11: RENDER ZONE LIST */
     function renderZonesView(loc) {
         document.getElementById('subLocZoneTitle').innerHTML = `🛋️ เลือกโซน <span class="text-amber-600 font-semibold text-xs block mt-0.5">สถานที่: ${loc.location_name}</span>`;
         document.getElementById('addLocationSection').classList.add('hidden');
@@ -672,7 +729,7 @@
         });
     }
 
-    /* [บล็อกย่อย 5.12] : ฟังก์ชันเพิ่มสถานที่ใหม่ลงฐานข้อมูล */
+    /* BLOCK 5.12: ADD NEW LOCATION */
     async function addNewLocation() {
         const input = document.getElementById('newLocationInput');
         const name = input.value.trim();
@@ -688,7 +745,7 @@
         }
     }
 
-    /* [บล็อกย่อย 5.13] : ฟังก์ชันเพิ่มโซนใหม่ลงฐานข้อมูล */
+    /* BLOCK 5.13: ADD NEW ZONE */
     async function addNewZone() {
         const input = document.getElementById('newZoneInput');
         const name = input.value.trim();
@@ -704,7 +761,7 @@
         }
     }
 
-    /* [บล็อกย่อย 5.14] : ฟังก์ชันยืนยันเลือกสถานที่และโซน */
+    /* BLOCK 5.14: CONFIRM LOCATION AND ZONE */
     function selectLocationAndZone(locId, locName, zoneId, zoneName) {
         document.getElementById('editSelectedLocationId').value = locId;
         document.getElementById('editSelectedZoneId').value = zoneId || '';
@@ -715,10 +772,10 @@
 
 
     /* ==========================================================
-       [📁 บล็อกที่ 6] : ระบบจัดการรายการอาหารและราคา (Cart & Pricing Logic)
+       BLOCK 6: CART & PRICING LOGIC
        ========================================================== */
 
-    /* [บล็อกย่อย 6.1] : ฟังก์ชันคำนวณราคาอาหารตามเรทลูกค้า */
+    /* BLOCK 6.1: CUSTOMER GROUP BASE PRICE CALCULATION */
     function getGroupBasePriceForEdit(item, groupId) {
         const foodId = item.food_id || item.id;
         const currentLocId = document.getElementById('editSelectedLocationId').value;
@@ -737,7 +794,7 @@
         return Number(item.price || 0);
     }
 
-    /* [บล็อกย่อย 6.2] : ฟังก์ชันเรนเดอร์รายการอาหารในตะกร้าหน้าจอแก้ไข */
+    /* BLOCK 6.2: CART RENDERING AND TOTAL CALCULATION */
     function renderEditOrderModalItems() {
         const container = document.getElementById('editOrderItemsContainer');
         container.innerHTML = '';
@@ -775,7 +832,7 @@
                 <div class="flex-1 pr-2 flex items-center gap-1">
                     <button type="button" onclick="currentEditingOrderItems.splice(${index},1); renderEditOrderModalItems();" class="delete-btn text-sm">&times;</button>
                     <div>
-                        <span class="font-bold text-slate-800">${q}x ${item.name || item.food_name || 'รายการ'}</span> 
+                        <span class="font-bold text-slate-800">${q}x ${item.name || item.food_name || 'รายการ'}</span>
                         <span class="text-amber-600 font-semibold">${details.length ? ` (${details.join(', ')})` : ''}</span>
                     </div>
                 </div>
@@ -808,10 +865,10 @@
 
 
     /* ==========================================================
-       [📁 บล็อกที่ 7] : ระบบเลือกหมวดหมู่และเมนูอาหารผ่าน Popup (Food Selection Modal & Iframe)
+       BLOCK 7: FOOD SELECTION MODAL & IFRAME
        ========================================================== */
 
-    /* [บล็อกย่อย 7.1] : ฟังก์ชันเปิด Modal เลือกหมวดหมู่ */
+    /* BLOCK 7.1: OPEN CATEGORY MODAL */
     function openCategoryModalForEdit() {
         currentPopupMode = 'category_list';
         document.getElementById('popupTitle').textContent = '📌 เลือกหมวดหมู่อาหาร';
@@ -819,12 +876,12 @@
         document.getElementById('popupInternalCategoryView').classList.remove('hidden');
         document.getElementById('popupInternalFoodView').classList.add('hidden');
         document.getElementById('popupInternalDetailView').classList.add('hidden');
-        
+
         sendDataToFoodGroupFrame();
         toggleModal('dynamicPopupOverlay', 'popupContainerBox', true);
     }
 
-    /* [บล็อกย่อย 7.2] : ฟังก์ชันส่งข้อมูลไปยัง Iframe foodgroup.html */
+    /* BLOCK 7.2: SEND DATA TO FOOD GROUP IFRAME */
     function sendDataToFoodGroupFrame() {
         const frame = document.getElementById('foodGroupFrame');
         if (frame && frame.contentWindow) {
@@ -837,7 +894,7 @@
         }
     }
 
-    /* [บล็อกย่อย 7.3] : รับ Event คลิกหมวดหมู่ผ่าน PostMessage */
+    /* BLOCK 7.3: RECEIVE CATEGORY SELECTION EVENT */
     window.addEventListener('message', (event) => {
         const { type, catId, catName } = event.data || {};
         if (type === 'SELECT_CATEGORY') {
@@ -845,7 +902,7 @@
         }
     });
 
-    /* [บล็อกย่อย 7.4] : ฟังก์ชันเปิดรายการอาหารในหมวด */
+    /* BLOCK 7.4: OPEN FOOD LIST */
     function openFoodListPopup(catId, catTitle) {
         currentPopupMode = 'food_list';
         currentCatId = catId;
@@ -879,7 +936,7 @@
         });
     }
 
-    /* [บล็อกย่อย 7.5] : ฟังก์ชันเปิดหน้าระบุจำนวนและหมายเหตุอาหาร */
+    /* BLOCK 7.5: OPEN FOOD DETAIL */
     function openItemDetailPopup(food) {
         currentPopupMode = 'item_detail';
         currentQty = 1; friedEgg = 0; omelet = 0;
@@ -900,7 +957,7 @@
         document.getElementById('popupInternalDetailView').classList.remove('hidden');
     }
 
-    /* [บล็อกย่อย 7.6] : ฟังก์ชันย้อนกลับใน Popup */
+    /* BLOCK 7.6: POPUP BACK NAVIGATION */
     function handlePopupBack() {
         if (currentPopupMode === 'item_detail') {
             openFoodListPopup(currentCatId, currentCatName);
@@ -909,18 +966,18 @@
         }
     }
 
-    /* [บล็อกย่อย 7.7] : ฟังก์ชันปิด Popup เลือกอาหาร */
+    /* BLOCK 7.7: CLOSE FOOD POPUP */
     function closeDynamicPopup() {
         toggleModal('dynamicPopupOverlay', 'popupContainerBox', false);
     }
 
-    /* [บล็อกย่อย 7.8] : ฟังก์ชันปรับจำนวนอาหาร */
+    /* BLOCK 7.8: ADJUST FOOD QUANTITY */
     function adjustQty(val) {
         currentQty = Math.max(1, currentQty + val);
         document.getElementById('foodQty').textContent = currentQty;
     }
 
-    /* [บล็อกย่อย 7.9] : ฟังก์ชันปรับเพิ่มไข่ดาว/ไข่เจียว */
+    /* BLOCK 7.9: ADJUST EGG EXTRAS */
     function adjustExtra(type, val) {
         if (type === 'friedEgg') {
             friedEgg = Math.max(0, friedEgg + val);
@@ -931,7 +988,7 @@
         }
     }
 
-    /* [บล็อกย่อย 7.10] : ฟังก์ชันบันทึกรายการอาหารลงตะกร้าชั่วคราว */
+    /* BLOCK 7.10: SAVE FOOD TO TEMPORARY CART */
     function saveToEditCartFromPopup() {
         const priceInput = document.getElementById('foodPrice').value;
         const price = priceInput !== "" ? parseFloat(priceInput) : null;
@@ -960,10 +1017,10 @@
 
 
     /* ==========================================================
-       [📁 บล็อกที่ 8] : ระบบบันทึกและลบออเดอร์ในฐานข้อมูล (Save & Delete Operations)
+       BLOCK 8: SAVE & DELETE OPERATIONS
        ========================================================== */
 
-    /* [บล็อกย่อย 8.1] : ฟังก์ชันตรวจสอบและบันทึกข้อมูลลูกค้าใหม่ */
+    /* BLOCK 8.1: ENSURE CUSTOMER IS SAVED */
     async function ensureCustomerSaved(inputValue) {
         const val = removeDuplicateWords(inputValue);
         if (!val) return null;
@@ -984,7 +1041,7 @@
         return { customer_name: val };
     }
 
-    /* [บล็อกย่อย 8.2] : รับ Event จากปฏิทิน (Calendar Modal) */
+    /* BLOCK 8.2: RECEIVE CALENDAR EVENTS */
     window.addEventListener('message', function(e) {
         if (!e.data) return;
         const d = e.data;
@@ -1000,7 +1057,7 @@
         }
     });
 
-    /* [บล็อกย่อย 8.3] : ฟังก์ชันบันทึกการแก้ไขออเดอร์ลง Supabase */
+    /* BLOCK 8.3: SAVE ORDER CHANGES */
     async function saveOrderEditData() {
         if (!targetOrderId) return;
         try {
@@ -1045,7 +1102,7 @@
         }
     }
 
-    /* [บล็อกย่อย 8.4] : ฟังก์ชันลบออเดอร์ออกจากฐานข้อมูล */
+    /* BLOCK 8.4: DELETE ORDER */
     async function deleteCurrentEditingOrder() {
         if (!targetOrderId) return;
         showAlert('ยืนยันการลบ', `คุณต้องการลบออเดอร์ #${targetOrderId} ใช่หรือไม่?`, '🗑', async () => {

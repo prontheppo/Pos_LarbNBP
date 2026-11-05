@@ -1,9 +1,18 @@
-<!-- 
+
+<!--
   ========================================================================
   FILE NAME: foodgroup.html
-  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 8 บล็อกย่อย ดังนี้
-   - [บล็อกที่ 1] UI Components & Layout (2 บล็อกย่อย: Container สำหรับปุ่มหมวดหมู่, Custom Popup Modal สำหรับแจ้งเตือน)
-   - [บล็อกที่ 2] Logic & Database Operations (6 บล็อกย่อย: ฟังก์ชันเปิด Modal, ฟังก์ชันปิด Modal, ตรวจสอบและโหลดข้อมูล Standalone, ดึงข้อมูลจาก Supabase, รับข้อความ PostMessage, เรนเดอร์ปุ่มหมวดหมู่และคำนวณจำนวนชิ้นในตะกร้า)
+  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 8 หัวข้อย่อย ดังนี้
+   - [บล็อก 1] ส่วนแสดงผลหน้าจอผู้ใช้ (2 หัวข้อย่อย)
+     - [บล็อก 1.1] Container สำหรับแสดงปุ่มหมวดหมู่
+     - [บล็อก 1.2] Custom Popup Modal สำหรับแจ้งเตือน
+   - [บล็อก 2] ระบบการทำงานและการจัดการฐานข้อมูล (6 หัวข้อย่อย)
+     - [บล็อก 2.1] ฟังก์ชันเปิด Modal แจ้งเตือน
+     - [บล็อก 2.2] ฟังก์ชันปิด Modal แจ้งเตือน
+     - [บล็อก 2.3] ตรวจสอบและโหลดข้อมูลเมื่อเปิดไฟล์เดี่ยว
+     - [บล็อก 2.4] ดึงข้อมูลจาก Supabase
+     - [บล็อก 2.5] รับข้อความ PostMessage จากหน้าต่างแม่
+     - [บล็อก 2.6] เรนเดอร์ปุ่มหมวดหมู่และคำนวณจำนวนสินค้าในตะกร้า
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -14,7 +23,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Food Group - ลาบหนองบัวลำภู</title>
     
-    <!-- Google Fonts & Tailwind CSS & Supabase JS -->
+    <!-- Google Fonts, Tailwind CSS, and Supabase JS -->
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -34,7 +43,7 @@
             flex-direction: column;
         }
 
-        /* โครงสร้างตารางหมวดหมู่ 2 คอลัมน์ */
+        /* Two-column category navigation grid */
         .category-nav-wrap { 
             display: grid; 
             grid-template-columns: repeat(2, minmax(0, 1fr)); 
@@ -47,7 +56,7 @@
         .cat-nav-btn {
             position: relative; 
             background-color: #ffffff; 
-            border: 1.5px solid #10349542; /* ปรับเส้นขอบทุกปุ่มให้เป็นสีแดง */
+            border: 1.5px solid #10349542; /* Set the border color for all category buttons */
             color: #1e293b;
             font-size: 1rem; 
             font-weight: 700; 
@@ -82,7 +91,7 @@
             word-break: break-word; 
         }
 
-        /* Badge ตัวเลขแดงนับจำนวนในตะกร้า */
+        /* Red badge displaying the cart item quantity */
         .badge-main { 
             position: absolute; 
             top: -0.35rem; 
@@ -105,10 +114,10 @@
 <body class="bg-slate-50 text-slate-800 flex flex-col items-center justify-start p-2">
 
     <!-- ==========================================================
-       [📁 บล็อกที่ 1] : ส่วนแสดงผลหน้าจอผู้ใช้ (UI Components & Layout)
-       ========================================================== -->
+         BLOCK 1: UI COMPONENTS & LAYOUT
+         ========================================================== -->
 
-    <!-- [บล็อกย่อย 1.1] : Container แบบ Single Frame สำหรับแสดงปุ่มหมวดหมู่ -->
+    <!-- BLOCK 1.1: CATEGORY BUTTON CONTAINER -->
     <div class="w-full max-w-xl mx-auto flex flex-col">
         <div id="categoryView" class="w-full">
             <div id="quickNavContainer" class="category-nav-wrap">
@@ -117,7 +126,7 @@
         </div>
     </div>
 
-    <!-- [บล็อกย่อย 1.2] : Custom Popup Modal สำหรับแสดงการแจ้งเตือน -->
+    <!-- BLOCK 1.2: CUSTOM ALERT POPUP MODAL -->
     <div id="customModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-opacity duration-200 opacity-0">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-xs p-5 text-center transform scale-95 transition-transform duration-200 border border-slate-100 flex flex-col items-center" id="modalBox">
             <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-2xl mb-3 shadow-inner">
@@ -133,14 +142,14 @@
 
     <script>
         /* ==========================================================
-           [📁 บล็อกที่ 2] : ระบบการทำงานและตรรกะของหมวดหมู่ (Logic & Database Operations)
+           BLOCK 2: LOGIC & DATABASE OPERATIONS
            ========================================================== */
         const categoryIcons = ['🍱', '🍲', '🍳', '🍚', '🥩', '⭐', '🥗', '🛍️', '🍽️', '🥢', '🍹'];
         let cachedCategories = [];
         let cachedFoods = [];
         let currentCart = [];
 
-        /* [บล็อกย่อย 2.1] : ฟังก์ชันเปิด Custom Modal แจ้งเตือน */
+        /* BLOCK 2.1: OPEN CUSTOM ALERT MODAL */
         function showCustomModal(message) {
             const modal = document.getElementById('customModal');
             const modalBox = document.getElementById('modalBox');
@@ -155,7 +164,7 @@
             }, 10);
         }
 
-        /* [บล็อกย่อย 2.2] : ฟังก์ชันปิด Custom Modal */
+        /* BLOCK 2.2: CLOSE CUSTOM ALERT MODAL */
         function closeCustomModal() {
             const modal = document.getElementById('customModal');
             const modalBox = document.getElementById('modalBox');
@@ -169,14 +178,14 @@
             }, 200);
         }
 
-        /* [บล็อกย่อย 2.3] : ตรวจสอบและโหลดข้อมูลแบบ Standalone ทันทีถ้าเปิดไฟล์เดี่ยว */
+        /* BLOCK 2.3: CHECK AND LOAD DATA IN STANDALONE MODE */
         window.addEventListener('DOMContentLoaded', async () => {
             if (window.self === window.top) {
                 await fetchStandaloneData();
             }
         });
 
-        /* [บล็อกย่อย 2.4] : ฟังก์ชันดึงข้อมูลหมวดหมู่และอาหารจาก Supabase โดยตรง */
+        /* BLOCK 2.4: FETCH CATEGORY AND FOOD DATA DIRECTLY FROM SUPABASE */
         async function fetchStandaloneData() {
             const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
             if (!client) {
@@ -201,7 +210,7 @@
             }
         }
 
-        /* [บล็อกย่อย 2.5] : รับข้อความ PostMessage จากหน้าต่างแม่ (Parent Window) เพื่ออัปเดตข้อมูล */
+        /* BLOCK 2.5: RECEIVE POSTMESSAGE FROM PARENT WINDOW */
         window.addEventListener('message', (event) => {
             const { type, categories, foods, cart } = event.data || {};
             if (type === 'RENDER_CATEGORIES') {
@@ -212,7 +221,7 @@
             }
         });
 
-        /* [บล็อกย่อย 2.6] : ฟังก์ชันเรนเดอร์ปุ่มหมวดหมู่อาหารและคำนวณจำนวนชิ้นในตะกร้า */
+        /* BLOCK 2.6: RENDER CATEGORY BUTTONS AND CALCULATE CART QUANTITIES */
         function renderCategories(categories, foods, cart) {
             const navContainer = document.getElementById('quickNavContainer');
             if (!navContainer) return;
@@ -222,7 +231,7 @@
                 return;
             }
 
-            // บังคับเรียงลำดับหมวดหมู่ตาม food_group_id จากน้อยไปมาก (1 -> 2 -> 3...)
+            // Sort categories by food_group_id in ascending order
             const sortedCategories = [...categories].sort((a, b) => Number(a.food_group_id) - Number(b.food_group_id));
 
             navContainer.innerHTML = '';
@@ -239,15 +248,15 @@
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 
-                // เช็คถ้าเป็นหมวดสุดท้ายและจำนวนหมวดหมู่เป็นเลขคี่ ให้ขยายเต็ม 2 คอลัมน์
+                // Expand the final category button across two columns when the total count is odd
                 const isLastAndOdd = (index === sortedCategories.length - 1) && (sortedCategories.length % 2 !== 0);
                 btn.className = `cat-nav-btn ${isLastAndOdd ? 'col-span-2' : ''}`;
 
-                // ดึงไอคอนตามลำดับ index
+                // Select the category icon based on its index
                 const icon = categoryIcons[index % categoryIcons.length];
                 const catName = cat.food_group_name || '';
                 
-                // คำนวณจำนวนชิ้นในตะกร้าของหมวดหมู่นี้
+                // Calculate the total cart quantity for the current category
                 let catTotalQty = 0;
                 const isSpecialCat = specialCategoryNames.includes(catName) || Number(cat.food_group_id) === 98;
 
@@ -271,7 +280,7 @@
                 
                 btn.innerHTML = `<span class="cat-nav-icon">${icon}</span> <span class="${textClass}">${catName}</span>${badgeHTML}`;
                 
-                // เมื่อกดปุ่มหมวดหมู่
+                // Handle category button clicks
                 btn.onclick = () => {
                     if (window.self !== window.top) {
                         window.parent.postMessage({
