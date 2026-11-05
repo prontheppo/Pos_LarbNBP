@@ -1,4 +1,3 @@
-
 <!--
   ========================================================================
   FILE NAME: adjus_schema.html
@@ -87,6 +86,7 @@
       </div>
     </div>
   </div>
+  <!-- END BLOCK 1.1 -->
 
   <!-- ----------------------------------------------------------
        BLOCK 1.2: TABLES DISPLAY CONTAINER
@@ -94,6 +94,9 @@
   <div class="max-w-7xl mx-auto space-y-6">
     <div id="tablesContainer" class="space-y-8"></div>
   </div>
+  <!-- END BLOCK 1.2 -->
+
+  <!-- END BLOCK 1 -->
 
   <script>
 
@@ -110,6 +113,7 @@
 
     // Stores actual database comments for each table
     let tableCommentsMap = {};
+    /* END BLOCK 2.1 */
 
 
     /* ----------------------------------------------------------
@@ -126,6 +130,7 @@
       'orders': 'order_id',
       'zones': 'zone_id'
     };
+    /* END BLOCK 2.2 */
 
 
     /* ----------------------------------------------------------
@@ -147,6 +152,9 @@
 
       return 'id';
     }
+    /* END BLOCK 2.3 */
+
+    /* END BLOCK 2 */
 
 
     /* ==========================================================
@@ -182,6 +190,7 @@
         return [];
       }
     }
+    /* END BLOCK 3.1 */
 
 
     /* ----------------------------------------------------------
@@ -241,6 +250,9 @@
 
       status.innerHTML = `<span class="text-emerald-400">✅ ดึงข้อมูลสำเร็จทั้งหมด ${tableList.length} ตาราง (รวม ${totalCount} รายการ)</span>`;
     }
+    /* END BLOCK 3.2 */
+
+    /* END BLOCK 3 */
 
 
     /* ==========================================================
@@ -320,6 +332,9 @@
       section.innerHTML = html;
       container.appendChild(section);
     }
+    /* END BLOCK 4.1 */
+
+    /* END BLOCK 4 */
 
 
     /* ==========================================================
@@ -346,6 +361,7 @@
 
       return "TEXT";
     }
+    /* END BLOCK 5.1 */
 
 
     /* ----------------------------------------------------------
@@ -401,6 +417,7 @@
 
       return sql.join("\n");
     }
+    /* END BLOCK 5.2 */
 
 
     /* ----------------------------------------------------------
@@ -450,6 +467,7 @@
         console.error(err);
       }
     }
+    /* END BLOCK 5.3 */
 
 
     /* ----------------------------------------------------------
@@ -506,6 +524,9 @@
         status.innerHTML = `<span class="text-rose-400">❌ ไม่สามารถคัดลอก SQL ได้</span>`;
       }
     }
+    /* END BLOCK 5.4 */
+
+    /* END BLOCK 5 */
 
   </script>
 </body>

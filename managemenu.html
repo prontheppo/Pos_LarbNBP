@@ -1,29 +1,49 @@
-
 <!--
   ========================================================================
   FILE NAME: managemenu.html
-  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 19 บล็อกย่อย ดังนี้
-   - [บล็อก 1] ส่วนแสดงผลหน้าจอผู้ใช้ (11 บล็อกย่อย: ส่วนหัว Header, พื้นที่แสดงกลุ่มอาหารผ่าน iframe, ส่วนท้าย Footer, Modal ตารางราคาอาหาร, Modal แก้ไขชื่อและย้ายกลุ่มเมนู, Modal เพิ่มเมนู, Modal จัดการกลุ่มอาหาร, Modal แจ้งเตือน, Modal แก้ไขชื่อกลุ่ม, Modal ยืนยันการลบ, รูปแบบ CSS)
-   - [บล็อก 2] ระบบการทำงานและการจัดการฐานข้อมูล (8 บล็อกย่อย: เริ่มต้นระบบและเชื่อมต่อฐานข้อมูล, รับส่งข้อความผ่าน iframe และจัดการ Modal, ระบบแจ้งเตือนและยืนยัน, โหลดข้อมูลเมนูและกลุ่มอาหาร, สร้างตารางราคาอาหาร, อัปเดตราคาอาหาร, จัดการเมนูอาหาร, จัดการกลุ่มอาหาร)
+  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 19 บล็อกย่อย ดังนี้
+
+   - [บล็อก 1] UI COMPONENTS & LAYOUT (ส่วนแสดงผลหน้าจอผู้ใช้)
+     (ประกอบด้วย 11 หัวข้อ)
+       - [บล็อก 1.1] HEADER SECTION (ส่วนหัว)
+       - [บล็อก 1.2] FOOD GROUP IFRAME CONTENT (พื้นที่แสดงกลุ่มอาหารผ่าน iframe)
+       - [บล็อก 1.3] FOOTER NAVIGATION (ส่วนท้าย Footer)
+       - [บล็อก 1.4] MANAGE MENU MODAL (Modal ตารางราคาอาหาร)
+       - [บล็อก 1.5] EDIT FOOD MENU MODAL (Modal แก้ไขชื่อและย้ายกลุ่มเมนู)
+       - [บล็อก 1.6] ADD FOOD MENU MODAL (Modal เพิ่มเมนู)
+       - [บล็อก 1.7] MANAGE FOOD GROUP MODAL (Modal จัดการกลุ่มอาหาร)
+       - [บล็อก 1.8] CUSTOM ALERT MODAL (Modal แจ้งเตือน)
+       - [บล็อก 1.9] EDIT CATEGORY MODAL (Modal แก้ไขชื่อกลุ่ม)
+       - [บล็อก 1.10] CUSTOM CONFIRMATION MODAL (Modal ยืนยันการลบ)
+       - [บล็อก 1.11] CSS STYLES (รูปแบบ CSS)
+
+   - [บล็อก 2] LOGIC & DATABASE OPERATIONS (ระบบการทำงานและการจัดการฐานข้อมูล)
+     (ประกอบด้วย 8 หัวข้อ)
+       - [บล็อก 2.1] INITIALIZATION AND DATABASE CLIENT (เริ่มต้นระบบและเชื่อมต่อฐานข้อมูล)
+       - [บล็อก 2.2] IFRAME MESSAGING AND MODAL HELPERS (รับส่งข้อความผ่าน iframe และจัดการ Modal)
+       - [บล็อก 2.3] ALERT AND CONFIRMATION DIALOGS (ระบบแจ้งเตือนและยืนยัน)
+       - [บล็อก 2.4] LOAD FOOD AND CATEGORY DATA FROM SUPABASE (โหลดข้อมูลเมนูและกลุ่มอาหาร)
+       - [บล็อก 2.5] RENDER FOOD PRICE EXCEL TABLE (สร้างตารางราคาอาหาร)
+       - [บล็อก 2.6] UPDATE FOOD PRICES IN DATABASE (อัปเดตราคาอาหาร)
+       - [บล็อก 2.7] FOOD MENU MANAGEMENT (จัดการเมนูอาหาร)
+       - [บล็อก 2.8] FOOD CATEGORY MANAGEMENT (จัดการกลุ่มอาหาร)
   ========================================================================
 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
     <script src="appInit.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>ดูแลและแก้ไขตารางราคา - ลาบหนองบัวลำภู</title>
     <!-- Load Tailwind CSS from CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Supabase JavaScript Client from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Load the shared Supabase initialization file -->
-    <script src="supabaseClient.js"></script>
     
-    <!-- ==========================================================
-       BLOCK 1.11: CSS STYLES
-       ========================================================== -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.11: CSS STYLES
+         ---------------------------------------------------------- -->
     <style>
       :root {
         --bg-color: #f8fafc;
@@ -91,31 +111,40 @@
           transition: height 0.15s ease;
       }
     </style>
+    <!-- END BLOCK 1.11 -->
 </head>
 <body class="bg-slate-100 flex items-center justify-center antialiased">
 
     <div class="app-container shadow-2xl w-full border border-slate-100">
         
         <!-- ==========================================================
-           BLOCK 1: UI COMPONENTS & LAYOUT
-           ========================================================== -->
+             BLOCK 1: UI COMPONENTS & LAYOUT
+             ========================================================== -->
 
-        <!-- BLOCK 1.1: HEADER SECTION -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.1: HEADER SECTION
+             ---------------------------------------------------------- -->
         <div class="py-3 px-4 bg-white border-b border-slate-100 text-center shrink-0 shadow-2xs">
             <h1 class="font-black text-lg text-slate-800 tracking-tight flex items-center justify-center gap-1.5">
                 🏷️ ดูแลและแก้ไขตารางราคา
             </h1>
             <p class="text-[11px] text-slate-400 font-medium mt-0.5">แตะที่กลุ่มอาหารเพื่อเปิดแก้ไขราคา</p>
         </div>
+        <!-- END BLOCK 1.1 -->
 
-        <!-- BLOCK 1.2: FOOD GROUP IFRAME CONTENT -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.2: FOOD GROUP IFRAME CONTENT
+             ---------------------------------------------------------- -->
         <div class="p-3 overflow-y-auto bg-slate-100" style="-webkit-overflow-scrolling: touch;">
             <div class="w-full h-full border border-slate-200/80 rounded-3xl bg-white shadow-xs overflow-hidden" style="min-height: 480px;">
                 <iframe id="foodGroupFrame" src="foodgroup.html" class="w-full h-full border-0"></iframe>
             </div>
         </div>
+        <!-- END BLOCK 1.2 -->
 
-        <!-- BLOCK 1.3: FOOTER NAVIGATION -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.3: FOOTER NAVIGATION
+             ---------------------------------------------------------- -->
         <div class="p-3 bg-white border-t border-slate-100 shrink-0 grid grid-cols-2 gap-2">
             <button type="button" onclick="openManageGroupModal()" 
                class="bg-slate-800 hover:bg-slate-900 active:scale-95 text-white font-bold py-3 px-2 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md transition cursor-pointer">
@@ -126,10 +155,13 @@
                 🏠 กลับหน้าผู้ดูแลระบบ
             </a>
         </div>
+        <!-- END BLOCK 1.3 -->
 
     </div>
 
-    <!-- BLOCK 1.4: MANAGE MENU MODAL -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.4: MANAGE MENU MODAL
+         ---------------------------------------------------------- -->
     <div id="popupModalWrapper" class="fixed inset-0 z-40 hidden bg-slate-900/60 backdrop-blur-xs flex items-start justify-center pt-12 p-3">
         <div onclick="event.stopPropagation()" class="w-full max-w-lg bg-white rounded-3xl shadow-2xl border-4 border-blue-600 overflow-hidden flex flex-col h-auto max-h-[82vh] z-10">
             
@@ -154,8 +186,11 @@
 
         </div>
     </div>
+    <!-- END BLOCK 1.4 -->
 
-    <!-- BLOCK 1.5: EDIT FOOD MENU MODAL -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.5: EDIT FOOD MENU MODAL
+         ---------------------------------------------------------- -->
     <div id="editModalWrapper" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-start justify-center pt-12 p-3">
         <div onclick="event.stopPropagation()" class="w-full max-w-sm h-[80dvh] max-h-[80dvh] bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col p-4 space-y-3 relative">
             
@@ -196,15 +231,21 @@
 
         </div>
     </div>
+    <!-- END BLOCK 1.5 -->
 
-    <!-- BLOCK 1.6: ADD FOOD MENU MODAL -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.6: ADD FOOD MENU MODAL
+         ---------------------------------------------------------- -->
     <div id="addModalWrapper" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3">
         <div onclick="event.stopPropagation()" class="w-full max-w-sm bg-white rounded-3xl overflow-hidden relative z-10 shadow-2xl border-4 border-red-500 flex flex-col">
             <iframe id="addMenuIframe" src="" class="w-full border-0"></iframe>
         </div>
     </div>
+    <!-- END BLOCK 1.6 -->
 
-    <!-- BLOCK 1.7: MANAGE FOOD GROUP MODAL -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.7: MANAGE FOOD GROUP MODAL
+         ---------------------------------------------------------- -->
     <div id="manageGroupModalWrapper" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-start justify-center pt-12 p-3">
         <div onclick="event.stopPropagation()" class="w-full max-w-sm bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col p-4 space-y-3 relative max-h-[82vh]">
             
@@ -240,8 +281,11 @@
             </div>
         </div>
     </div>
+    <!-- END BLOCK 1.7 -->
 
-    <!-- BLOCK 1.8: CUSTOM ALERT MODAL -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.8: CUSTOM ALERT MODAL
+         ---------------------------------------------------------- -->
     <div id="customAlertModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden z-50">
         <div onclick="event.stopPropagation()" class="bg-white w-full max-w-xs rounded-3xl shadow-2xl p-5 text-center space-y-3">
             <div id="alertIconContainer" class="w-12 h-12 rounded-full flex items-center justify-center mx-auto text-2xl">
@@ -258,8 +302,11 @@
             </div>
         </div>
     </div>
+    <!-- END BLOCK 1.8 -->
 
-    <!-- BLOCK 1.9: EDIT CATEGORY MODAL -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.9: EDIT CATEGORY MODAL
+         ---------------------------------------------------------- -->
     <div id="editCategoryModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden z-50">
         <div onclick="event.stopPropagation()" class="bg-white w-full max-w-xs rounded-3xl shadow-2xl p-5 text-left space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-2">
@@ -284,8 +331,11 @@
             </div>
         </div>
     </div>
+    <!-- END BLOCK 1.9 -->
 
-    <!-- BLOCK 1.10: CUSTOM CONFIRMATION MODAL -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.10: CUSTOM CONFIRMATION MODAL
+         ---------------------------------------------------------- -->
     <div id="customConfirmModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden z-50">
         <div onclick="event.stopPropagation()" class="bg-white w-full max-w-xs rounded-3xl shadow-2xl p-5 text-center space-y-3">
             <div class="w-12 h-12 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto text-2xl">
@@ -305,6 +355,9 @@
             </div>
         </div>
     </div>
+    <!-- END BLOCK 1.10 -->
+
+    <!-- END BLOCK 1 -->
 
     <script>
         /* ==========================================================
@@ -322,7 +375,9 @@
 
         const categoryIcons = ['🍱', '🍲', '🍳', '🍚', '🥩', '⭐', '🥗', '🛍️', '🍽️', '🥢', '🍹'];
 
-        /* BLOCK 2.1: INITIALIZATION AND DATABASE CLIENT */
+        /* ----------------------------------------------------------
+           BLOCK 2.1: INITIALIZATION AND DATABASE CLIENT
+           ---------------------------------------------------------- */
         function getDbClient() {
             if (db) return db;
             if (typeof window.supabaseClient !== 'undefined') {
@@ -343,8 +398,11 @@
                 console.error("ไม่สามารถเชื่อมต่อฐานข้อมูลได้");
             }
         });
+        /* END BLOCK 2.1 */
 
-        /* BLOCK 2.2: IFRAME MESSAGING AND MODAL HELPERS */
+        /* ----------------------------------------------------------
+           BLOCK 2.2: IFRAME MESSAGING AND MODAL HELPERS
+           ---------------------------------------------------------- */
         window.addEventListener('message', (event) => {
             const { type, catId, catName, height } = event.data || {};
             
@@ -409,8 +467,11 @@
             document.getElementById(id)?.classList.add('hidden');
             if (id === 'editCategoryModal') activeEditingCategoryId = null;
         }
+        /* END BLOCK 2.2 */
 
-        /* BLOCK 2.3: ALERT AND CONFIRMATION DIALOGS */
+        /* ----------------------------------------------------------
+           BLOCK 2.3: ALERT AND CONFIRMATION DIALOGS
+           ---------------------------------------------------------- */
         function showAlertModal(message, type = 'warning') {
             const iconContainer = document.getElementById('alertIconContainer');
             const titleEl = document.getElementById('alertTitle');
@@ -449,8 +510,11 @@
 
             openModal('customConfirmModal');
         }
+        /* END BLOCK 2.3 */
 
-        /* BLOCK 2.4: LOAD FOOD AND CATEGORY DATA FROM SUPABASE */
+        /* ----------------------------------------------------------
+           BLOCK 2.4: LOAD FOOD AND CATEGORY DATA FROM SUPABASE
+           ---------------------------------------------------------- */
         async function loadAllData() {
             try {
                 const [ { data: mData }, { data: fgData } ] = await Promise.all([
@@ -523,8 +587,11 @@
                 container.innerHTML = `<div class="text-center py-8 text-rose-500 text-xs">เกิดข้อผิดพลาด: ${err.message}</div>`;
             }
         }
+        /* END BLOCK 2.4 */
 
-        /* BLOCK 2.5: RENDER FOOD PRICE EXCEL TABLE */
+        /* ----------------------------------------------------------
+           BLOCK 2.5: RENDER FOOD PRICE EXCEL TABLE
+           ---------------------------------------------------------- */
         function renderFoodExcelTable(foods) {
             const container = document.getElementById('foodListContainer');
             container.innerHTML = '';
@@ -588,8 +655,11 @@
             table.appendChild(tbody);
             container.appendChild(table);
         }
+        /* END BLOCK 2.5 */
 
-        /* BLOCK 2.6: UPDATE FOOD PRICES IN DATABASE */
+        /* ----------------------------------------------------------
+           BLOCK 2.6: UPDATE FOOD PRICES IN DATABASE
+           ---------------------------------------------------------- */
         async function updatePrice(foodId, priceField, value) {
             try {
                 const numVal = parseFloat(value) || 0;
@@ -599,8 +669,11 @@
                 showAlertModal('ไม่สามารถอัปเดตราคาได้: ' + err.message, 'error');
             }
         }
+        /* END BLOCK 2.6 */
 
-        /* BLOCK 2.7: FOOD MENU MANAGEMENT */
+        /* ----------------------------------------------------------
+           BLOCK 2.7: FOOD MENU MANAGEMENT
+           ---------------------------------------------------------- */
         function closeManageMenuModal() {
             closeModal('popupModalWrapper');
             loadAllData();
@@ -689,8 +762,11 @@
             closeModal('addModalWrapper');
             loadCategoryFoods();
         }
+        /* END BLOCK 2.7 */
 
-        /* BLOCK 2.8: FOOD CATEGORY MANAGEMENT */
+        /* ----------------------------------------------------------
+           BLOCK 2.8: FOOD CATEGORY MANAGEMENT
+           ---------------------------------------------------------- */
         function openManageGroupModal() {
             renderCategoryList();
             openModal('manageGroupModalWrapper');
@@ -796,6 +872,11 @@
                 showAlertModal('ไม่สามารถลบได้: ' + err.message, 'error');
             }
         }
+        /* END BLOCK 2.8 */
+
+        /* ==========================================================
+           END BLOCK 2: LOGIC & DATABASE OPERATIONS
+           ========================================================== */
     </script>
 </body>
 </html>

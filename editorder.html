@@ -1,10 +1,9 @@
-
 <!--
   ========================================================================
   FILE NAME: editorder.html
 
   SUMMARY:
-  มีทั้งหมด 8 บล็อกหลัก | 43 หัวข้อย่อย ดังนี้
+  มีทั้งหมด 8 บล็อกหลัก | 43 หัวข้อย่อย ดังသည်။
 
   [บล็อก 1] Main UI Header & Structure
     [บล็อก 1.1] Main Content Area and Food Items
@@ -182,7 +181,9 @@
          BLOCK 1: MAIN UI HEADER & STRUCTURE
          ========================================================== -->
 
-    <!-- BLOCK 1.1: MAIN CONTENT AREA AND FOOD ITEMS -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.1: MAIN CONTENT AREA AND FOOD ITEMS
+         ---------------------------------------------------------- -->
     <div class="p-4 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
         <div class="flex items-center gap-2">
             <button type="button" onclick="goBackToReport()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold active:scale-95 transition">
@@ -211,8 +212,11 @@
             <span>+</span> เพิ่มรายการอาหาร
         </button>
     </div>
+    <!-- END BLOCK 1.1 -->
 
-    <!-- BLOCK 1.2: FOOTER ACTIONS -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.2: FOOTER ACTIONS
+         ---------------------------------------------------------- -->
     <div class="p-4 bg-white border-t border-slate-100 space-y-3 shrink-0 shadow-lg">
         <div class="flex justify-between items-end">
             <span class="text-xs text-slate-500 font-bold" id="editCartCountText">0 รายการ | 0 ชิ้น</span>
@@ -228,11 +232,15 @@
             <button type="button" onclick="saveOrderEditData()" class="py-2.5 bg-amber-500 text-white font-bold text-xs rounded-xl shadow-md hover:bg-amber-600 active:scale-95 transition">✏️ บันทึก</button>
         </div>
     </div>
+    <!-- END BLOCK 1.2 -->
+
 </div>
 
 <!-- Modal Collection: Centered Floating Dialogs -->
 
-<!-- BLOCK 1.3: CALENDAR SELECTION MODAL -->
+<!-- ----------------------------------------------------------
+     BLOCK 1.3: CALENDAR SELECTION MODAL
+     ---------------------------------------------------------- -->
 <div id="calendarModalOverlay" class="custom-modal-overlay" onclick="toggleModal('calendarModalOverlay','calendarModalBox',false)">
     <div id="calendarModalBox" class="popup-container" onclick="event.stopPropagation()">
         <div class="flex justify-between items-center px-4 py-3 bg-slate-50 border-b border-slate-100 shrink-0">
@@ -245,8 +253,11 @@
         <iframe id="calendarFrame" src="" class="w-full flex-1 border-none bg-white min-h-[360px]"></iframe>
     </div>
 </div>
+<!-- END BLOCK 1.3 -->
 
-<!-- BLOCK 1.4: LOCATION AND ZONE SELECTION MODAL -->
+<!-- ----------------------------------------------------------
+     BLOCK 1.4: LOCATION AND ZONE SELECTION MODAL
+     ---------------------------------------------------------- -->
 <div id="subLocZoneModal" class="custom-modal-overlay" onclick="toggleModal('subLocZoneModal','subLocZoneBox',false)">
     <div id="subLocZoneBox" class="popup-container" onclick="event.stopPropagation()">
         <div id="popupHeader" class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
@@ -272,8 +283,11 @@
         </div>
     </div>
 </div>
+<!-- END BLOCK 1.4 -->
 
-<!-- BLOCK 1.5: FOOD SELECTION MODAL AND IFRAME -->
+<!-- ----------------------------------------------------------
+     BLOCK 1.5: FOOD SELECTION MODAL AND IFRAME
+     ---------------------------------------------------------- -->
 <div id="dynamicPopupOverlay" class="custom-modal-overlay" onclick="closeDynamicPopup()">
     <div id="popupContainerBox" class="popup-container" onclick="event.stopPropagation()">
         <div id="popupHeader" class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 shrink-0">
@@ -338,8 +352,11 @@
         </div>
     </div>
 </div>
+<!-- END BLOCK 1.5 -->
 
-<!-- BLOCK 1.6: CUSTOM ALERT AND CONFIRMATION MODAL -->
+<!-- ----------------------------------------------------------
+     BLOCK 1.6: CUSTOM ALERT AND CONFIRMATION MODAL
+     ---------------------------------------------------------- -->
 <div id="customAlertModal" class="custom-modal-overlay" onclick="toggleModal('customAlertModal','customAlertBox',false)">
     <div class="popup-container max-w-xs p-5 text-center" onclick="event.stopPropagation()" id="customAlertBox">
         <div id="customAlertIcon" class="text-3xl mb-2">🎉</div>
@@ -348,6 +365,9 @@
         <div id="customAlertButtons" class="flex gap-2"></div>
     </div>
 </div>
+<!-- END BLOCK 1.6 -->
+
+<!-- END BLOCK 1 -->
 
 <script>
     /* ==========================================================
@@ -364,29 +384,38 @@
     let currentCatId = null, currentCatName = '', selectedFoodId = null, selectedFoodName = '';
     let currentQty = 1, friedEgg = 0, omelet = 0, currentPopupMode = 'category_list';
     const EGG_CATEGORY_IDS = ['1', '2'];
+    /* END BLOCK 2 */
 
 
     /* ==========================================================
        BLOCK 3: UTILITY FUNCTIONS
        ========================================================== */
 
-    /* BLOCK 3.1: DUPLICATE WORD REMOVAL */
+    /* ----------------------------------------------------------
+       BLOCK 3.1: DUPLICATE WORD REMOVAL
+       ---------------------------------------------------------- */
     function removeDuplicateWords(text) {
         if (!text) return '';
         const parts = text.trim().split(/\s+/);
         if (parts.length === 2 && parts[0] === parts[1]) { return parts[0]; }
         return text.trim();
     }
+    /* END BLOCK 3.1 */
 
-    /* BLOCK 3.2: GENERAL MODAL TOGGLE */
+    /* ----------------------------------------------------------
+       BLOCK 3.2: MODAL TOGGLE
+       ---------------------------------------------------------- */
     function toggleModal(modalId, boxId, show = true) {
         const m = document.getElementById(modalId), b = document.getElementById(boxId);
         if(!m || !b) return;
         if(show) m.classList.add('active');
         else m.classList.remove('active');
     }
+    /* END BLOCK 3.2 */
 
-    /* BLOCK 3.3: ALERT AND CONFIRMATION DISPLAY */
+    /* ----------------------------------------------------------
+       BLOCK 3.3: ALERT AND CONFIRMATION DISPLAY
+       ---------------------------------------------------------- */
     function showAlert(title, message, icon = '🎉', onOk = null, isConfirm = false) {
         document.getElementById('customAlertTitle').textContent = title;
         document.getElementById('customAlertMessage').textContent = message;
@@ -405,13 +434,18 @@
         }
         toggleModal('customAlertModal','customAlertBox',true);
     }
+    /* END BLOCK 3.3 */
+
+    /* END BLOCK 3 */
 
 
     /* ==========================================================
        BLOCK 4: INITIALIZATION & FETCH ORDER
        ========================================================== */
 
-    /* BLOCK 4.1: PAGE INITIALIZATION */
+    /* ----------------------------------------------------------
+       BLOCK 4.1: PAGE INITIALIZATION
+       ---------------------------------------------------------- */
     window.onload = async function() {
         targetOrderId = new URLSearchParams(window.location.search).get('order_id');
         if (!targetOrderId) return showAlert('แจ้งเตือน', 'ไม่พบรหัสออร์เดอร์', '⚠️', goBackToReport);
@@ -420,22 +454,31 @@
         renderEditLocationComponent('editLocationSelectorWrapper');
         await fetchMasterDataAndOrder();
     };
+    /* END BLOCK 4.1 */
 
-    /* BLOCK 4.2: RETURN TO REPORT PAGE */
+    /* ----------------------------------------------------------
+       BLOCK 4.2: RETURN TO REPORT
+       ---------------------------------------------------------- */
     function goBackToReport() {
         if (document.referrer && document.referrer.includes(window.location.host)) window.history.back();
         else window.location.href = 'salesreport.html';
     }
+    /* END BLOCK 4.2 */
 
-    /* BLOCK 4.3: THAI DATE FORMATTING */
+    /* ----------------------------------------------------------
+       BLOCK 4.3: THAI DATE FORMATTING
+       ---------------------------------------------------------- */
     function formatThaiDateDisplay(dateStr) {
         if (!dateStr) return 'เลือกวันที่';
         const [y, m, d] = dateStr.split('-');
         const thaiMonthsShort = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
         return `${parseInt(d)} ${thaiMonthsShort[parseInt(m)-1]} ${parseInt(y)+543}`;
     }
+    /* END BLOCK 4.3 */
 
-    /* BLOCK 4.4: FETCH MASTER DATA AND ORDER */
+    /* ----------------------------------------------------------
+       BLOCK 4.4: FETCH MASTER DATA AND ORDER
+       ---------------------------------------------------------- */
     async function fetchMasterDataAndOrder() {
         if (!db) return;
         try {
@@ -507,13 +550,18 @@
             showAlert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลได้', '❌', goBackToReport);
         }
     }
+    /* END BLOCK 4.4 */
+
+    /* END BLOCK 4 */
 
 
     /* ==========================================================
        BLOCK 5: CUSTOMER & LOCATION COMPONENT
        ========================================================== */
 
-    /* BLOCK 5.1: CUSTOMER AND TIME COMPONENT RENDERING */
+    /* ----------------------------------------------------------
+       BLOCK 5.1: CUSTOMER AND TIME COMPONENT RENDERING
+       ---------------------------------------------------------- */
     function renderEditLocationComponent(containerId) {
         document.getElementById(containerId).innerHTML = `
             <div class="bg-amber-50/50 border border-amber-200 rounded-2xl p-3 shadow-sm space-y-2">
@@ -562,8 +610,11 @@
 
         initTimeWheels();
     }
+    /* END BLOCK 5.1 */
 
-    /* BLOCK 5.2: CUSTOMER AUTOCOMPLETE */
+    /* ----------------------------------------------------------
+       BLOCK 5.2: CUSTOMER AUTOCOMPLETE
+       ---------------------------------------------------------- */
     function handleCustomerInput(val) {
         document.querySelectorAll('.customer-input-field').forEach(inp => {
             if (inp.value !== val) inp.value = val;
@@ -590,8 +641,11 @@
         });
         dropdown.classList.add('active');
     }
+    /* END BLOCK 5.2 */
 
-    /* BLOCK 5.3: TIME WHEEL INITIALIZATION */
+    /* ----------------------------------------------------------
+       BLOCK 5.3: TIME WHEEL INITIALIZATION
+       ---------------------------------------------------------- */
     function initTimeWheels() {
         const wheelH = document.getElementById('wheelH');
         const wheelM = document.getElementById('wheelM');
@@ -608,8 +662,11 @@
         setupScrollListener(wheelH, 23, (val) => curH = val);
         setupScrollListener(wheelM, 59, (val) => curM = val);
     }
+    /* END BLOCK 5.3 */
 
-    /* BLOCK 5.4: TIME WHEEL ITEM GENERATION */
+    /* ----------------------------------------------------------
+       BLOCK 5.4: TIME WHEEL ITEM GENERATION
+       ---------------------------------------------------------- */
     function buildWheel(container, count) {
         container.innerHTML = '';
         for (let i = 0; i < count; i++) {
@@ -619,8 +676,11 @@
             container.appendChild(item);
         }
     }
+    /* END BLOCK 5.4 */
 
-    /* BLOCK 5.5: TIME WHEEL SCROLL LISTENER */
+    /* ----------------------------------------------------------
+       BLOCK 5.5: TIME WHEEL SCROLL LISTENER
+       ---------------------------------------------------------- */
     function setupScrollListener(container, maxIdx, onSelect) {
         let timer = null;
         container.onscroll = () => {
@@ -634,19 +694,28 @@
             }, 100);
         };
     }
+    /* END BLOCK 5.5 */
 
-    /* BLOCK 5.6: SCROLL TO SELECTED TIME */
+    /* ----------------------------------------------------------
+       BLOCK 5.6: SCROLL TO SELECTED TIME
+       ---------------------------------------------------------- */
     function scrollToValue(container, index) {
         container.scrollTop = index * ITEM_HEIGHT;
     }
+    /* END BLOCK 5.6 */
 
-    /* BLOCK 5.7: OPEN CALENDAR MODAL */
+    /* ----------------------------------------------------------
+       BLOCK 5.7: OPEN CALENDAR MODAL
+       ---------------------------------------------------------- */
     function openCalendarModal() {
         document.getElementById('calendarFrame').src = 'calendar.html';
         toggleModal('calendarModalOverlay', 'calendarModalBox', true);
     }
+    /* END BLOCK 5.7 */
 
-    /* BLOCK 5.8: SELECT CUSTOMER GROUP */
+    /* ----------------------------------------------------------
+       BLOCK 5.8: SELECT CUSTOMER GROUP
+       ---------------------------------------------------------- */
     function selectEditCustomerGroup(groupId) {
         document.getElementById('editCustomerGroupSelect').value = groupId;
         document.querySelectorAll('.group-btn-v2').forEach(b => b.classList.remove('active'));
@@ -661,15 +730,21 @@
         }
         if (currentEditingOrderItems.length > 0) renderEditOrderModalItems();
     }
+    /* END BLOCK 5.8 */
 
-    /* BLOCK 5.9: OPEN LOCATION MODAL */
+    /* ----------------------------------------------------------
+       BLOCK 5.9: OPEN LOCATION MODAL
+       ---------------------------------------------------------- */
     function openSubLocationModal() {
         document.getElementById('subLocZoneTitle').innerText = '📍 เลือกสถานที่ / ที่พัก';
         renderLocationsView();
         toggleModal('subLocZoneModal', 'subLocZoneBox', true);
     }
+    /* END BLOCK 5.9 */
 
-    /* BLOCK 5.10: RENDER LOCATION LIST */
+    /* ----------------------------------------------------------
+       BLOCK 5.10: RENDER LOCATION LIST
+       ---------------------------------------------------------- */
     function renderLocationsView() {
         document.getElementById('subLocZoneTitle').innerText = '📍 เลือกสถานที่ / ที่พัก';
         document.getElementById('addLocationSection').classList.remove('hidden');
@@ -695,8 +770,11 @@
             grid.appendChild(btn);
         });
     }
+    /* END BLOCK 5.10 */
 
-    /* BLOCK 5.11: RENDER ZONE LIST */
+    /* ----------------------------------------------------------
+       BLOCK 5.11: RENDER ZONE LIST
+       ---------------------------------------------------------- */
     function renderZonesView(loc) {
         document.getElementById('subLocZoneTitle').innerHTML = `🛋️ เลือกโซน <span class="text-amber-600 font-semibold text-xs block mt-0.5">สถานที่: ${loc.location_name}</span>`;
         document.getElementById('addLocationSection').classList.add('hidden');
@@ -728,8 +806,11 @@
             grid.appendChild(btn);
         });
     }
+    /* END BLOCK 5.11 */
 
-    /* BLOCK 5.12: ADD NEW LOCATION */
+    /* ----------------------------------------------------------
+       BLOCK 5.12: ADD NEW LOCATION
+       ---------------------------------------------------------- */
     async function addNewLocation() {
         const input = document.getElementById('newLocationInput');
         const name = input.value.trim();
@@ -744,8 +825,11 @@
             }
         }
     }
+    /* END BLOCK 5.12 */
 
-    /* BLOCK 5.13: ADD NEW ZONE */
+    /* ----------------------------------------------------------
+       BLOCK 5.13: ADD NEW ZONE
+       ---------------------------------------------------------- */
     async function addNewZone() {
         const input = document.getElementById('newZoneInput');
         const name = input.value.trim();
@@ -760,8 +844,11 @@
             }
         }
     }
+    /* END BLOCK 5.13 */
 
-    /* BLOCK 5.14: CONFIRM LOCATION AND ZONE */
+    /* ----------------------------------------------------------
+       BLOCK 5.14: CONFIRM LOCATION AND ZONE
+       ---------------------------------------------------------- */
     function selectLocationAndZone(locId, locName, zoneId, zoneName) {
         document.getElementById('editSelectedLocationId').value = locId;
         document.getElementById('editSelectedZoneId').value = zoneId || '';
@@ -769,13 +856,18 @@
         toggleModal('subLocZoneModal', 'subLocZoneBox', false);
         renderEditOrderModalItems();
     }
+    /* END BLOCK 5.14 */
+
+    /* END BLOCK 5 */
 
 
     /* ==========================================================
        BLOCK 6: CART & PRICING LOGIC
        ========================================================== */
 
-    /* BLOCK 6.1: CUSTOMER GROUP BASE PRICE CALCULATION */
+    /* ----------------------------------------------------------
+       BLOCK 6.1: CUSTOMER GROUP BASE PRICE CALCULATION
+       ---------------------------------------------------------- */
     function getGroupBasePriceForEdit(item, groupId) {
         const foodId = item.food_id || item.id;
         const currentLocId = document.getElementById('editSelectedLocationId').value;
@@ -793,8 +885,11 @@
         }
         return Number(item.price || 0);
     }
+    /* END BLOCK 6.1 */
 
-    /* BLOCK 6.2: CART RENDERING AND TOTAL CALCULATION */
+    /* ----------------------------------------------------------
+       BLOCK 6.2: CART RENDERING AND TOTAL CALCULATION
+       ---------------------------------------------------------- */
     function renderEditOrderModalItems() {
         const container = document.getElementById('editOrderItemsContainer');
         container.innerHTML = '';
@@ -862,13 +957,18 @@
         document.getElementById('editCartCountText').textContent = `${currentEditingOrderItems.length} รายการ | ${totalQty} ชิ้น`;
         document.getElementById('editTotalPrice').textContent = `${(totalCartPrice + deliveryFee).toLocaleString()} บาท`;
     }
+    /* END BLOCK 6.2 */
+
+    /* END BLOCK 6 */
 
 
     /* ==========================================================
        BLOCK 7: FOOD SELECTION MODAL & IFRAME
        ========================================================== */
 
-    /* BLOCK 7.1: OPEN CATEGORY MODAL */
+    /* ----------------------------------------------------------
+       BLOCK 7.1: OPEN CATEGORY MODAL
+       ---------------------------------------------------------- */
     function openCategoryModalForEdit() {
         currentPopupMode = 'category_list';
         document.getElementById('popupTitle').textContent = '📌 เลือกหมวดหมู่อาหาร';
@@ -880,8 +980,11 @@
         sendDataToFoodGroupFrame();
         toggleModal('dynamicPopupOverlay', 'popupContainerBox', true);
     }
+    /* END BLOCK 7.1 */
 
-    /* BLOCK 7.2: SEND DATA TO FOOD GROUP IFRAME */
+    /* ----------------------------------------------------------
+       BLOCK 7.2: SEND DATA TO FOOD GROUP IFRAME
+       ---------------------------------------------------------- */
     function sendDataToFoodGroupFrame() {
         const frame = document.getElementById('foodGroupFrame');
         if (frame && frame.contentWindow) {
@@ -893,16 +996,22 @@
             }, '*');
         }
     }
+    /* END BLOCK 7.2 */
 
-    /* BLOCK 7.3: RECEIVE CATEGORY SELECTION EVENT */
+    /* ----------------------------------------------------------
+       BLOCK 7.3: RECEIVE CATEGORY SELECTION EVENT
+       ---------------------------------------------------------- */
     window.addEventListener('message', (event) => {
         const { type, catId, catName } = event.data || {};
         if (type === 'SELECT_CATEGORY') {
             openFoodListPopup(catId, catName);
         }
     });
+    /* END BLOCK 7.3 */
 
-    /* BLOCK 7.4: OPEN FOOD LIST */
+    /* ----------------------------------------------------------
+       BLOCK 7.4: OPEN FOOD LIST
+       ---------------------------------------------------------- */
     function openFoodListPopup(catId, catTitle) {
         currentPopupMode = 'food_list';
         currentCatId = catId;
@@ -935,8 +1044,11 @@
             container.appendChild(btn);
         });
     }
+    /* END BLOCK 7.4 */
 
-    /* BLOCK 7.5: OPEN FOOD DETAIL */
+    /* ----------------------------------------------------------
+       BLOCK 7.5: OPEN FOOD DETAIL
+       ---------------------------------------------------------- */
     function openItemDetailPopup(food) {
         currentPopupMode = 'item_detail';
         currentQty = 1; friedEgg = 0; omelet = 0;
@@ -956,8 +1068,11 @@
         document.getElementById('popupInternalFoodView').classList.add('hidden');
         document.getElementById('popupInternalDetailView').classList.remove('hidden');
     }
+    /* END BLOCK 7.5 */
 
-    /* BLOCK 7.6: POPUP BACK NAVIGATION */
+    /* ----------------------------------------------------------
+       BLOCK 7.6: POPUP BACK NAVIGATION
+       ---------------------------------------------------------- */
     function handlePopupBack() {
         if (currentPopupMode === 'item_detail') {
             openFoodListPopup(currentCatId, currentCatName);
@@ -965,19 +1080,28 @@
             openCategoryModalForEdit();
         }
     }
+    /* END BLOCK 7.6 */
 
-    /* BLOCK 7.7: CLOSE FOOD POPUP */
+    /* ----------------------------------------------------------
+       BLOCK 7.7: CLOSE FOOD POPUP
+       ---------------------------------------------------------- */
     function closeDynamicPopup() {
         toggleModal('dynamicPopupOverlay', 'popupContainerBox', false);
     }
+    /* END BLOCK 7.7 */
 
-    /* BLOCK 7.8: ADJUST FOOD QUANTITY */
+    /* ----------------------------------------------------------
+       BLOCK 7.8: ADJUST FOOD QUANTITY
+       ---------------------------------------------------------- */
     function adjustQty(val) {
         currentQty = Math.max(1, currentQty + val);
         document.getElementById('foodQty').textContent = currentQty;
     }
+    /* END BLOCK 7.8 */
 
-    /* BLOCK 7.9: ADJUST EGG EXTRAS */
+    /* ----------------------------------------------------------
+       BLOCK 7.9: ADJUST EGG EXTRAS
+       ---------------------------------------------------------- */
     function adjustExtra(type, val) {
         if (type === 'friedEgg') {
             friedEgg = Math.max(0, friedEgg + val);
@@ -987,8 +1111,11 @@
             document.getElementById('omeletQty').textContent = omelet;
         }
     }
+    /* END BLOCK 7.9 */
 
-    /* BLOCK 7.10: SAVE FOOD TO TEMPORARY CART */
+    /* ----------------------------------------------------------
+       BLOCK 7.10: SAVE FOOD TO TEMPORARY CART
+       ---------------------------------------------------------- */
     function saveToEditCartFromPopup() {
         const priceInput = document.getElementById('foodPrice').value;
         const price = priceInput !== "" ? parseFloat(priceInput) : null;
@@ -1014,13 +1141,18 @@
         closeDynamicPopup();
         renderEditOrderModalItems();
     }
+    /* END BLOCK 7.10 */
+
+    /* END BLOCK 7 */
 
 
     /* ==========================================================
        BLOCK 8: SAVE & DELETE OPERATIONS
        ========================================================== */
 
-    /* BLOCK 8.1: ENSURE CUSTOMER IS SAVED */
+    /* ----------------------------------------------------------
+       BLOCK 8.1: ENSURE CUSTOMER IS SAVED
+       ---------------------------------------------------------- */
     async function ensureCustomerSaved(inputValue) {
         const val = removeDuplicateWords(inputValue);
         if (!val) return null;
@@ -1040,8 +1172,11 @@
         } catch (err) { console.error('Insert Customer Error:', err); }
         return { customer_name: val };
     }
+    /* END BLOCK 8.1 */
 
-    /* BLOCK 8.2: RECEIVE CALENDAR EVENTS */
+    /* ----------------------------------------------------------
+       BLOCK 8.2: RECEIVE CALENDAR EVENTS
+       ---------------------------------------------------------- */
     window.addEventListener('message', function(e) {
         if (!e.data) return;
         const d = e.data;
@@ -1056,8 +1191,11 @@
             return;
         }
     });
+    /* END BLOCK 8.2 */
 
-    /* BLOCK 8.3: SAVE ORDER CHANGES */
+    /* ----------------------------------------------------------
+       BLOCK 8.3: SAVE ORDER CHANGES
+       ---------------------------------------------------------- */
     async function saveOrderEditData() {
         if (!targetOrderId) return;
         try {
@@ -1101,8 +1239,11 @@
             showAlert('เกิดข้อผิดพลาด', err.message, '❌');
         }
     }
+    /* END BLOCK 8.3 */
 
-    /* BLOCK 8.4: DELETE ORDER */
+    /* ----------------------------------------------------------
+       BLOCK 8.4: DELETE ORDER
+       ---------------------------------------------------------- */
     async function deleteCurrentEditingOrder() {
         if (!targetOrderId) return;
         showAlert('ยืนยันการลบ', `คุณต้องการลบออเดอร์ #${targetOrderId} ใช่หรือไม่?`, '🗑', async () => {
@@ -1115,6 +1256,10 @@
             }
         }, true);
     }
+    /* END BLOCK 8.4 */
+
+    /* END BLOCK 8 */
+
 </script>
 </body>
 </html>

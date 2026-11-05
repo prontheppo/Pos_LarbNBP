@@ -1,22 +1,25 @@
-
 <!--
   ========================================================================
   FILE NAME: foodmenu.html
-  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 12 หัวข้อย่อย ดังนี้
-   - [บล็อก 1] ส่วนแสดงผลหน้าจอผู้ใช้ (4 หัวข้อย่อย)
-     - [บล็อก 1.1] ส่วนหัว (Header)
-     - [บล็อก 1.2] Content Body แสดงรายการอาหาร
-     - [บล็อก 1.3] Dynamic Popup Modal สำหรับเพิ่มเมนูใหม่
-     - [บล็อก 1.4] CSS Styles
-   - [บล็อก 2] ระบบการทำงานและการจัดการฐานข้อมูล (8 หัวข้อย่อย)
-     - [บล็อก 2.1] โหลดหน้าเว็บและดึงข้อมูลจาก Supabase
-     - [บล็อก 2.2] รับข้อความ PostMessage
-     - [บล็อก 2.3] ปรับความสูง Popup อัตโนมัติ
-     - [บล็อก 2.4] เรนเดอร์ปุ่มอาหารและปุ่มเพิ่มเมนู
-     - [บล็อก 2.5] เลือกอาหารและส่งข้อมูลไปหน้าต่างแม่
-     - [บล็อก 2.6] เปิด Modal เพิ่มเมนูอาหาร
-     - [บล็อก 2.7] ปิด Modal และโหลดข้อมูลใหม่
-     - [บล็อก 2.8] ปิด Popup หลักและส่งสัญญาณกลับหน้าแม่
+  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 12 หัวข้อย่อย ดังนี้
+
+   - [บล็อก 1] UI COMPONENTS & LAYOUT (ส่วนประกอบหน้าจอ)
+     (ประกอบด้วย 4 หัวข้อ)
+       - [บล็อก 1.1] HEADER (ส่วนหัว)
+       - [บล็อก 1.2] FOOD MENU CONTENT BODY (เนื้อหาแสดงรายการอาหาร)
+       - [บล็อก 1.3] DYNAMIC POPUP MODAL FOR ADDING NEW FOOD (หน้าต่างเพิ่มเมนูใหม่)
+       - [บล็อก 1.4] CSS STYLES (สไตล์การแสดงผล)
+
+   - [บล็อก 2] LOGIC & DATABASE OPERATIONS (ระบบการทำงานและฐานข้อมูล)
+     (ประกอบด้วย 8 หัวข้อ)
+       - [บล็อก 2.1] PAGE INITIALIZATION AND SUPABASE DATA FETCHING (เริ่มต้นหน้าเว็บและดึงข้อมูลจาก Supabase)
+       - [บล็อก 2.2] RECEIVE POSTMESSAGE FROM OTHER WINDOWS OR IFRAMES (รับข้อความ PostMessage)
+       - [บล็อก 2.3] AUTOMATIC PARENT POPUP HEIGHT ADJUSTMENT (ปรับความสูง Popup อัตโนมัติ)
+       - [บล็อก 2.4] RENDER FOOD BUTTONS AND ADD MENU BUTTON (เรนเดอร์ปุ่มอาหารและปุ่มเพิ่มเมนู)
+       - [บล็อก 2.5] SELECT FOOD AND SEND DATA TO PARENT WINDOW (เลือกอาหารและส่งข้อมูลไปยังหน้าต่างหลัก)
+       - [บล็อก 2.6] OPEN NEW FOOD MENU MODAL THROUGH IFRAME (เปิด Modal เพิ่มเมนูผ่าน Iframe)
+       - [บล็อก 2.7] CLOSE NEW FOOD MENU MODAL AND REFRESH DATA (ปิด Modal เพิ่มเมนูและโหลดข้อมูลใหม่)
+       - [บล็อก 2.8] CLOSE MAIN POPUP AND NOTIFY PARENT WINDOW (ปิด Popup หลักและแจ้งเตือนหน้าต่างหลัก)
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -33,7 +36,9 @@
     <script src="supabaseClient.js"></script>
 
     <style>
-        /* BLOCK 1.4: CSS STYLES */
+        /* ----------------------------------------------------------
+           BLOCK 1.4: CSS STYLES
+           ---------------------------------------------------------- */
         html, body {
             width: 100%; height: auto;
             background-color: #ffffff; color: #1e293b;
@@ -71,8 +76,8 @@
         }
 
         .add-item-bottom-btn {
-            background: #2563eb; color: white; border: none; padding: 12px;
-            border-radius: 1rem; font-weight: bold; cursor: pointer; font-size: 15px;
+            background: #2563eb; color: white; border: none; padding: 10px;
+            border-radius: 1rem; font-weight: bold; cursor: pointer; font-size: 14px;
             display: flex; align-items: center; justify-content: center; gap: 6px;
             box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
             width: 100%; transition: all 0.15s ease;
@@ -80,34 +85,42 @@
         .add-item-bottom-btn:hover { background: #1d4ed8; }
         .add-item-bottom-btn:active { transform: scale(0.98); }
 
-        .custom-modal-overlay { 
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-            background: rgba(15, 23, 42, 0.6); 
-            backdrop-filter: blur(4px);
-            display: none; 
-            align-items: center; 
-            justify-content: center; 
-            z-index: 2000; 
-            padding: 1rem; 
-        }
+      .custom-modal-overlay { 
+          position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+          background: #ffffff; 
+          display: none; 
+          align-items: center; 
+          justify-content: center; 
+          z-index: 2000; 
+          padding: 0.5rem; 
+      }
+
+
         .custom-modal-overlay.active { display: flex !important; }
         
-        .popup-container {
-            background: #ffffff; 
-            width: 100% !important; 
-            max-width: 24rem !important;
-            border-radius: 1.5rem !important; 
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
-            overflow: hidden; 
-            position: relative;
-        }
+      .popup-container {
+          background: transparent !important; 
+          width: 100% !important; 
+          max-width: 24rem !important;
+          box-shadow: none !important;
+          border: none !important;
+          padding: 0 !important;
+          overflow: visible !important; 
+          position: relative;
+      }
+
+
         #popupIframe {
             width: 100%;
             height: auto;
-            min-height: 250px;
+            min-height: 200px;
+            max-height: 85vh;
             border: 0;
             display: block;
         }
+        /* END BLOCK 1.4 */
+
+
     </style>
 </head>
 <body>
@@ -116,25 +129,36 @@
          BLOCK 1: UI COMPONENTS & LAYOUT
          ========================================================== -->
 
-    <!-- BLOCK 1.1: HEADER -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.1: HEADER
+         ---------------------------------------------------------- -->
     <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
         <span id="groupTitleName" class="font-extrabold text-sm text-slate-700 truncate px-2">📌 หมวดหมู่เมนู</span>
         <button type="button" onclick="closePopup()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
     </div>
+    <!-- END BLOCK 1.1 -->
 
-    <!-- BLOCK 1.2: FOOD MENU CONTENT BODY -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.2: FOOD MENU CONTENT BODY
+         ---------------------------------------------------------- -->
     <div class="p-3.5 space-y-3 bg-white w-full">
         <div id="foodListGrid" class="grid grid-cols-3 gap-2.5">
             <div class="col-span-3 text-center text-slate-400 py-8 text-xs font-bold">กำลังโหลดข้อมูล...</div>
         </div>
     </div>
+    <!-- END BLOCK 1.2 -->
 
-    <!-- BLOCK 1.3: DYNAMIC POPUP MODAL FOR ADDING NEW FOOD -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.3: DYNAMIC POPUP MODAL FOR ADDING NEW FOOD
+         ---------------------------------------------------------- -->
     <div id="dynamicPopupOverlay" class="custom-modal-overlay" onclick="closeAddMenuModal()">
         <div class="popup-container" onclick="event.stopPropagation()">
-            <iframe id="popupIframe" src=""></iframe>
+            <iframe id="popupIframe" src="" onload="autoResizeIframe(this)"></iframe>
         </div>
     </div>
+    <!-- END BLOCK 1.3 -->
+
+    <!-- END BLOCK 1 -->
 
     <script>
         /* ==========================================================
@@ -149,7 +173,9 @@
         currentGroupId = urlParams.get('group_id');
         groupName = urlParams.get('name') ? decodeURIComponent(urlParams.get('name')) : 'เมนูอาหาร';
 
-        /* BLOCK 2.1: PAGE INITIALIZATION AND SUPABASE DATA FETCHING */
+        /* ----------------------------------------------------------
+           BLOCK 2.1: PAGE INITIALIZATION AND SUPABASE DATA FETCHING
+           ---------------------------------------------------------- */
         window.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('groupTitleName').textContent = `📌 ${groupName}`;
             currentCart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -167,8 +193,27 @@
                 }
             }
         });
+        /* END BLOCK 2.1 --> */
 
-        /* BLOCK 2.2: RECEIVE POSTMESSAGE FROM OTHER WINDOWS OR IFRAMES */
+        /* ----------------------------------------------------------
+           AUTO RESIZE IFRAME FUNCTION (PERFECT FIT)
+           ---------------------------------------------------------- */
+        function autoResizeIframe(iframe) {
+            try {
+                const innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+                if (innerDoc) {
+                    const formEl = innerDoc.querySelector('form') || innerDoc.body.firstElementChild;
+                    // ใช้ offsetHeight ของฟอร์ม แล้วบวกเพิ่ม 80px เพื่อให้เหลือขอบล่างสวยงามพอดี
+                    const contentHeight = formEl ? formEl.offsetHeight + 60 : innerDoc.body.scrollHeight;
+                    iframe.style.height = contentHeight + 'px';
+                }
+            } catch (e) {
+                iframe.style.height = '450px';
+            }
+        }
+        /* ----------------------------------------------------------
+           BLOCK 2.2: RECEIVE POSTMESSAGE FROM OTHER WINDOWS OR IFRAMES
+           ---------------------------------------------------------- */
         window.addEventListener('message', (event) => {
             const { type, cart, foods, height } = event.data || {};
             if (type === 'RENDER_FOOD_MENU' || cart) {
@@ -180,14 +225,25 @@
                 if (popupIframe && document.getElementById('dynamicPopupOverlay').classList.contains('active')) {
                     popupIframe.style.height = height + 'px';
                 }
+            } else if (type === 'CLOSE_ADD_MENU') {
+                closeAddMenuModal();
             }
         });
+        /* END BLOCK 2.2 */
 
-        /* BLOCK 2.3: AUTOMATIC PARENT POPUP HEIGHT ADJUSTMENT */
+
+        /* ----------------------------------------------------------
+           BLOCK 2.3: AUTOMATIC PARENT POPUP HEIGHT ADJUSTMENT
+           ---------------------------------------------------------- */
         function updateParentHeight() {
             setTimeout(() => {
                 if (window.self !== window.top) {
-                    const totalHeight = document.body.scrollHeight;
+                    const totalHeight = Math.max(
+                        document.body.scrollHeight, 
+                        document.documentElement.scrollHeight,
+                        document.body.offsetHeight, 
+                        document.documentElement.offsetHeight
+                    );
                     window.top.postMessage({
                         type: 'RESIZE_POPUP',
                         height: totalHeight
@@ -195,8 +251,11 @@
                 }
             }, 50);
         }
+        /* END BLOCK 2.3 */
 
-        /* BLOCK 2.4: RENDER FOOD BUTTONS AND ADD MENU BUTTON */
+        /* ----------------------------------------------------------
+           BLOCK 2.4: RENDER FOOD BUTTONS AND ADD MENU BUTTON
+           ---------------------------------------------------------- */
         function renderFoodButtons() {
             const grid = document.getElementById('foodListGrid');
             if (!grid) return;
@@ -247,8 +306,11 @@
 
             updateParentHeight();
         }
+        /* END BLOCK 2.4 */
 
-        /* BLOCK 2.5: SELECT FOOD AND SEND DATA TO PARENT WINDOW */
+        /* ----------------------------------------------------------
+           BLOCK 2.5: SELECT FOOD AND SEND DATA TO PARENT WINDOW
+           ---------------------------------------------------------- */
         function selectFood(food) {
             if (window.self !== window.top) {
                 window.top.postMessage({
@@ -258,31 +320,55 @@
                 }, '*');
             }
         }
+        /* END BLOCK 2.5 */
 
-        /* BLOCK 2.6: OPEN NEW FOOD MENU MODAL THROUGH IFRAME */
+        /* ----------------------------------------------------------
+           BLOCK 2.6: OPEN NEW FOOD MENU MODAL THROUGH IFRAME
+           ---------------------------------------------------------- */
         function openAddMenuModal() {
+            // ซ่อนเฉพาะเนื้อหาหลักด้านหลัง (เช่น ปุ่มรายการอาหาร) โดยไม่ให้กระทบตัว Popup Overlay
+            const mainContent = document.getElementById('mainContentContainer'); // หรือใส่ ID ส่วนเนื้อหาหลักของคุณ
+            if (mainContent) mainContent.style.visibility = 'hidden';
+            
             const iframe = document.getElementById('popupIframe');
             iframe.src = `foodaddnew.html?group_id=99&group_name=${encodeURIComponent(groupName)}`;
             document.getElementById('dynamicPopupOverlay').classList.add('active');
         }
-
-        /* BLOCK 2.7: CLOSE NEW FOOD MENU MODAL AND REFRESH DATA */
+        /* END BLOCK 2.6 */
+        
+        /* ----------------------------------------------------------
+           BLOCK 2.7: CLOSE NEW FOOD MENU MODAL AND REFRESH DATA
+           ---------------------------------------------------------- */
         function closeAddMenuModal() {
             document.getElementById('dynamicPopupOverlay').classList.remove('active');
             document.getElementById('popupIframe').src = '';
+            
+            // แสดงเนื้อหาหลักด้านหลังกลับมาเหมือนเดิม
+            const mainContent = document.getElementById('mainContentContainer');
+            if (mainContent) mainContent.style.visibility = 'visible';
+            
             if (currentGroupId && typeof supabaseClient !== 'undefined') {
                 supabaseClient.from('foods').select('*').eq('food_group_id', currentGroupId).order('food_id', { ascending: true }).then(({ data }) => {
-                    if (data) { allFoods = data; renderFoodButtons(); }
+                    if (data) { allFoods = data;
+                        renderFoodButtons(); }
                 });
             }
         }
-
-        /* BLOCK 2.8: CLOSE MAIN POPUP AND NOTIFY PARENT WINDOW */
+        /* END BLOCK 2.7 */
+        
+        /* ----------------------------------------------------------
+           BLOCK 2.8: CLOSE MAIN POPUP AND NOTIFY PARENT WINDOW
+           ---------------------------------------------------------- */
         function closePopup() {
             if (window.self !== window.top) {
                 window.top.postMessage({ type: 'CLOSE_POPUP' }, '*');
             }
         }
+        /* END BLOCK 2.8 */
+
+        /* ==========================================================
+           END BLOCK 2: LOGIC & DATABASE OPERATIONS
+           ========================================================== */
     </script>
 </body>
 </html>

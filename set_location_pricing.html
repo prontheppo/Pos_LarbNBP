@@ -1,38 +1,43 @@
-
 <!--
   ========================================================================
   FILE NAME: set_location_pricing.html
-  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 12 บล็อกย่อย ดังนี้
-   - [บล็อก 1] UI Components & Layout (7 บล็อกย่อย)
-     - [บล็อก 1.1] Header Section
-     - [บล็อก 1.2] Location Selector Section
-     - [บล็อก 1.3] Content Section (Iframe for foodgroup.html)
-     - [บล็อก 1.4] Footer Navigation Section
-     - [บล็อก 1.5] Location Selection Modal
-     - [บล็อก 1.6] Category Price Editor Modal
-     - [บล็อก 1.7] Custom Alert Modal
-   - [บล็อก 2] Logic & Database Operations (5 บล็อกย่อย)
-     - [บล็อก 2.1] Initialization and Supabase Client
-     - [บล็อก 2.2] Iframe Messaging and Modal Utilities
-     - [บล็อก 2.3] Location Data and Selection Management
-     - [บล็อก 2.4] Food Group and Category Price Data Loading
-     - [บล็อก 2.5] Food Table Rendering and Custom Price Operations
+  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 12 บล็อกย่อย ดังนี้
+
+   - [บล็อก 1] UI Components & Layout (ส่วนแสดงผลหน้าจอผู้ใช้)
+     (ประกอบด้วย 7 หัวข้อ)
+       - [บล็อก 1.1] HEADER SECTION (ส่วนหัวของหน้า)
+       - [บล็อก 1.2] LOCATION SELECTOR SECTION (ส่วนเลือกสถานที่)
+       - [บล็อก 1.3] CONTENT SECTION (ส่วนแสดงเนื้อหา Iframe สำหรับ foodgroup.html)
+       - [บล็อก 1.4] FOOTER NAVIGATION SECTION (ส่วนท้ายปุ่มนำทาง)
+       - [บล็อก 1.5] LOCATION SELECTION MODAL (หน้าต่างเลือกสถานที่)
+       - [บล็อก 1.6] CATEGORY PRICE EDITOR MODAL (หน้าต่างแก้ไขราคาตามหมวดหมู่)
+       - [บล็อก 1.7] CUSTOM ALERT MODAL (หน้าต่างแจ้งเตือน)
+       - [บล็อก 1.8] CSS STYLES (รูปแบบ CSS)
+
+   - [บล็อก 2] Logic & Database Operations (ระบบการทำงานและการจัดการฐานข้อมูล)
+     (ประกอบด้วย 5 หัวข้อ)
+       - [บล็อก 2.1] INITIALIZATION AND SUPABASE CLIENT (เริ่มต้นการทำงานและเชื่อมต่อ Supabase)
+       - [บล็อก 2.2] IFRAME MESSAGING AND MODAL UTILITIES (การรับส่งข้อความผ่าน Iframe และตัวจัดการ Modal)
+       - [บล็อก 2.3] LOCATION DATA AND SELECTION MANAGEMENT (การจัดการข้อมูลสถานที่และการเลือก)
+       - [บล็อก 2.4] FOOD GROUP AND CATEGORY PRICE DATA LOADING (การโหลดข้อมูลกลุ่มอาหารและราคาหมวดหมู่)
+       - [บล็อก 2.5] FOOD TABLE RENDERING AND CUSTOM PRICE OPERATIONS (การเรนเดอร์ตารางอาหารและการจัดการราคาพิเศษ)
   ========================================================================
 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
     <script src="appInit.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>จัดการราคาพิเศษตามสถานที่ - ลาบหนองบัวลำภู</title>
     <!-- Tailwind CSS (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase JS Client (CDN) -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Supabase Initialization -->
-    <script src="supabaseClient.js"></script>
     
+    <!-- ----------------------------------------------------------
+         BLOCK 1.8: CSS STYLES
+         ---------------------------------------------------------- -->
     <style>
       :root { --bg-color: #f8fafc; }
       html, body { 
@@ -116,6 +121,7 @@
           border-radius: 2px;
       }
     </style>
+    <!-- END BLOCK 1.8 -->
 </head>
 <body class="bg-slate-100 flex items-center justify-center antialiased">
 
@@ -125,15 +131,20 @@
            BLOCK 1: UI COMPONENTS & LAYOUT
            ========================================================== -->
 
-        <!-- BLOCK 1.1: HEADER SECTION -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.1: HEADER SECTION
+             ---------------------------------------------------------- -->
         <div class="py-3 px-4 bg-white border-b border-slate-100 text-center shrink-0 shadow-2xs">
             <h1 class="font-black text-lg text-slate-800 tracking-tight flex items-center justify-center gap-1.5">
                 🏷️ จัดการราคาพิเศษตามสถานที่
             </h1>
             <p class="text-[11px] text-slate-400 font-medium mt-0.5">เลือกสถานที่ด้านบน แล้วเลือกกลุ่มอาหารเพื่อกำหนดราคาเฉพาะจุดที่ต่างจากปกติ</p>
         </div>
+        <!-- END BLOCK 1.1 -->
 
-        <!-- BLOCK 1.2: LOCATION SELECTOR SECTION -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.2: LOCATION SELECTOR SECTION
+             ---------------------------------------------------------- -->
         <div class="p-3 bg-slate-50 border-b border-slate-200 shrink-0">
             <div class="bg-amber-50/50 border border-amber-200/80 rounded-2xl p-3 shadow-sm">
                 <button type="button" onclick="openLocationModal()" class="w-full h-[46px] bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition cursor-pointer">
@@ -142,15 +153,21 @@
                 </button>
             </div>
         </div>
+        <!-- END BLOCK 1.2 -->
 
-        <!-- BLOCK 1.3: CONTENT SECTION (IFRAME FOR FOODGROUP.HTML) -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.3: CONTENT SECTION (IFRAME FOR FOODGROUP.HTML)
+             ---------------------------------------------------------- -->
         <div class="p-3 overflow-hidden bg-slate-100 flex flex-col">
             <div class="w-full h-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1">
                 <iframe id="foodGroupFrame" src="foodgroup.html" class="w-full h-full border-0"></iframe>
             </div>
         </div>
+        <!-- END BLOCK 1.3 -->
 
-        <!-- BLOCK 1.4: FOOTER NAVIGATION SECTION -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.4: FOOTER NAVIGATION SECTION
+             ---------------------------------------------------------- -->
         <div class="p-3 bg-white border-t border-slate-100 shrink-0 grid grid-cols-2 gap-2">
             <button type="button" onclick="resetToHome()" 
                class="bg-slate-700 hover:bg-slate-800 active:scale-95 text-white font-bold py-3 px-2 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md transition cursor-pointer">
@@ -161,10 +178,13 @@
                 🚪 หน้าหลัก (Index)
             </a>
         </div>
+        <!-- END BLOCK 1.4 -->
 
     </div>
 
-    <!-- BLOCK 1.5: LOCATION SELECTION MODAL -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.5: LOCATION SELECTION MODAL
+         ---------------------------------------------------------- -->
     <div id="locationModal" class="custom-modal-overlay" onclick="handleOutsideClick(event, 'locationModal')">
         <div class="custom-modal-box border-t-4 border-amber-500" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-3 pb-2 border-b">
@@ -174,8 +194,11 @@
             <div id="locationGrid" class="grid grid-cols-2 gap-2 overflow-y-auto py-1 pr-1 max-h-[60vh]"></div>
         </div>
     </div>
+    <!-- END BLOCK 1.5 -->
 
-    <!-- BLOCK 1.6: CATEGORY PRICE EDITOR MODAL -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.6: CATEGORY PRICE EDITOR MODAL
+         ---------------------------------------------------------- -->
     <div id="popupModalWrapper" class="custom-modal-overlay" onclick="handleOutsideClick(event, 'popupModalWrapper')">
         <div class="custom-modal-box border-t-4 border-blue-600 max-w-lg p-0 overflow-hidden" onclick="event.stopPropagation()">
             
@@ -213,8 +236,11 @@
 
         </div>
     </div>
+    <!-- END BLOCK 1.6 -->
 
-    <!-- BLOCK 1.7: CUSTOM ALERT MODAL -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.7: CUSTOM ALERT MODAL
+         ---------------------------------------------------------- -->
     <div id="customAlertModal" class="custom-modal-overlay" onclick="handleOutsideClick(event, 'customAlertModal')">
         <div class="custom-modal-box max-w-xs text-center space-y-3" onclick="event.stopPropagation()">
             <div id="alertIconContainer" class="w-12 h-12 rounded-full flex items-center justify-center mx-auto text-2xl">⚠️</div>
@@ -229,6 +255,9 @@
             </div>
         </div>
     </div>
+    <!-- END BLOCK 1.7 -->
+
+    <!-- END BLOCK 1 -->
 
     <script>
         /* ==========================================================
@@ -245,7 +274,9 @@
         let cachedCategories = [];
         let cachedFoods = [];
 
-        /* BLOCK 2.1: INITIALIZATION AND SUPABASE CLIENT */
+        /* ----------------------------------------------------------
+           BLOCK 2.1: INITIALIZATION AND SUPABASE CLIENT
+           ---------------------------------------------------------- */
         function getDbClient() {
             if (db) return db;
             if (typeof window.supabaseClient !== 'undefined') db = window.supabaseClient;
@@ -262,9 +293,11 @@
                 console.error("❌ ไม่สามารถเชื่อมต่อฐานข้อมูลได้");
             }
         });
+        /* END BLOCK 2.1 */
 
-        /* BLOCK 2.2: IFRAME MESSAGING AND MODAL UTILITIES */
-        // Receive category selection messages from the foodgroup.html iframe.
+        /* ----------------------------------------------------------
+           BLOCK 2.2: IFRAME MESSAGING AND MODAL UTILITIES
+           ---------------------------------------------------------- */
         window.addEventListener('message', (event) => {
             const { type, catName } = event.data || {};
             if (type === 'SELECT_CATEGORY') {
@@ -310,8 +343,11 @@
             }
             openModal('customAlertModal');
         }
+        /* END BLOCK 2.2 */
 
-        /* BLOCK 2.3: LOCATION DATA AND SELECTION MANAGEMENT */
+        /* ----------------------------------------------------------
+           BLOCK 2.3: LOCATION DATA AND SELECTION MANAGEMENT
+           ---------------------------------------------------------- */
         async function loadLocations() {
             try {
                 const { data, error } = await db.from('locations').select('*');
@@ -371,8 +407,11 @@
 
             await loadCustomPricesForLocation(selectedLocationId);
         }
+        /* END BLOCK 2.3 */
 
-        /* BLOCK 2.4: FOOD GROUP AND CATEGORY PRICE DATA LOADING */
+        /* ----------------------------------------------------------
+           BLOCK 2.4: FOOD GROUP AND CATEGORY PRICE DATA LOADING
+           ---------------------------------------------------------- */
         async function loadFoodGroups() {
             try {
                 const [catRes, foodRes] = await Promise.all([
@@ -447,8 +486,11 @@
                 container.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-rose-500 text-xs">เกิดข้อผิดพลาด: ${err.message}</td></tr>`;
             }
         }
+        /* END BLOCK 2.4 */
 
-        /* BLOCK 2.5: FOOD TABLE RENDERING AND CUSTOM PRICE OPERATIONS */
+        /* ----------------------------------------------------------
+           BLOCK 2.5: FOOD TABLE RENDERING AND CUSTOM PRICE OPERATIONS
+           ---------------------------------------------------------- */
         function renderFoodRows(foods) {
             const container = document.getElementById('foodListContainer');
             container.innerHTML = '';
@@ -524,6 +566,11 @@
                 showAlertModal('บันทึกราคาไม่สำเร็จ: ' + err.message, 'error');
             }
         }
+        /* END BLOCK 2.5 */
+
+        /* ==========================================================
+           END BLOCK 2: LOGIC & DATABASE OPERATIONS
+           ========================================================== */
     </script>
 </body>
 </html>

@@ -1,30 +1,36 @@
-
 <!--
-  ================================
+  ========================================================================
   FILE NAME: settings_delivery.html
-  ================================
+  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 5 บล็อกย่อย ดังนี้
 
-  [บล็อก 1] ส่วนประกอบและการจัดวางหน้าจอ (3 บล็อกย่อย)
-  [บล็อก 1.1] ส่วนหัว ชื่อหน้า และปุ่มกลับหน้าผู้ดูแลระบบ
-  [บล็อก 1.2] ข้อความแสดงสถานะระหว่างโหลดข้อมูล
-  [บล็อก 1.3] ตารางตั้งค่ายอดขั้นต่ำและค่าส่งของแต่ละสถานที่
+   - [บล็อก 1] UI Components & Layout (ส่วนแสดงผลหน้าจอผู้ใช้)
+     (ประกอบด้วย 4 หัวข้อ)
+       - [บล็อก 1.1] HEADER AND ADMIN NAVIGATION (ส่วนหัว ชื่อหน้า และปุ่มกลับหน้าผู้ดูแลระบบ)
+       - [บล็อก 1.2] LOADING STATUS (ข้อความแสดงสถานะระหว่างโหลดข้อมูล)
+       - [บล็อก 1.3] LOCATION DELIVERY SETTINGS TABLE (ตารางตั้งค่ายอดขั้นต่ำและค่าส่งของแต่ละสถานที่)
+       - [บล็อก 1.4] CSS STYLES (รูปแบบ CSS)
 
-  [บล็อก 2] ระบบโหลดข้อมูลและบันทึกเงื่อนไขการจัดส่ง (3 บล็อกย่อย)
-  [บล็อก 2.1] เริ่มต้นระบบและตรวจสอบการเชื่อมต่อ Supabase
-  [บล็อก 2.2] โหลดข้อมูลสถานที่และแสดงผลในตาราง
-  [บล็อก 2.3] บันทึกยอดขั้นต่ำและค่าส่งของแต่ละสถานที่
+   - [บล็อก 2] Database & Delivery Settings Logic (ระบบการทำงานและการจัดการฐานข้อมูล)
+     (ประกอบด้วย 3 หัวข้อ)
+       - [บล็อก 2.1] INITIALIZATION AND SUPABASE CLIENT CONNECTION (เริ่มต้นระบบและตรวจสอบการเชื่อมต่อ Supabase)
+       - [บล็อก 2.2] FETCH AND RENDER LOCATION DATA (โหลดข้อมูลสถานที่และแสดงผลในตาราง)
+       - [บล็อก 2.3] SAVE LOCATION DELIVERY SETTINGS (บันทึกยอดขั้นต่ำและค่าส่งของแต่ละสถานที่)
+  ========================================================================
 -->
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
     <script src="appInit.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ตั้งค่าเรทค่าส่งตามสถานที่ - ลาบหนองบัวลำภู</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="supabaseClient.js"></script>
+
+    <!-- ----------------------------------------------------------
+         BLOCK 1.4: CSS STYLES
+         ---------------------------------------------------------- -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap');
         html, body {
@@ -76,14 +82,19 @@
             border-radius: 2px;
         }
     </style>
+    <!-- END BLOCK 1.4 -->
 </head>
 <body class="p-2 max-w-2xl mx-auto h-full flex flex-col">
 
-    <!-- BLOCK 1: UI COMPONENTS & LAYOUT -->
+    <!-- ==========================================================
+         BLOCK 1: UI COMPONENTS & LAYOUT
+         ========================================================== -->
 
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 flex flex-col h-full overflow-hidden">
 
-        <!-- BLOCK 1.1: HEADER AND ADMIN NAVIGATION -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.1: HEADER AND ADMIN NAVIGATION
+             ---------------------------------------------------------- -->
         <div class="flex justify-between items-center mb-2 pb-2 border-b shrink-0">
             <div>
                 <h1 class="font-extrabold text-sm text-slate-800 flex items-center gap-1.5">⚙️ ตั้งค่าเรทค่าส่ง & ยอดขั้นต่ำ</h1>
@@ -93,11 +104,17 @@
                 ⬅️ กลับหน้าผู้ดูแลระบบ
             </a>
         </div>
+        <!-- END BLOCK 1.1 -->
 
-        <!-- BLOCK 1.2: LOADING STATUS -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.2: LOADING STATUS
+             ---------------------------------------------------------- -->
         <div id="loadingText" class="text-center text-xs text-slate-400 py-6">⏳ กำลังโหลดข้อมูล...</div>
+        <!-- END BLOCK 1.2 -->
 
-        <!-- BLOCK 1.3: LOCATION DELIVERY SETTINGS TABLE -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.3: LOCATION DELIVERY SETTINGS TABLE
+             ---------------------------------------------------------- -->
         <!-- Excel-style table with a sticky header and internal scrolling -->
         <div class="flex-1 overflow-y-auto relative rounded border border-slate-200">
             <table id="locationTable" class="excel-table text-xs hidden">
@@ -114,12 +131,19 @@
                 </tbody>
             </table>
         </div>
-    </div>
+        <!-- END BLOCK 1.3 -->
 
-    <!-- BLOCK 2: DATABASE & DELIVERY SETTINGS LOGIC -->
+    </div>
+    <!-- END BLOCK 1 -->
 
     <script>
-        // BLOCK 2.1: INITIALIZATION AND SUPABASE CLIENT CONNECTION
+        /* ==========================================================
+           BLOCK 2: DATABASE & DELIVERY SETTINGS LOGIC
+           ========================================================== */
+
+        /* ----------------------------------------------------------
+           BLOCK 2.1: INITIALIZATION AND SUPABASE CLIENT CONNECTION
+           ---------------------------------------------------------- */
         window.addEventListener('DOMContentLoaded', async () => {
             await fetchAndRenderLocations();
         });
@@ -129,8 +153,11 @@
             if (typeof supabase?.from === 'function') return supabase;
             return null;
         }
+        /* END BLOCK 2.1 */
 
-        // BLOCK 2.2: FETCH AND RENDER LOCATION DATA
+        /* ----------------------------------------------------------
+           BLOCK 2.2: FETCH AND RENDER LOCATION DATA
+           ---------------------------------------------------------- */
         async function fetchAndRenderLocations() {
             const _db = getSupabaseClient();
             const loadingText = document.getElementById('loadingText');
@@ -187,8 +214,11 @@
                 loadingText.textContent = '❌ เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + err.message;
             }
         }
+        /* END BLOCK 2.2 */
 
-        // BLOCK 2.3: SAVE LOCATION DELIVERY SETTINGS
+        /* ----------------------------------------------------------
+           BLOCK 2.3: SAVE LOCATION DELIVERY SETTINGS
+           ---------------------------------------------------------- */
         async function saveLocationRule(locId) {
             const _db = getSupabaseClient();
             if (!_db) return;
@@ -225,6 +255,11 @@
                 alert('❌ บันทึกไม่สำเร็จ: ' + err.message);
             }
         }
+        /* END BLOCK 2.3 */
+
+        /* ==========================================================
+           END BLOCK 2: DATABASE & DELIVERY SETTINGS LOGIC
+           ========================================================== */
     </script>
 </body>
 </html>

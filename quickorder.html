@@ -1,35 +1,41 @@
-
 <!--
   ========================================================================
   FILE NAME: quickorder.html
-  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 11 บล็อกย่อย ดังนี้
-   - [บล็อก 1] UI Components & Layout (4 บล็อกย่อย:
-     ส่วนหัวพร้อมตัวเลือกกลุ่มลูกค้าและสถานที่,
-     ส่วนกรอกยอดเงินและหมายเหตุ,
-     ส่วนท้ายปุ่มดำเนินการ,
-     หน้าต่าง Pop-up สำหรับเลือกสถานที่และโซน)
-   - [บล็อก 2] Logic & Database Operations (7 บล็อกย่อย:
-     เริ่มต้นการทำงานและกำหนดข้อมูลเริ่มต้น,
-     สร้างคอมโพเนนต์เลือกกลุ่มลูกค้า,
-     ดึงข้อมูลลูกค้า สถานที่ และโซนจาก Supabase,
-     ค้นหาลูกค้าและจัดการกลุ่มลูกค้า,
-     แสดงหน้าจอเลือกสถานที่และโซน,
-     เพิ่มและบันทึกข้อมูลสถานที่ โซน และลูกค้า,
-     ตรวจสอบข้อมูลและบันทึกออร์เดอร์ด่วนลง Supabase)
+  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 11 บล็อกย่อย ดังนี้
+
+   - [บล็อก 1] UI Components & Layout (ส่วนแสดงผลหน้าจอผู้ใช้)
+     (ประกอบด้วย 4 หัวข้อ)
+       - [บล็อก 1.1] HEADER AND CUSTOMER LOCATION SELECTOR (ส่วนหัวพร้อมตัวเลือกกลุ่มลูกค้าและสถานที่)
+       - [บล็อก 1.2] MAIN CONTENT AND QUICK ORDER INPUTS (ส่วนกรอกยอดเงินและหมายเหตุ)
+       - [บล็อก 1.3] FOOTER ACTION BUTTONS (ส่วนท้ายปุ่มดำเนินการ)
+       - [บล็อก 1.4] LOCATION AND ZONE SELECTION MODAL (หน้าต่าง Pop-up สำหรับเลือกสถานที่และโซน)
+       - [บล็อก 1.5] CSS STYLES (รูปแบบ CSS)
+
+   - [บล็อก 2] Logic & Database Operations (ระบบการทำงานและการจัดการฐานข้อมูล)
+     (ประกอบด้วย 7 หัวข้อ)
+       - [บล็อก 2.1] INITIALIZATION AND DEFAULT DATA (เริ่มต้นการทำงานและกำหนดข้อมูลเริ่มต้น)
+       - [บล็อก 2.2] CUSTOMER GROUP AND CUSTOMER SELECTOR COMPONENT (สร้างคอมโพเนนต์เลือกกลุ่มลูกค้า)
+       - [บล็อก 2.3] FETCH CUSTOMER, LOCATION, AND ZONE DATA FROM SUPABASE (ดึงข้อมูลลูกค้า สถานที่ และโซนจาก Supabase)
+       - [บล็อก 2.4] CUSTOMER SEARCH, GROUP SELECTION, AND POPUP CONTROL (ค้นหาลูกค้าและจัดการกลุ่มลูกค้า)
+       - [บล็อก 2.5] RENDER LOCATION AND ZONE SELECTION VIEWS (แสดงหน้าจอเลือกสถานที่และโซน)
+       - [บล็อก 2.6] ADD AND SAVE LOCATIONS, ZONES, AND CUSTOMERS (เพิ่มและบันทึกข้อมูลสถานที่ โซน และลูกค้า)
+       - [บล็อก 2.7] VALIDATE AND SAVE QUICK ORDER TO SUPABASE (ตรวจสอบข้อมูลและบันทึกออร์เดอร์ด่วนลง Supabase)
   ========================================================================
 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
     <script src="appInit.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>บันทึกยอดด่วน - ลาบหนองบัวลำภู</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="supabaseClient.js"></script>
 
-    <!-- CSS STYLES -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.5: CSS STYLES
+         ---------------------------------------------------------- -->
     <style>
         :root {
             --bg-color: #f1f5f9;
@@ -151,6 +157,7 @@
 
         .popup-content-wrapper { width: 100%; background: #ffffff; overflow-y: auto; flex: 1; }
     </style>
+    <!-- END BLOCK 1.5 -->
 </head>
 <body>
 
@@ -159,12 +166,17 @@
          BLOCK 1: UI COMPONENTS & LAYOUT
          ========================================================== -->
 
-    <!-- BLOCK 1.1: HEADER AND CUSTOMER LOCATION SELECTOR -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.1: HEADER AND CUSTOMER LOCATION SELECTOR
+         ---------------------------------------------------------- -->
     <div class="fixed-header-wrapper">
         <div id="locationSelectorWrapper"></div>
     </div>
+    <!-- END BLOCK 1.1 -->
 
-    <!-- BLOCK 1.2: MAIN CONTENT AND QUICK ORDER INPUTS -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.2: MAIN CONTENT AND QUICK ORDER INPUTS
+         ---------------------------------------------------------- -->
     <div class="main-content-box">
         <div class="bg-white border-2 border-emerald-500/30 rounded-2xl p-4 shadow-sm space-y-3">
             <label for="quickAmountInput" class="font-extrabold text-sm text-slate-700 flex items-center gap-1.5">
@@ -192,8 +204,11 @@
             </div>
         </div>
     </div>
+    <!-- END BLOCK 1.2 -->
 
-    <!-- BLOCK 1.3: FOOTER ACTION BUTTONS -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.3: FOOTER ACTION BUTTONS
+         ---------------------------------------------------------- -->
     <div class="fixed-footer-wrapper">
         <div class="flex gap-2.5 max-w-2xl mx-auto">
             <a href="index.html" class="bg-white hover:bg-gray-50 text-slate-800 border border-slate-300 font-bold py-3.5 px-3 rounded-xl text-xs flex-1 text-center shadow-sm transition flex items-center justify-center gap-1">
@@ -204,9 +219,13 @@
             </button>
         </div>
     </div>
+    <!-- END BLOCK 1.3 -->
+
 </div>
 
-<!-- BLOCK 1.4: LOCATION AND ZONE SELECTION MODAL -->
+<!-- ----------------------------------------------------------
+     BLOCK 1.4: LOCATION AND ZONE SELECTION MODAL
+     ---------------------------------------------------------- -->
 <div id="dynamicPopupOverlay" class="custom-modal-overlay" onclick="closeDynamicPopup()">
     <div id="popupContainerBox" class="popup-container" onclick="event.stopPropagation()">
         <div id="popupHeader" class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
@@ -232,13 +251,18 @@
         </div>
     </div>
 </div>
+<!-- END BLOCK 1.4 -->
+
+<!-- END BLOCK 1 -->
 
 <script>
     /* ==========================================================
        BLOCK 2: LOGIC & DATABASE OPERATIONS
        ========================================================== */
 
-    /* BLOCK 2.1: INITIALIZATION AND DEFAULT DATA */
+    /* ----------------------------------------------------------
+       BLOCK 2.1: INITIALIZATION AND DEFAULT DATA
+       ---------------------------------------------------------- */
     document.addEventListener('touchstart', function(event) {
         if (event.touches.length > 1) { event.preventDefault(); }
     }, { passive: false });
@@ -273,8 +297,11 @@
             fetchLocationsAndZones()
         ]);
     });
+    /* END BLOCK 2.1 */
 
-    /* BLOCK 2.2: CUSTOMER GROUP AND CUSTOMER SELECTOR COMPONENT */
+    /* ----------------------------------------------------------
+       BLOCK 2.2: CUSTOMER GROUP AND CUSTOMER SELECTOR COMPONENT
+       ---------------------------------------------------------- */
     function initLocationComponent(targetContainerId) {
         const container = document.getElementById(targetContainerId);
         if (!container) return;
@@ -298,8 +325,11 @@
             </div>
         `;
     }
+    /* END BLOCK 2.2 */
 
-    /* BLOCK 2.3: FETCH CUSTOMER, LOCATION, AND ZONE DATA FROM SUPABASE */
+    /* ----------------------------------------------------------
+       BLOCK 2.3: FETCH CUSTOMER, LOCATION, AND ZONE DATA FROM SUPABASE
+       ---------------------------------------------------------- */
     async function fetchCustomersData() {
         try {
             if (typeof supabaseClient !== 'undefined') {
@@ -322,8 +352,11 @@
             }
         } catch (err) { console.error('Error fetching locations/zones:', err); }
     }
+    /* END BLOCK 2.3 */
 
-    /* BLOCK 2.4: CUSTOMER SEARCH, GROUP SELECTION, AND POPUP CONTROL */
+    /* ----------------------------------------------------------
+       BLOCK 2.4: CUSTOMER SEARCH, GROUP SELECTION, AND POPUP CONTROL
+       ---------------------------------------------------------- */
     function handleCustomerInput(val) {
         document.querySelectorAll('.customer-input-field').forEach(inp => {
             if (inp.value !== val) inp.value = val;
@@ -386,8 +419,11 @@
     function closeDynamicPopup() {
         document.getElementById('dynamicPopupOverlay').classList.remove('active');
     }
+    /* END BLOCK 2.4 */
 
-    /* BLOCK 2.5: RENDER LOCATION AND ZONE SELECTION VIEWS */
+    /* ----------------------------------------------------------
+       BLOCK 2.5: RENDER LOCATION AND ZONE SELECTION VIEWS
+       ---------------------------------------------------------- */
     function renderLocationsView() {
         document.getElementById('popupTitle').innerText = '📍 เลือกสถานที่ / ที่พัก';
         document.getElementById('addLocationSection').classList.remove('hidden');
@@ -445,8 +481,11 @@
             grid.appendChild(btn);
         });
     }
+    /* END BLOCK 2.5 */
 
-    /* BLOCK 2.6: ADD AND SAVE LOCATIONS, ZONES, AND CUSTOMERS */
+    /* ----------------------------------------------------------
+       BLOCK 2.6: ADD AND SAVE LOCATIONS, ZONES, AND CUSTOMERS
+       ---------------------------------------------------------- */
     async function addNewLocation() {
         const input = document.getElementById('newLocationInput');
         const name = input.value.trim();
@@ -514,8 +553,11 @@
         } catch (err) { console.error('Insert Customer Error:', err); }
         return { customer_name: val };
     }
+    /* END BLOCK 2.6 */
 
-    /* BLOCK 2.7: VALIDATE AND SAVE QUICK ORDER TO SUPABASE */
+    /* ----------------------------------------------------------
+       BLOCK 2.7: VALIDATE AND SAVE QUICK ORDER TO SUPABASE
+       ---------------------------------------------------------- */
     async function submitQuickOrder() {
         const amountInput = document.getElementById('quickAmountInput');
         const totalAmount = Number(amountInput.value);
@@ -590,6 +632,11 @@
             btn.innerHTML = '💾 บันทึก';
         }
     }
+    /* END BLOCK 2.7 */
+
+    /* ==========================================================
+       END BLOCK 2: LOGIC & DATABASE OPERATIONS
+       ========================================================== */
 </script>
 </body>
 </html>

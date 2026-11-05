@@ -1,30 +1,30 @@
-
 <!--
   ========================================================================
   FILE NAME: foodselect.html
-  SUMMARY:
-  มีทั้งหมด 2 บล็อกหลัก | 17 บล็อกย่อย ดังนี้
+  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 17 บล็อกย่อย ดังนี้
 
-  [บล็อก 1] ส่วนแสดงผลหน้าจอผู้ใช้ (UI Components & Layout)
-    - [บล็อก 1.1] ส่วนหัว Header
-    - [บล็อก 1.2] ส่วนแสดงรายละเอียดสินค้าและปุ่มบันทึก
-    - [บล็อก 1.3] รายการสินค้าที่เลือกไว้แล้วในตะกร้า
-    - [บล็อก 1.4] ส่วนกำหนดราคาและจำนวนสินค้า
-    - [บล็อก 1.5] ส่วนเลือกไข่ดาวและไข่เจียว
-    - [บล็อก 1.6] ส่วนกรอกหมายเหตุ
-    - [บล็อก 1.7] รูปแบบการแสดงผล CSS
+   - [บล็อก 1] UI COMPONENTS & LAYOUT (ส่วนประกอบหน้าจอผู้ใช้)
+     (ประกอบด้วย 7 หัวข้อ)
+       - [บล็อก 1.1] HEADER (ส่วนหัว)
+       - [บล็อก 1.2] FOOD DETAILS AND SAVE BUTTON (ส่วนแสดงรายละเอียดสินค้าและปุ่มบันทึก)
+       - [บล็อก 1.3] SELECTED CART ITEMS (รายการสินค้าที่เลือกไว้แล้วในตะกร้า)
+       - [บล็อก 1.4] PRICE AND QUANTITY INPUTS (ส่วนกำหนดราคาและจำนวนสินค้า)
+       - [บล็อก 1.5] EGG OPTIONS (ส่วนเลือกไข่ดาวและไข่เจียว)
+       - [บล็อก 1.6] FOOD NOTE (ส่วนกรอกหมายเหตุ)
+       - [บล็อก 1.7] CSS STYLES (รูปแบบการแสดงผล CSS)
 
-  [บล็อก 2] ระบบการทำงานและจัดการข้อมูล (Logic & Database Operations)
-    - [บล็อก 2.1] เริ่มต้นการทำงานและโหลดข้อมูลสินค้า
-    - [บล็อก 2.2] รับข้อความ PostMessage จากหน้าต่างแม่
-    - [บล็อก 2.3] ปรับความสูง Popup อัตโนมัติ
-    - [บล็อก 2.4] ตั้งค่ารายละเอียดสินค้าและตรวจสอบหมวดหมู่
-    - [บล็อก 2.5] ปรับเพิ่มหรือลดจำนวนสินค้า
-    - [บล็อก 2.6] ปรับจำนวนไข่ดาวและไข่เจียว
-    - [บล็อก 2.7] แสดงรายการสินค้าที่เลือกไว้แล้ว
-    - [บล็อก 2.8] ลบรายการสินค้าออกจากตะกร้า
-    - [บล็อก 2.9] บันทึกข้อมูลสินค้าลงในตะกร้า
-    - [บล็อก 2.10] ย้อนกลับไปหน้าหมวดหมู่และปิด Popup
+   - [บล็อก 2] LOGIC & DATABASE OPERATIONS (ระบบการทำงานและจัดการข้อมูล)
+     (ประกอบด้วย 10 หัวข้อ)
+       - [บล็อก 2.1] PAGE INITIALIZATION AND FOOD DATA FETCHING (เริ่มต้นการทำงานและโหลดข้อมูลสินค้า)
+       - [บล็อก 2.2] RECEIVE POSTMESSAGE FROM PARENT WINDOW (รับข้อความ PostMessage จากหน้าต่างแม่)
+       - [บล็อก 2.3] AUTOMATIC PARENT POPUP HEIGHT ADJUSTMENT (ปรับความสูง Popup อัตโนมัติ)
+       - [บล็อก 2.4] INITIALIZE FOOD DETAILS AND CHECK CATEGORY (ตั้งค่ารายละเอียดสินค้าและตรวจสอบหมวดหมู่)
+       - [บล็อก 2.5] ADJUST FOOD QUANTITY (ปรับเพิ่มหรือลดจำนวนสินค้า)
+       - [บล็อก 2.6] ADJUST FRIED EGG AND OMELET QUANTITIES (ปรับจำนวนไข่ดาวและไข่เจียว)
+       - [บล็อก 2.7] RENDER SELECTED CART ITEMS (แสดงรายการสินค้าที่เลือกไว้แล้ว)
+       - [บล็อก 2.8] DELETE A SPECIFIC CART ITEM (ลบรายการสินค้าออกจากตะกร้า)
+       - [บล็อก 2.9] SAVE FOOD DATA TO CART (บันทึกข้อมูลสินค้าลงในตะกร้า)
+       - [บล็อก 2.10] RETURN TO CATEGORY AND CLOSE POPUP (ย้อนกลับไปหน้าหมวดหมู่และปิด Popup)
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -55,6 +55,7 @@
         input[type="number"], input[type="text"] { font-size: 16px !important; }
         .back-btn { background-color: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; font-weight: 700; font-size: 14px !important; padding: 0.3rem 0.6rem; border-radius: 0.6rem; cursor: pointer; }
     </style>
+    <!-- END BLOCK 1.7 -->
 </head>
 <body>
 
@@ -62,14 +63,19 @@
          BLOCK 1: UI COMPONENTS & LAYOUT
          ========================================================== -->
 
-    <!-- BLOCK 1.1: HEADER -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.1: HEADER
+         ---------------------------------------------------------- -->
     <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
         <button type="button" id="popupBackBtn" class="back-btn" onclick="goBackToCategory()">◀ รายการ</button>
         <span id="foodTitleHeader" class="font-extrabold text-sm text-slate-700 truncate px-2">📌 เลือกรายการ</span>
         <button type="button" onclick="closePopup()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
     </div>
+    <!-- END BLOCK 1.1 -->
 
-    <!-- BLOCK 1.2: FOOD DETAILS AND SAVE BUTTON -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.2: FOOD DETAILS AND SAVE BUTTON
+         ---------------------------------------------------------- -->
     <div class="p-3.5 space-y-3 bg-white w-full">
         <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200">
             <span id="foodTitleName" class="font-extrabold text-slate-900 text-base truncate pr-2">📌 รายการสินค้า</span>
@@ -77,8 +83,11 @@
                 <span>💾 บันทึก</span>
             </button>
         </div>
+        <!-- END BLOCK 1.2 -->
 
-        <!-- BLOCK 1.3: SELECTED CART ITEMS -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.3: SELECTED CART ITEMS
+             ---------------------------------------------------------- -->
         <div id="selectedCartItemsBox" class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 hidden">
             <div class="flex justify-between items-center mb-1.5">
                 <span class="text-[15px] text-slate-600 font-bold">🛒 รายการที่เลือกไว้แล้ว:</span>
@@ -86,8 +95,11 @@
             </div>
             <div id="selectedCartList" class="space-y-1.5 text-[16px] text-slate-700 max-h-36 overflow-y-auto pr-0.5"></div>
         </div>
+        <!-- END BLOCK 1.3 -->
 
-        <!-- BLOCK 1.4: PRICE AND QUANTITY INPUTS -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.4: PRICE AND QUANTITY INPUTS
+             ---------------------------------------------------------- -->
         <div class="grid grid-cols-2 gap-2.5 items-center">
             <div>
                 <label id="priceLabel" class="block custom-label text-slate-700 mb-1">ราคาพิเศษ (ถ้ามี)</label>
@@ -102,8 +114,11 @@
                 </div>
             </div>
         </div>
+        <!-- END BLOCK 1.4 -->
 
-        <!-- BLOCK 1.5: EGG OPTIONS -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.5: EGG OPTIONS
+             ---------------------------------------------------------- -->
         <div id="eggSection" class="grid grid-cols-2 gap-2 items-center hidden">
             <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl flex items-center justify-between">
                 <span class="custom-label text-slate-700">ไข่ดาว</span>
@@ -122,13 +137,19 @@
                 </div>
             </div>
         </div>
+        <!-- END BLOCK 1.5 -->
 
-        <!-- BLOCK 1.6: FOOD NOTE -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.6: FOOD NOTE
+             ---------------------------------------------------------- -->
         <div>
             <label class="block custom-label text-slate-700 mb-1">หมายเหตุ</label>
             <input type="text" id="foodNote" placeholder="(เช่น เผ็ดน้อย, ไม่ใส่ผัก)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-base outline-none focus:border-emerald-500">
         </div>
+        <!-- END BLOCK 1.6 -->
+
     </div>
+    <!-- END BLOCK 1 -->
 
     <script>
         /* ==========================================================
@@ -146,7 +167,9 @@
         const urlFoodId = urlParams.get('food_id');
         const urlGroupId = urlParams.get('group_id');
 
-        /* BLOCK 2.1: PAGE INITIALIZATION AND FOOD DATA FETCHING */
+        /* ----------------------------------------------------------
+           BLOCK 2.1: PAGE INITIALIZATION AND FOOD DATA FETCHING
+           ---------------------------------------------------------- */
         window.addEventListener('DOMContentLoaded', async () => {
             if (urlFoodId && typeof supabaseClient !== 'undefined') {
                 currentCatId = urlGroupId;
@@ -157,8 +180,11 @@
                 }
             }
         });
+        /* END BLOCK 2.1 */
 
-        /* BLOCK 2.2: RECEIVE POSTMESSAGE FROM PARENT WINDOW */
+        /* ----------------------------------------------------------
+           BLOCK 2.2: RECEIVE POSTMESSAGE FROM PARENT WINDOW
+           ---------------------------------------------------------- */
         window.addEventListener('message', (event) => {
             const { type, food, catId } = event.data || {};
             if (type === 'INIT_FOOD_SELECT') {
@@ -167,8 +193,11 @@
                 initDetail();
             }
         });
+        /* END BLOCK 2.2 */
 
-        /* BLOCK 2.3: AUTOMATIC PARENT POPUP HEIGHT ADJUSTMENT */
+        /* ----------------------------------------------------------
+           BLOCK 2.3: AUTOMATIC PARENT POPUP HEIGHT ADJUSTMENT
+           ---------------------------------------------------------- */
         function updateParentHeight() {
             setTimeout(() => {
                 if (window.self !== window.top) {
@@ -177,8 +206,11 @@
                 }
             }, 50);
         }
+        /* END BLOCK 2.3 */
 
-        /* BLOCK 2.4: INITIALIZE FOOD DETAILS AND CHECK CATEGORY */
+        /* ----------------------------------------------------------
+           BLOCK 2.4: INITIALIZE FOOD DETAILS AND CHECK CATEGORY
+           ---------------------------------------------------------- */
         function initDetail() {
             if (!currentFood) return;
             currentQty = 1; friedEgg = 0; omelet = 0;
@@ -216,14 +248,20 @@
             }
             updateParentHeight();
         }
+        /* END BLOCK 2.4 */
 
-        /* BLOCK 2.5: ADJUST FOOD QUANTITY */
+        /* ----------------------------------------------------------
+           BLOCK 2.5: ADJUST FOOD QUANTITY
+           ---------------------------------------------------------- */
         function adjustQty(val) {
             currentQty = Math.max(1, currentQty + val);
             document.getElementById('foodQty').textContent = currentQty;
         }
+        /* END BLOCK 2.5 */
 
-        /* BLOCK 2.6: ADJUST FRIED EGG AND OMELET QUANTITIES */
+        /* ----------------------------------------------------------
+           BLOCK 2.6: ADJUST FRIED EGG AND OMELET QUANTITIES
+           ---------------------------------------------------------- */
         function adjustExtra(type, val) {
             if (type === 'friedEgg') {
                 friedEgg = Math.max(0, friedEgg + val);
@@ -233,8 +271,11 @@
                 document.getElementById('omeletQty').textContent = omelet;
             }
         }
+        /* END BLOCK 2.6 */
 
-        /* BLOCK 2.7: RENDER SELECTED CART ITEMS */
+        /* ----------------------------------------------------------
+           BLOCK 2.7: RENDER SELECTED CART ITEMS
+           ---------------------------------------------------------- */
         function renderSelectedCartList() {
             if (String(currentCatId) === '99') return;
             let cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -274,8 +315,11 @@
             });
             updateParentHeight();
         }
+        /* END BLOCK 2.7 */
 
-        /* BLOCK 2.8: DELETE A SPECIFIC CART ITEM */
+        /* ----------------------------------------------------------
+           BLOCK 2.8: DELETE A SPECIFIC CART ITEM
+           ---------------------------------------------------------- */
         function deleteCartItemMatch(itemId) {
             let cart = JSON.parse(localStorage.getItem('cart')) || [];
             cart = cart.filter(item => item.item_id !== itemId);
@@ -285,8 +329,11 @@
                 window.top.postMessage({ type: 'UPDATE_CART' }, '*');
             }
         }
+        /* END BLOCK 2.8 */
 
-        /* BLOCK 2.9: SAVE FOOD DATA TO CART */
+        /* ----------------------------------------------------------
+           BLOCK 2.9: SAVE FOOD DATA TO CART
+           ---------------------------------------------------------- */
         function saveToCart() {
             if (!currentFood) {
                 alert('ไม่พบข้อมูลสินค้า กรุณาลองใหม่อีกครั้ง');
@@ -365,8 +412,11 @@
                 window.top.postMessage({ type: 'CLOSE_POPUP' }, '*');
             }
         }
+        /* END BLOCK 2.9 */
 
-        /* BLOCK 2.10: RETURN TO CATEGORY AND CLOSE POPUP */
+        /* ----------------------------------------------------------
+           BLOCK 2.10: RETURN TO CATEGORY AND CLOSE POPUP
+           ---------------------------------------------------------- */
         function goBackToCategory() {
             if (window.self !== window.top) {
                 window.top.postMessage({ type: 'BACK_TO_CATEGORY' }, '*');
@@ -378,6 +428,11 @@
                 window.top.postMessage({ type: 'CLOSE_POPUP' }, '*');
             }
         }
+        /* END BLOCK 2.10 */
+
+        /* ==========================================================
+           END BLOCK 2: LOGIC & DATABASE OPERATIONS
+           ========================================================== */
     </script>
 </body>
 </html>

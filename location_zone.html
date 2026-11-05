@@ -1,59 +1,84 @@
-
 <!--
   ========================================================================
   FILE NAME: location_zone.html
-  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 12 บล็อกย่อย ดังนี้
-   - [บล็อก 1] ส่วนแสดงผลหน้าจอผู้ใช้ (4 บล็อกย่อย: ช่องเพิ่มสถานที่ใหม่, ช่องเพิ่มโซน/ห้องพักใหม่, ตารางแสดงรายการ Locations/Zones, รูปแบบ CSS พื้นฐาน)
-   - [บล็อก 2] ระบบการทำงานและการจัดการข้อมูล (8 บล็อกย่อย: เริ่มต้นการทำงานเมื่อโหลดหน้าเว็บ, ปรับความสูง Popup อัตโนมัติ, ดึงข้อมูล Locations และ Zones จาก Supabase, แสดงรายการสถานที่, แสดงรายการโซน, เพิ่มสถานที่ใหม่, เพิ่มโซนใหม่, เลือกสถานที่และส่งข้อมูลกลับหน้าต่างแม่)
+  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 12 บล็อกย่อย ดังนี้
+
+   - [บล็อก 1] UI COMPONENTS & LAYOUT (ส่วนแสดงผลหน้าจอผู้ใช้)
+     (ประกอบด้วย 4 หัวข้อ)
+       - [บล็อก 1.1] ADD NEW LOCATION (ช่องเพิ่มสถานที่ใหม่)
+       - [บล็อก 1.2] ADD NEW ZONE (ช่องเพิ่มโซน/ห้องพักใหม่)
+       - [บล็อก 1.3] LOCATION AND ZONE SELECTION GRID (ตารางแสดงรายการ Locations/Zones)
+       - [บล็อก 1.4] CSS STYLES (รูปแบบ CSS พื้นฐาน)
+
+   - [บล็อก 2] LOGIC & DATABASE OPERATIONS (ระบบการทำงานและการจัดการข้อมูล)
+     (ประกอบด้วย 8 หัวข้อ)
+       - [บล็อก 2.1] PAGE INITIALIZATION (เริ่มต้นการทำงานเมื่อโหลดหน้าเว็บ)
+       - [บล็อก 2.2] AUTOMATIC POPUP HEIGHT ADJUSTMENT (ปรับความสูง Popup อัตโนมัติ)
+       - [บล็อก 2.3] FETCH LOCATIONS AND ZONES FROM SUPABASE (ดึงข้อมูล Locations และ Zones จาก Supabase)
+       - [บล็อก 2.4] RENDER LOCATION SELECTION VIEW (แสดงรายการสถานที่)
+       - [บล็อก 2.5] RENDER ZONE SELECTION VIEW (แสดงรายการโซน)
+       - [บล็อก 2.6] ADD NEW LOCATION TO DATABASE (เพิ่มสถานที่ใหม่)
+       - [บล็อก 2.7] ADD NEW ZONE TO DATABASE (เพิ่มโซนใหม่)
+       - [บล็อก 2.8] SELECT LOCATION AND RETURN DATA TO PARENT WINDOW (เลือกสถานที่และส่งข้อมูลกลับหน้าต่างแม่)
   ========================================================================
 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
     <script src="appInit.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>เลือกสถานที่ / โซน</title>
     
     <!-- Supabase JS Client, Tailwind CSS, and FontAwesome -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <!-- Load the shared Supabase connection file -->
-    <script src="supabaseClient.js"></script>
-    
-    <!-- ==========================================================
-       BLOCK 1.4: CSS STYLES
-       ========================================================== -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.4: CSS STYLES
+         ---------------------------------------------------------- -->
     <style>
         html, body { background-color: transparent; font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none; }
     </style>
+    <!-- END BLOCK 1.4 -->
 </head>
 <body class="flex flex-col h-full bg-white">
 
     <!-- ==========================================================
-       BLOCK 1: UI COMPONENTS & LAYOUT
-       ========================================================== -->
+         BLOCK 1: UI COMPONENTS & LAYOUT
+         ========================================================== -->
     <div class="flex flex-col space-y-3 p-1">
 
-        <!-- BLOCK 1.1: ADD NEW LOCATION -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.1: ADD NEW LOCATION
+             ---------------------------------------------------------- -->
         <div id="addLocationSection" class="bg-amber-50 p-2.5 rounded-2xl border border-amber-200 flex gap-2">
             <input type="text" id="newLocationInput" placeholder="➕ เพิ่มสถานที่ใหม่..." class="flex-1 h-9 px-3 text-xs rounded-xl border border-amber-300 bg-white outline-none">
             <button type="button" onclick="addNewLocation()" class="h-9 px-4 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-sm">+ เพิ่ม</button>
         </div>
+        <!-- END BLOCK 1.1 -->
 
-        <!-- BLOCK 1.2: ADD NEW ZONE -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.2: ADD NEW ZONE
+             ---------------------------------------------------------- -->
         <div id="addZoneSection" class="bg-blue-50 p-2.5 rounded-2xl border border-blue-200 flex gap-2 hidden">
             <input type="text" id="newZoneInput" placeholder="➕ เพิ่มโซน/ห้องพักใหม่..." class="flex-1 h-9 px-3 text-xs rounded-xl border border-blue-300 bg-white outline-none">
             <button type="button" onclick="addNewZone()" class="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-sm">+ เพิ่ม</button>
         </div>
+        <!-- END BLOCK 1.2 -->
 
-        <!-- BLOCK 1.3: LOCATION AND ZONE SELECTION GRID -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.3: LOCATION AND ZONE SELECTION GRID
+             ---------------------------------------------------------- -->
         <div id="selectionGrid" class="grid grid-cols-2 gap-2.5 pt-1">
             <span class="text-slate-400 text-xs py-8 text-center col-span-2 block">⏳ กำลังโหลดข้อมูล...</span>
         </div>
+        <!-- END BLOCK 1.3 -->
+
     </div>
+    <!-- END BLOCK 1 -->
 
     <script>
         /* ==========================================================
@@ -63,13 +88,18 @@
         let zonesData = [];
         let selectedLocationForZone = null;
 
-        /* BLOCK 2.1: PAGE INITIALIZATION */
+        /* ----------------------------------------------------------
+           BLOCK 2.1: PAGE INITIALIZATION
+           ---------------------------------------------------------- */
         window.addEventListener('DOMContentLoaded', async () => {
             await fetchLocationsAndZonesFromSupabase();
             updateParentHeight();
         });
+        /* END BLOCK 2.1 */
 
-        /* BLOCK 2.2: AUTOMATIC POPUP HEIGHT ADJUSTMENT */
+        /* ----------------------------------------------------------
+           BLOCK 2.2: AUTOMATIC POPUP HEIGHT ADJUSTMENT
+           ---------------------------------------------------------- */
         function updateParentHeight() {
             setTimeout(() => {
                 if (window.self !== window.top) {
@@ -81,8 +111,11 @@
                 }
             }, 50);
         }
+        /* END BLOCK 2.2 */
 
-        /* BLOCK 2.3: FETCH LOCATIONS AND ZONES FROM SUPABASE */
+        /* ----------------------------------------------------------
+           BLOCK 2.3: FETCH LOCATIONS AND ZONES FROM SUPABASE
+           ---------------------------------------------------------- */
         async function fetchLocationsAndZonesFromSupabase() {
             try {
                 if (typeof supabaseClient !== 'undefined') {
@@ -105,8 +138,11 @@
                 updateParentHeight();
             }
         }
+        /* END BLOCK 2.3 */
 
-        /* BLOCK 2.4: RENDER LOCATION SELECTION VIEW */
+        /* ----------------------------------------------------------
+           BLOCK 2.4: RENDER LOCATION SELECTION VIEW
+           ---------------------------------------------------------- */
         function renderLocationsView() {
             document.getElementById('addLocationSection').classList.remove('hidden');
             document.getElementById('addZoneSection').classList.add('hidden');
@@ -137,8 +173,11 @@
 
             updateParentHeight();
         }
+        /* END BLOCK 2.4 */
 
-        /* BLOCK 2.5: RENDER ZONE SELECTION VIEW */
+        /* ----------------------------------------------------------
+           BLOCK 2.5: RENDER ZONE SELECTION VIEW
+           ---------------------------------------------------------- */
         function renderZonesView(loc) {
             window.parent.postMessage({ 
                 type: 'UPDATE_POPUP_TITLE', 
@@ -176,8 +215,11 @@
 
             updateParentHeight();
         }
+        /* END BLOCK 2.5 */
 
-        /* BLOCK 2.6: ADD NEW LOCATION TO DATABASE */
+        /* ----------------------------------------------------------
+           BLOCK 2.6: ADD NEW LOCATION TO DATABASE
+           ---------------------------------------------------------- */
         async function addNewLocation() {
             const input = document.getElementById('newLocationInput');
             const name = input.value.trim();
@@ -194,8 +236,11 @@
                 }
             } catch (err) { console.error('Add location error:', err); }
         }
+        /* END BLOCK 2.6 */
 
-        /* BLOCK 2.7: ADD NEW ZONE TO DATABASE */
+        /* ----------------------------------------------------------
+           BLOCK 2.7: ADD NEW ZONE TO DATABASE
+           ---------------------------------------------------------- */
         async function addNewZone() {
             const input = document.getElementById('newZoneInput');
             const name = input.value.trim();
@@ -212,8 +257,11 @@
                 }
             } catch (err) { console.error('Add zone error:', err); }
         }
+        /* END BLOCK 2.7 */
 
-        /* BLOCK 2.8: SELECT LOCATION AND RETURN DATA TO PARENT WINDOW */
+        /* ----------------------------------------------------------
+           BLOCK 2.8: SELECT LOCATION AND RETURN DATA TO PARENT WINDOW
+           ---------------------------------------------------------- */
         function selectLocationAndZone(locId, locName, zoneId, zoneName) {
             window.parent.postMessage({
                 type: 'SELECT_LOCATION',
@@ -225,6 +273,11 @@
                 }
             }, '*');
         }
+        /* END BLOCK 2.8 */
+
+        /* ==========================================================
+           END BLOCK 2: LOGIC & DATABASE OPERATIONS
+           ========================================================== */
     </script>
 </body>
 </html>

@@ -1,40 +1,45 @@
-
-<!-- 
+<!--
   ========================================================================
   FILE NAME: ordersystem.html
-  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 13 บล็อกย่อย ดังนี้
-   - [บล็อก 1] UI Components & Layout (6 บล็อกย่อย)
-     - [บล็อก 1.1] TAB 1: เลือกรายการอาหาร
-     - [บล็อก 1.2] TAB 2: ตรวจสอบและระบุลูกค้า
-     - [บล็อก 1.3] TAB 3: สรุปและพิมพ์
-     - [บล็อก 1.4] Modal Pop-up สำหรับแสดง Iframe
-     - [บล็อก 1.5] Modal ยืนยันการล้างตะกร้า
-     - [บล็อก 1.6] CSS Styles
-   - [บล็อก 2] Logic & Database Operations (7 บล็อกย่อย)
-     - [บล็อก 2.1] Initialization and DOMContentLoaded
-     - [บล็อก 2.2] Cross-Window Message Handling
-     - [บล็อก 2.3] Screen, Tab, Cart, and Popup Controls
-     - [บล็อก 2.4] Customer and Location Management
-     - [บล็อก 2.5] Database Fetch Functions
-     - [บล็อก 2.6] Price Calculation and Order Summary
-     - [บล็อก 2.7] Checkout and Print Navigation
+  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 13 บล็อกย่อย ดังသည်။
+
+   - [บล็อก 1] UI Components & Layout (ส่วนแสดงผลหน้าจอผู้ใช้)
+     (ประกอบด้วย 6 หัวข้อ)
+       - [บล็อก 1.1] TAB 1: เลือกรายการอาหาร (Food Selection Tab)
+       - [บล็อก 1.2] TAB 2: ตรวจสอบและระบุลูกค้า (Cart Review and Customer Details Tab)
+       - [บล็อก 1.3] TAB 3: สรุปและพิมพ์ (Order Summary and Print Preview Tab)
+       - [บล็อก 1.4] Modal Pop-up สำหรับแสดง Iframe (Iframe Popup Modal)
+       - [บล็อก 1.5] Modal ยืนยันการล้างตะกร้า (Clear Cart Confirmation Modal)
+       - [บล็อก 1.6] CSS Styles (รูปแบบ CSS Styles)
+
+   - [บล็อก 2] Logic & Database Operations (ระบบการทำงานและการจัดการฐานข้อมูล)
+     (ประกอบด้วย 7 หัวข้อ)
+       - [บล็อก 2.1] Initialization and DOMContentLoaded (เริ่มต้นการทำงานและ DOMContentLoaded)
+       - [บล็อก 2.2] Cross-Window Message Handling (ระบบรับส่งข้อความระหว่างหน้าต่าง)
+       - [บล็อก 2.3] Screen, Tab, Cart, and Popup Controls (ควบคุมหน้าจอ แท็บ ตะกร้า และ Popup)
+       - [บล็อก 2.4] Customer and Location Management (จัดการข้อมูลลูกค้าและสถานที่)
+       - [บล็อก 2.5] Database Fetch Functions (ฟังก์ชันดึงข้อมูลจากฐานข้อมูล)
+       - [บล็อก 2.6] Price Calculation and Order Summary (การคำนวณราคาและสรุปออเดอร์)
+       - [บล็อก 2.7] Checkout and Print Navigation (การดำเนินการสั่งซื้อและนำทางไปหน้าพิมพ์)
   ========================================================================
 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
     <script src="appInit.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>ระบบรับออเดอร์ - ลาบหนองบัวลำภู</title>
     
-    <!-- BLOCK 1.6: CSS STYLES -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.6: CSS STYLES
+         ---------------------------------------------------------- -->
     <!-- Supabase JS Client & Tailwind CSS & SweetAlert2 & FontAwesome -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="supabaseClient.js"></script>
     
     <style>
         :root { --bg-color: #f8fafc; }
@@ -125,14 +130,19 @@
             .no-print { display: none !important; }
         }
     </style>
+    <!-- END BLOCK 1.6 -->
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased flex flex-col min-h-screen">
 
     <div class="flex-1 w-full max-w-xl mx-auto p-3 flex flex-col relative">
         
-        <!-- BLOCK 1: UI COMPONENTS & LAYOUT -->
+        <!-- ==========================================================
+             BLOCK 1: UI COMPONENTS & LAYOUT
+             ========================================================== -->
 
-        <!-- BLOCK 1.1: TAB 1 - FOOD SELECTION -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.1: TAB 1 - FOOD SELECTION
+             ---------------------------------------------------------- -->
         <div id="tabContent1" class="flex flex-col w-full">
             <div class="pb-1 flex-shrink-0">
                 <div class="bg-white p-2.5 px-4 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
@@ -152,8 +162,11 @@
                 <button type="button" onclick="window.location.href='QuickOrder.html'" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 px-2 rounded-2xl text-xs flex items-center justify-center gap-1 shadow active:scale-95 transition cursor-pointer">⚡ สั่งด่วน</button>
             </div>
         </div>
+        <!-- END BLOCK 1.1 -->
 
-        <!-- BLOCK 1.2: TAB 2 - CART REVIEW AND CUSTOMER DETAILS -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.2: TAB 2 - CART REVIEW AND CUSTOMER DETAILS
+             ---------------------------------------------------------- -->
         <div id="tabContent2" class="flex flex-col w-full hidden">
             <div id="locationSelectorWrapper" class="flex-shrink-0 mb-2"></div>
             <div class="flex-1 flex flex-col min-h-0 gap-2 mb-4">
@@ -178,8 +191,11 @@
                 <button type="button" onclick="goToPrintOrder()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-3 rounded-xl text-xs flex-1 shadow transition flex items-center justify-center gap-1 cursor-pointer">✅ ไปหน้าสรุป/พิมพ์</button>
             </div>
         </div>
+        <!-- END BLOCK 1.2 -->
 
-        <!-- BLOCK 1.3: TAB 3 - ORDER SUMMARY AND PRINT PREVIEW -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.3: TAB 3 - ORDER SUMMARY AND PRINT PREVIEW
+             ---------------------------------------------------------- -->
         <div id="tabContent3" class="flex flex-col w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-4 hidden mb-4">
             <div class="text-center mb-2 pb-1 flex-shrink-0">
                 <h2 class="font-extrabold text-slate-800 text-base leading-tight">ลาบหนองบัวลำภู @เขื่อนขุนด่าน</h2>
@@ -214,10 +230,13 @@
                 <button type="button" onclick="goToPrintOrder()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl shadow transition cursor-pointer">🖨️ ไปหน้าพิมพ์ (Print Order)</button>
             </div>
         </div>
+        <!-- END BLOCK 1.3 -->
 
     </div>
 
-    <!-- BLOCK 1.4: IFRAME POPUP MODAL -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.4: IFRAME POPUP MODAL
+         ---------------------------------------------------------- -->
     <div id="dynamicPopupOverlay" class="custom-modal-overlay" onclick="handleOverlayClick()">
         <div id="popupContainerBox" class="popup-container" onclick="event.stopPropagation()">
             <div class="popup-content-wrapper">
@@ -225,8 +244,11 @@
             </div>
         </div>
     </div>
+    <!-- END BLOCK 1.4 -->
 
-    <!-- BLOCK 1.5: CLEAR CART CONFIRMATION MODAL -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.5: CLEAR CART CONFIRMATION MODAL
+         ---------------------------------------------------------- -->
     <div id="confirmClearModalOverlay" class="custom-modal-overlay" onclick="closeConfirmClearModal()">
         <div class="bg-white rounded-3xl max-w-xs w-full p-5 text-center border border-slate-200 shadow-2xl m-4" onclick="event.stopPropagation()">
             <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-3 text-xl font-bold">🗑️</div>
@@ -238,9 +260,11 @@
             </div>
         </div>
     </div>
+    <!-- END BLOCK 1.5 -->
+
+    <!-- END BLOCK 1 -->
 
     <script>
-        <!-- BLOCK 2: LOGIC & DATABASE OPERATIONS -->
         /* ==========================================================
            BLOCK 2: LOGIC & DATABASE OPERATIONS
            ========================================================== */
@@ -266,7 +290,9 @@
         let currentOrderSummary = { itemsCount: 0, totalQty: 0, subtotal: 0, deliveryFee: 0, grandTotal: 0, processedCart: [] };
         let processedItemsForDb = [];
 
-        /* BLOCK 2.1: INITIALIZATION AND DOMCONTENTLOADED */
+        /* ----------------------------------------------------------
+           BLOCK 2.1: INITIALIZATION AND DOMCONTENTLOADED
+           ---------------------------------------------------------- */
         window.addEventListener('DOMContentLoaded', async () => {
             await Promise.all([
                 fetchLatestFoods(),
@@ -284,8 +310,11 @@
                 switchTab(parseInt(targetTab, 10));
             }
         });
+        /* END BLOCK 2.1 */
 
-        /* BLOCK 2.2: CROSS-WINDOW MESSAGE HANDLING */
+        /* ----------------------------------------------------------
+           BLOCK 2.2: CROSS-WINDOW MESSAGE HANDLING
+           ---------------------------------------------------------- */
         window.addEventListener('message', (event) => {
             const { type, catId, catName, food, height, locationObj, group_id, group_name } = event.data || {};
             
@@ -330,23 +359,8 @@
             }
 
             if (type === 'OPEN_ADD_MENU') {
-                const currentIframeSrc = document.getElementById('popupIframe').getAttribute('src');
-                if (currentIframeSrc && !currentIframeSrc.includes('food_add_new.html')) {
-                    previousPopupUrl = currentIframeSrc;
-                }
-                
-                const overlay = document.getElementById('dynamicPopupOverlay');
-                const iframe = document.getElementById('popupIframe');
-                
-                overlay.classList.remove('active');
-                iframe.src = '';
-
-                setTimeout(() => {
-                    const addUrl = `food_add_new.html?group_id=${group_id || ''}&group_name=${encodeURIComponent(group_name || '')}`;
-                    iframe.style.height = '550px'; 
-                    iframe.src = addUrl;
-                    overlay.classList.add('active');
-                }, 150);
+                const addUrl = `food_add_new.html?group_id=${group_id || ''}&group_name=${encodeURIComponent(group_name || '')}`;
+                window.location.href = addUrl;
             }
 
             if (type === 'BACK_TO_CATEGORY') {
@@ -370,8 +384,12 @@
                 }
             }
         });
+        /* END BLOCK 2.2 */
 
-        /* BLOCK 2.3: SCREEN, TAB, CART, AND POPUP CONTROLS */
+
+        /* ----------------------------------------------------------
+           BLOCK 2.3: SCREEN, TAB, CART, AND POPUP CONTROLS
+           ---------------------------------------------------------- */
         function sendDataToFoodGroupFrame() {
             const frame = document.getElementById('foodGroupFrame');
             if (frame && frame.contentWindow) {
@@ -464,8 +482,11 @@
             document.getElementById('popupIframe').src = '';
             updateCartUI();
         }
+        /* END BLOCK 2.3 */
 
-        /* BLOCK 2.4: CUSTOMER AND LOCATION MANAGEMENT */
+        /* ----------------------------------------------------------
+           BLOCK 2.4: CUSTOMER AND LOCATION MANAGEMENT
+           ---------------------------------------------------------- */
         function removeDuplicateWords(text) {
             if (!text) return '';
             const parts = text.trim().split(/\s+/);
@@ -552,8 +573,11 @@
         function openLocationZoneModal() {
             openDynamicPopup('location_zone');
         }
+        /* END BLOCK 2.4 */
 
-        /* BLOCK 2.5: DATABASE FETCH FUNCTIONS */
+        /* ----------------------------------------------------------
+           BLOCK 2.5: DATABASE FETCH FUNCTIONS
+           ---------------------------------------------------------- */
         async function fetchLocationsAndZones() {
             if (typeof supabaseClient !== 'undefined') {
                 const [locRes, zoneRes] = await Promise.all([
@@ -600,8 +624,11 @@
                 sendDataToFoodGroupFrame();
             }
         }
+        /* END BLOCK 2.5 */
 
-        /* BLOCK 2.6: PRICE CALCULATION AND ORDER SUMMARY */
+        /* ----------------------------------------------------------
+           BLOCK 2.6: PRICE CALCULATION AND ORDER SUMMARY
+           ---------------------------------------------------------- */
         function getGroupBasePrice(item, groupId) {
             if (item.price !== undefined && item.price !== null && Number(item.price) > 0 && (item.is_buying_resell || Number(item.food_group_id) === 99)) {
                 return Number(item.price);
@@ -827,8 +854,11 @@
             document.getElementById('summaryQty').textContent = `${currentOrderSummary.itemsCount} รายการ - ${currentOrderSummary.totalQty} ชิ้น`;
             document.getElementById('summaryTotal').textContent = currentOrderSummary.grandTotal.toLocaleString();
         }
+        /* END BLOCK 2.6 */
 
-        /* BLOCK 2.7: CHECKOUT AND PRINT NAVIGATION */
+        /* ----------------------------------------------------------
+           BLOCK 2.7: CHECKOUT AND PRINT NAVIGATION
+           ---------------------------------------------------------- */
         async function ensureCustomerSaved(inputValue) {
             const val = removeDuplicateWords(inputValue);
             if (!val) return null;
@@ -877,6 +907,11 @@
             sessionStorage.setItem('printOrderData', JSON.stringify(orderPayload));
             window.location.href = 'printorder.html';
         }
+        /* END BLOCK 2.7 */
+
+        /* ==========================================================
+           END BLOCK 2: LOGIC & DATABASE OPERATIONS
+           ========================================================== */
     </script>
 </body>
 </html>

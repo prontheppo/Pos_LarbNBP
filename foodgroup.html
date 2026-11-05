@@ -1,18 +1,21 @@
-
 <!--
   ========================================================================
   FILE NAME: foodgroup.html
-  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 8 หัวข้อย่อย ดังนี้
-   - [บล็อก 1] ส่วนแสดงผลหน้าจอผู้ใช้ (2 หัวข้อย่อย)
-     - [บล็อก 1.1] Container สำหรับแสดงปุ่มหมวดหมู่
-     - [บล็อก 1.2] Custom Popup Modal สำหรับแจ้งเตือน
-   - [บล็อก 2] ระบบการทำงานและการจัดการฐานข้อมูล (6 หัวข้อย่อย)
-     - [บล็อก 2.1] ฟังก์ชันเปิด Modal แจ้งเตือน
-     - [บล็อก 2.2] ฟังก์ชันปิด Modal แจ้งเตือน
-     - [บล็อก 2.3] ตรวจสอบและโหลดข้อมูลเมื่อเปิดไฟล์เดี่ยว
-     - [บล็อก 2.4] ดึงข้อมูลจาก Supabase
-     - [บล็อก 2.5] รับข้อความ PostMessage จากหน้าต่างแม่
-     - [บล็อก 2.6] เรนเดอร์ปุ่มหมวดหมู่และคำนวณจำนวนสินค้าในตะกร้า
+  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 8 หัวข้อย่อย ดังนี้
+
+   - [บล็อก 1] UI COMPONENTS & LAYOUT (ส่วนประกอบหน้าจอ)
+     (ประกอบด้วย 2 หัวข้อ)
+       - [บล็อก 1.1] CATEGORY BUTTON CONTAINER (กล่องแสดงปุ่มหมวดหมู่)
+       - [บล็อก 1.2] CUSTOM ALERT POPUP MODAL (หน้าต่างแจ้งเตือน)
+
+   - [บล็อก 2] LOGIC & DATABASE OPERATIONS (ระบบการทำงานและฐานข้อมูล)
+     (ประกอบด้วย 6 หัวข้อ)
+       - [บล็อก 2.1] OPEN CUSTOM ALERT MODAL (เปิดหน้าต่างแจ้งเตือน)
+       - [บล็อก 2.2] CLOSE CUSTOM ALERT MODAL (ปิดหน้าต่างแจ้งเตือน)
+       - [บล็อก 2.3] CHECK AND LOAD DATA IN STANDALONE MODE (ตรวจสอบและโหลดข้อมูลเมื่อเปิดไฟล์เดี่ยว)
+       - [บล็อก 2.4] FETCH CATEGORY AND FOOD DATA DIRECTLY FROM SUPABASE (ดึงข้อมูลหมวดหมู่และอาหารจาก Supabase)
+       - [บล็อก 2.5] RECEIVE POSTMESSAGE FROM PARENT WINDOW (รับข้อความจากหน้าต่างหลัก)
+       - [บล็อก 2.6] RENDER CATEGORY BUTTONS AND CALCULATE CART QUANTITIES (แสดงผลปุ่มหมวดหมู่และคำนวณจำนวนสินค้า)
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -117,7 +120,9 @@
          BLOCK 1: UI COMPONENTS & LAYOUT
          ========================================================== -->
 
-    <!-- BLOCK 1.1: CATEGORY BUTTON CONTAINER -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.1: CATEGORY BUTTON CONTAINER
+         ---------------------------------------------------------- -->
     <div class="w-full max-w-xl mx-auto flex flex-col">
         <div id="categoryView" class="w-full">
             <div id="quickNavContainer" class="category-nav-wrap">
@@ -125,8 +130,11 @@
             </div>
         </div>
     </div>
+    <!-- END BLOCK 1.1 -->
 
-    <!-- BLOCK 1.2: CUSTOM ALERT POPUP MODAL -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.2: CUSTOM ALERT POPUP MODAL
+         ---------------------------------------------------------- -->
     <div id="customModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-opacity duration-200 opacity-0">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-xs p-5 text-center transform scale-95 transition-transform duration-200 border border-slate-100 flex flex-col items-center" id="modalBox">
             <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-2xl mb-3 shadow-inner">
@@ -139,6 +147,9 @@
             </button>
         </div>
     </div>
+    <!-- END BLOCK 1.2 -->
+
+    <!-- END BLOCK 1 -->
 
     <script>
         /* ==========================================================
@@ -149,7 +160,9 @@
         let cachedFoods = [];
         let currentCart = [];
 
-        /* BLOCK 2.1: OPEN CUSTOM ALERT MODAL */
+        /* ----------------------------------------------------------
+           BLOCK 2.1: OPEN CUSTOM ALERT MODAL
+           ---------------------------------------------------------- */
         function showCustomModal(message) {
             const modal = document.getElementById('customModal');
             const modalBox = document.getElementById('modalBox');
@@ -163,8 +176,11 @@
                 modalBox.classList.add('scale-100');
             }, 10);
         }
+        /* END BLOCK 2.1 */
 
-        /* BLOCK 2.2: CLOSE CUSTOM ALERT MODAL */
+        /* ----------------------------------------------------------
+           BLOCK 2.2: CLOSE CUSTOM ALERT MODAL
+           ---------------------------------------------------------- */
         function closeCustomModal() {
             const modal = document.getElementById('customModal');
             const modalBox = document.getElementById('modalBox');
@@ -177,15 +193,21 @@
                 modal.classList.add('hidden');
             }, 200);
         }
+        /* END BLOCK 2.2 */
 
-        /* BLOCK 2.3: CHECK AND LOAD DATA IN STANDALONE MODE */
+        /* ----------------------------------------------------------
+           BLOCK 2.3: CHECK AND LOAD DATA IN STANDALONE MODE
+           ---------------------------------------------------------- */
         window.addEventListener('DOMContentLoaded', async () => {
             if (window.self === window.top) {
                 await fetchStandaloneData();
             }
         });
+        /* END BLOCK 2.3 */
 
-        /* BLOCK 2.4: FETCH CATEGORY AND FOOD DATA DIRECTLY FROM SUPABASE */
+        /* ----------------------------------------------------------
+           BLOCK 2.4: FETCH CATEGORY AND FOOD DATA DIRECTLY FROM SUPABASE
+           ---------------------------------------------------------- */
         async function fetchStandaloneData() {
             const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
             if (!client) {
@@ -209,8 +231,11 @@
                 console.error("Load error:", err);
             }
         }
+        /* END BLOCK 2.4 */
 
-        /* BLOCK 2.5: RECEIVE POSTMESSAGE FROM PARENT WINDOW */
+        /* ----------------------------------------------------------
+           BLOCK 2.5: RECEIVE POSTMESSAGE FROM PARENT WINDOW
+           ---------------------------------------------------------- */
         window.addEventListener('message', (event) => {
             const { type, categories, foods, cart } = event.data || {};
             if (type === 'RENDER_CATEGORIES') {
@@ -220,8 +245,11 @@
                 renderCategories(cachedCategories, cachedFoods, currentCart);
             }
         });
+        /* END BLOCK 2.5 */
 
-        /* BLOCK 2.6: RENDER CATEGORY BUTTONS AND CALCULATE CART QUANTITIES */
+        /* ----------------------------------------------------------
+           BLOCK 2.6: RENDER CATEGORY BUTTONS AND CALCULATE CART QUANTITIES
+           ---------------------------------------------------------- */
         function renderCategories(categories, foods, cart) {
             const navContainer = document.getElementById('quickNavContainer');
             if (!navContainer) return;
@@ -297,6 +325,11 @@
                 navContainer.appendChild(btn);
             });
         }
+        /* END BLOCK 2.6 */
+
+        /* ==========================================================
+           END BLOCK 2: LOGIC & DATABASE OPERATIONS
+           ========================================================== */
     </script>
 </body>
 </html>

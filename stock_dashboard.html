@@ -1,36 +1,37 @@
-
 <!--
-  ================================
+  ========================================================================
   FILE NAME: stock_dashboard.html
-  ================================
+  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 22 บล็อกย่อย ดังนี้
 
-  [บล็อก 1] ส่วนประกอบและการจัดวางหน้าจอ (12 บล็อกย่อย)
-  [บล็อก 1.1] รูปแบบ CSS และการแสดงหน้าต่าง Modal
-  [บล็อก 1.2] ส่วนหัวระบบและปุ่มกลับหน้าผู้ดูแลระบบ
-  [บล็อก 1.3] แถบนำทางสำหรับสลับแท็บ
-  [บล็อก 1.4] หน้าจัดการสต็อก: ส่วนเพิ่มวัตถุดิบ
-  [บล็อก 1.5] หน้าจัดการสต็อก: รายการวัตถุดิบปัจจุบัน
-  [บล็อก 1.6] หน้ากำหนดสูตร: ส่วนเลือกวัตถุดิบตั้งต้นและปุ่มผูกเมนู
-  [บล็อก 1.7] หน้ากำหนดสูตร: สรุปรายการเชื่อมโยงวัตถุดิบกับเมนู
-  [บล็อก 1.8] หน้าต่างแก้ไขจำนวนสต็อกวัตถุดิบ
-  [บล็อก 1.9] หน้าต่างเลือกวัตถุดิบตั้งต้นสำหรับกำหนดสูตร
-  [บล็อก 1.10] หน้าต่างเลือกเมนูอาหารเพื่อเชื่อมโยงกับวัตถุดิบ
-  [บล็อก 1.11] หน้าต่างเลือกหรือเพิ่มชื่อวัตถุดิบ
-  [บล็อก 1.12] หน้าต่างแจ้งเตือนผลการทำงาน
+   - [บล็อก 1] UI Components & Layout (ส่วนแสดงผลหน้าจอผู้ใช้)
+     (ประกอบด้วย 12 หัวข้อ)
+       - [บล็อก 1.1] CSS STYLES AND MODAL LAYOUT (รูปแบบ CSS และการแสดงหน้าต่าง Modal)
+       - [บล็อก 1.2] SYSTEM HEADER AND ADMIN NAVIGATION (ส่วนหัวระบบและปุ่มกลับหน้าผู้ดูแลระบบ)
+       - [บล็อก 1.3] TAB NAVIGATION (แถบนำทางสำหรับสลับแท็บ)
+       - [บล็อก 1.4] TAB 1 - ADD NEW STOCK ITEM (หน้าจัดการสต็อก: ส่วนเพิ่มวัตถุดิบ)
+       - [บล็อก 1.5] TAB 1 - CURRENT STOCK LIST (หน้าจัดการสต็อก: รายการวัตถุดิบปัจจุบัน)
+       - [บล็อก 1.6] TAB 2 - SELECT STOCK AND LINK MENU (หน้ากำหนดสูตร: ส่วนเลือกวัตถุดิบตั้งต้นและปุ่มผูกเมนู)
+       - [บล็อก 1.7] TAB 2 - STOCK AND MENU LINK SUMMARY (หน้ากำหนดสูตร: สรุปรายการเชื่อมโยงวัตถุดิบกับเมนู)
+       - [บล็อก 1.8] EDIT STOCK QUANTITY MODAL (หน้าต่างแก้ไขจำนวนสต็อกวัตถุดิบ)
+       - [บล็อก 1.9] STOCK SELECTION MODAL FOR RECIPE CONFIGURATION (หน้าต่างเลือกวัตถุดิบตั้งต้นสำหรับกำหนดสูตร)
+       - [บล็อก 1.10] RECIPE MENU LINKING MODAL (หน้าต่างเลือกเมนูอาหารเพื่อเชื่อมโยงกับวัตถุดิบ)
+       - [บล็อก 1.11] STOCK SELECTION AND CUSTOM ITEM MODAL (หน้าต่างเลือกหรือเพิ่มชื่อวัตถุดิบ)
+       - [บล็อก 1.12] NOTIFICATION MODAL (หน้าต่างแจ้งเตือนผลการทำงาน)
 
-  [บล็อก 2] ระบบจัดการสต็อกและสูตรอาหาร (10 บล็อกย่อย)
-  [บล็อก 2.1] ตัวแปรเริ่มต้นและการเชื่อมต่อ Supabase
-  [บล็อก 2.2] ระบบสลับแท็บและจัดการหน้าต่าง Modal
-  [บล็อก 2.3] ระบบเพิ่มและเลือกวัตถุดิบ
-  [บล็อก 2.4] ระบบแสดงรายการสต็อกและแก้ไขจำนวน
-  [บล็อก 2.5] ระบบโหลดข้อมูลวัตถุดิบและเมนูอาหาร
-  [บล็อก 2.6] ระบบแสดงสรุปรายการเชื่อมโยงวัตถุดิบกับเมนู
-  [บล็อก 2.7] ระบบตัดสต็อกและแจ้งเตือนเมื่อวัตถุดิบใกล้หมด
-  [บล็อก 2.8] ระบบเลือกวัตถุดิบและเปิดหน้าต่างเชื่อมโยงเมนู
-  [บล็อก 2.9] ระบบแสดงหมวดหมู่เมนูและจัดการรายการที่เลือก
-  [บล็อก 2.10] ระบบบันทึกการเชื่อมโยงเมนูและกลับหน้าผู้ดูแลระบบ
+   - [บล็อก 2] STOCK AND RECIPE MANAGEMENT LOGIC (ระบบจัดการสต็อกและสูตรอาหาร)
+     (ประกอบด้วย 10 หัวข้อ)
+       - [บล็อก 2.1] INITIALIZATION AND SUPABASE CLIENT CONNECTION (ตัวแปรเริ่มต้นและการเชื่อมต่อ Supabase)
+       - [บล็อก 2.2] TAB SWITCHING AND MODAL HELPERS (ระบบสลับแท็บและจัดการหน้าต่าง Modal)
+       - [บล็อก 2.3] STOCK SELECTION AND ADDITION (ระบบเพิ่มและเลือกวัตถุดิบ)
+       - [บล็อก 2.4] STOCK LIST DISPLAY AND QUANTITY EDITING (ระบบแสดงรายการสต็อกและแก้ไขจำนวน)
+       - [บล็อก 2.5] LOAD STOCK AND FOOD DATA (ระบบโหลดข้อมูลวัตถุดิบและเมนูอาหาร)
+       - [บล็อก 2.6] STOCK AND RECIPE LINK SUMMARY (ระบบแสดงสรุปรายการเชื่อมโยงวัตถุดิบกับเมนู)
+       - [บล็อก 2.7] DEDUCT STOCK AND NOTIFY LOW QUANTITIES (ระบบตัดสต็อกและแจ้งเตือนเมื่อวัตถุดิบใกล้หมด)
+       - [บล็อก 2.8] SELECT STOCK AND OPEN RECIPE LINKING MODAL (ระบบเลือกวัตถุดิบและเปิดหน้าต่างเชื่อมโยงเมนู)
+       - [บล็อก 2.9] CATEGORY GRID, FOOD DETAILS, AND CHECKBOX MANAGEMENT (ระบบแสดงหมวดหมู่เมนูและจัดการรายการที่เลือก)
+       - [บล็อก 2.10] SAVE RECIPE LINKS AND ADMIN NAVIGATION (ระบบบันทึกการเชื่อมโยงเมนูและกลับหน้าผู้ดูแลระบบ)
+  ========================================================================
 -->
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -43,7 +44,9 @@
     <!-- Load Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- BLOCK 1.1: CSS STYLES AND MODAL LAYOUT -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.1: CSS STYLES AND MODAL LAYOUT
+         ---------------------------------------------------------- -->
     <style>
       * { touch-action: pan-y; }
       body { width: 100vw; overflow-x: hidden; margin: 0; padding: 0; }
@@ -71,22 +74,30 @@
           to { transform: scale(1); opacity: 1; }
       }
     </style>
+    <!-- END BLOCK 1.1 -->
 </head>
 <body class="bg-gray-100 font-sans">
 
-    <!-- BLOCK 1: UI COMPONENTS & LAYOUT -->
+    <!-- ==========================================================
+       BLOCK 1: UI COMPONENTS & LAYOUT
+       ========================================================== -->
 
     <div class="max-w-5xl mx-auto p-2 sm:p-4 overflow-hidden space-y-3">
 
-        <!-- BLOCK 1.2: SYSTEM HEADER AND ADMIN NAVIGATION -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.2: SYSTEM HEADER AND ADMIN NAVIGATION
+             ---------------------------------------------------------- -->
         <div class="flex justify-between items-center mb-2">
             <h1 class="text-base sm:text-xl font-bold truncate">📦 ระบบจัดการสต็อกและสูตรอาหาร</h1>
             <button onclick="goBack()" class="bg-orange-500 hover:bg-orange-600 active:scale-95 text-white px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold shadow shrink-0 cursor-pointer transition">
                 ⬅ กลับหน้าผู้ดูแลระบบ
             </button>
         </div>
+        <!-- END BLOCK 1.2 -->
 
-        <!-- BLOCK 1.3: TAB NAVIGATION -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.3: TAB NAVIGATION
+             ---------------------------------------------------------- -->
         <div class="flex border-b border-gray-300 bg-white rounded-t-lg p-1 shadow-sm">
             <button onclick="switchTab(1)" id="tabBtn1" class="flex-1 py-2 text-xs sm:text-sm font-bold text-center rounded-lg transition bg-amber-600 text-white shadow-sm cursor-pointer">
                 📦 จัดการสต็อกวัตถุดิบ
@@ -95,10 +106,13 @@
                 🔗 กำหนดสูตรและลิงก์เมนู
             </button>
         </div>
+        <!-- END BLOCK 1.3 -->
 
-        <!-- BLOCK 1.4: TAB 1 - ADD NEW STOCK ITEM -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.4 & 1.5: TAB 1 CONTENT (STOCK MANAGEMENT)
+             ---------------------------------------------------------- -->
         <div id="tabContent1" class="space-y-3">
-            <!-- Add a new stock item -->
+            <!-- BLOCK 1.4: TAB 1 - ADD NEW STOCK ITEM -->
             <div class="bg-white p-3 rounded-lg shadow">
                 <h2 class="font-bold text-xs sm:text-sm mb-2">➕ เพิ่มวัตถุดิบตั้งต้นใหม่</h2>
                 <div class="flex items-center gap-1.5 w-full">
@@ -117,10 +131,13 @@
                 <div id="stockList" class="text-gray-500 text-xs sm:text-sm max-h-96 overflow-y-auto popup-scrollbar">กำลังโหลดข้อมูล...</div>
             </div>
         </div>
+        <!-- END BLOCK 1.4 & 1.5 -->
 
-        <!-- BLOCK 1.6: TAB 2 - SELECT STOCK AND LINK MENU -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.6 & 1.7: TAB 2 CONTENT (RECIPE & MENU LINKING)
+             ---------------------------------------------------------- -->
         <div id="tabContent2" class="space-y-3 hidden">
-            <!-- Select stock item to configure its recipe -->
+            <!-- BLOCK 1.6: TAB 2 - SELECT STOCK AND LINK MENU -->
             <div class="bg-white p-3 rounded-lg shadow">
                 <h2 class="font-bold text-xs sm:text-sm mb-2">📦 เลือกวัตถุดิบตั้งต้นเพื่อกำหนดสูตร</h2>
                 <div class="bg-amber-50/50 border border-amber-200/80 rounded-xl p-2 shadow-sm flex items-center gap-2">
@@ -142,9 +159,12 @@
                 </div>
             </div>
         </div>
+        <!-- END BLOCK 1.6 & 1.7 -->
     </div>
 
-    <!-- BLOCK 1.8: EDIT STOCK QUANTITY MODAL -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.8: EDIT STOCK QUANTITY MODAL
+         ---------------------------------------------------------- -->
     <div id="editStockModal" class="custom-modal-overlay" onclick="handleOutsideClick(event, 'editStockModal')">
         <div class="custom-modal-box border-t-4 border-amber-600" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-3 pb-2 border-b">
@@ -181,8 +201,11 @@
             </div>
         </div>
     </div>
+    <!-- END BLOCK 1.8 -->
 
-    <!-- BLOCK 1.9: STOCK SELECTION MODAL FOR RECIPE CONFIGURATION -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.9: STOCK SELECTION MODAL FOR RECIPE CONFIGURATION
+         ---------------------------------------------------------- -->
     <div id="stockModal" class="custom-modal-overlay" onclick="handleOutsideClick(event, 'stockModal')">
         <div class="custom-modal-box border-t-4 border-amber-500" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-3 pb-2 border-b">
@@ -192,8 +215,11 @@
             <div id="stockGrid" class="grid grid-cols-2 gap-2 overflow-y-auto py-1 pr-1 max-h-[60vh]"></div>
         </div>
     </div>
+    <!-- END BLOCK 1.9 -->
 
-    <!-- BLOCK 1.10: RECIPE MENU LINKING MODAL -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.10: RECIPE MENU LINKING MODAL
+         ---------------------------------------------------------- -->
     <div id="recipeLinkModal" class="custom-modal-overlay" onclick="handleOutsideClick(event, 'recipeLinkModal')">
         <div class="custom-modal-box border-t-4 border-blue-600" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-3 pb-2 border-b">
@@ -227,8 +253,11 @@
             </div>
         </div>
     </div>
+    <!-- END BLOCK 1.10 -->
 
-    <!-- BLOCK 1.11: STOCK SELECTION AND CUSTOM ITEM MODAL -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.11: STOCK SELECTION AND CUSTOM ITEM MODAL
+         ---------------------------------------------------------- -->
     <div id="stockSelectModal" class="custom-modal-overlay" onclick="handleOutsideClick(event, 'stockSelectModal')">
         <div class="custom-modal-box border-t-4 border-amber-600" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-3 pb-2 border-b">
@@ -246,8 +275,11 @@
             </div>
         </div>
     </div>
+    <!-- END BLOCK 1.11 -->
 
-    <!-- BLOCK 1.12: NOTIFICATION MODAL -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.12: NOTIFICATION MODAL
+         ---------------------------------------------------------- -->
     <div id="notificationModal" class="custom-modal-overlay" onclick="handleOutsideClick(event, 'notificationModal')">
         <div class="custom-modal-box text-center p-5" onclick="event.stopPropagation()" style="max-width: 380px;">
             <div id="notifIconContainer" class="w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center text-2xl shadow-inner">
@@ -260,13 +292,15 @@
             </button>
         </div>
     </div>
+    <!-- END BLOCK 1.12 -->
 
     <!-- Load Supabase Client -->
     <script src="supabaseClient.js"></script>
 
-    <!-- BLOCK 2: STOCK AND RECIPE MANAGEMENT LOGIC -->
     <script>
-        // BLOCK 2.1: INITIALIZATION AND SUPABASE CLIENT CONNECTION
+        /* ==========================================================
+           BLOCK 2: STOCK AND RECIPE MANAGEMENT LOGIC
+           ========================================================== */
         let db;
         let stockData = [];
         let allFoodsData = [];
@@ -277,6 +311,9 @@
         let chosenStockValue = ''; 
         let activeGroupId = null;
 
+        /* ----------------------------------------------------------
+           BLOCK 2.1: INITIALIZATION AND SUPABASE CLIENT CONNECTION
+           ---------------------------------------------------------- */
         function getDbClient() {
             if (db) return db;
             if (typeof window.supabaseClient !== 'undefined') db = window.supabaseClient;
@@ -295,10 +332,11 @@
                 console.error("Supabase client not found.");
             }
         });
+        /* END BLOCK 2.1 */
 
-        // BLOCK 2.2: TAB SWITCHING AND MODAL HELPERS
-
-        // Switch between application tabs
+        /* ----------------------------------------------------------
+           BLOCK 2.2: TAB SWITCHING AND MODAL HELPERS
+           ---------------------------------------------------------- */
         function switchTab(tabNumber) {
             const btn1 = document.getElementById('tabBtn1');
             const btn2 = document.getElementById('tabBtn2');
@@ -322,7 +360,6 @@
         function closeModal(id) { document.getElementById(id)?.classList.remove('active'); }
         function handleOutsideClick(e, id) { if (e.target.id === id) closeModal(id); }
 
-        // Display a modern notification popup
         function showNotification(type, title, message) {
             const iconContainer = document.getElementById('notifIconContainer');
             const titleEl = document.getElementById('notifTitle');
@@ -346,9 +383,11 @@
 
             openModal('notificationModal');
         }
+        /* END BLOCK 2.2 */
 
-        // BLOCK 2.3: STOCK SELECTION AND ADDITION
-
+        /* ----------------------------------------------------------
+           BLOCK 2.3: STOCK SELECTION AND ADDITION
+           ---------------------------------------------------------- */
         function openStockSelectModal() {
             const container = document.getElementById('stockSelectListContainer');
             container.innerHTML = '';
@@ -446,9 +485,11 @@
             textEl.className = 'truncate text-slate-500';
             document.getElementById('stockQty').value = '';
         }
+        /* END BLOCK 2.3 */
 
-        // BLOCK 2.4: STOCK LIST DISPLAY AND QUANTITY EDITING
-
+        /* ----------------------------------------------------------
+           BLOCK 2.4: STOCK LIST DISPLAY AND QUANTITY EDITING
+           ---------------------------------------------------------- */
         async function loadStocks() {
             const { data, error } = await db
                 .from('food_stock')
@@ -551,9 +592,11 @@
                 alert('เกิดข้อผิดพลาดในการแก้ไขจำนวน: ' + err.message);
             }
         }
+        /* END BLOCK 2.4 */
 
-        // BLOCK 2.5: LOAD STOCK AND FOOD DATA
-
+        /* ----------------------------------------------------------
+           BLOCK 2.5: LOAD STOCK AND FOOD DATA
+           ---------------------------------------------------------- */
         async function loadStockItems() {
             try {
                 const { data, error } = await db.from('food_stock').select('*').order('food_stock_name', { ascending: true });
@@ -566,7 +609,6 @@
 
         async function loadAllFoods() {
             try {
-                // Use food_name to sort according to the foods table structure
                 const { data, error } = await db.from('foods').select('*').order('food_name', { ascending: true });
                 if (error) throw error;
                 allFoodsData = data || [];
@@ -574,9 +616,11 @@
                 console.error("Error loading foods:", err);
             }
         }
+        /* END BLOCK 2.5 */
 
-        // BLOCK 2.6: STOCK AND RECIPE LINK SUMMARY
-
+        /* ----------------------------------------------------------
+           BLOCK 2.6: STOCK AND RECIPE LINK SUMMARY
+           ---------------------------------------------------------- */
         async function loadAllStockRecipeLinks() {
             const summaryContainer = document.getElementById('stockLinkSummary');
             if (!summaryContainer) return;
@@ -610,7 +654,6 @@
                         .filter(r => String(r.food_stock_id) === String(stockId))
                         .map(r => String(r.food_id));
 
-                    // Use food_name to match the actual schema
                     const linkedFoodNames = foods
                         .filter(f => linkedFoodIds.includes(String(f.food_id || f.id)))
                         .map(f => f.food_name);
@@ -637,10 +680,11 @@
                 summaryContainer.innerHTML = '<span class="text-red-500">โหลดข้อมูลการลิงก์ไม่สำเร็จ</span>';
             }
         }
+        /* END BLOCK 2.6 */
 
-        // BLOCK 2.7: DEDUCT STOCK AND NOTIFY LOW QUANTITIES
-        // This function is called from the food sales page
-
+        /* ----------------------------------------------------------
+           BLOCK 2.7: DEDUCT STOCK AND NOTIFY LOW QUANTITIES
+           ---------------------------------------------------------- */
         async function deductStockForOrder(foodId, orderedQty = 1) {
             try {
                 const { data: relations, error: relError } = await db
@@ -694,9 +738,11 @@
                 console.error("เกิดข้อผิดพลาดในการตัดสต็อก:", err);
             }
         }
+        /* END BLOCK 2.7 */
 
-        // BLOCK 2.8: SELECT STOCK AND OPEN RECIPE LINKING MODAL
-
+        /* ----------------------------------------------------------
+           BLOCK 2.8: SELECT STOCK AND OPEN RECIPE LINKING MODAL
+           ---------------------------------------------------------- */
         async function openStockModal() {
             await loadStockItems();
             const grid = document.getElementById('stockGrid');
@@ -752,7 +798,6 @@
             openModal('recipeLinkModal');
 
             try {
-                // Use food_group_name and food_name according to the schema
                 const [linkRes, groupRes, foodRes] = await Promise.all([
                     db.from('menu_food_stock').select('food_id').eq('food_stock_id', selectedStockId),
                     db.from('food_groups').select('*').order('food_group_name', { ascending: true }),
@@ -774,16 +819,17 @@
                 gridContainer.innerHTML = '<div class="text-center text-red-500 text-xs py-4">โหลดข้อมูลหมวดหมู่ไม่สำเร็จ</div>';
             }
         }
+        /* END BLOCK 2.8 */
 
-        // BLOCK 2.9: CATEGORY GRID, FOOD DETAILS, AND CHECKBOX MANAGEMENT
-
+        /* ----------------------------------------------------------
+           BLOCK 2.9: CATEGORY GRID, FOOD DETAILS, AND CHECKBOX MANAGEMENT
+           ---------------------------------------------------------- */
         function renderCategoryGrid() {
             const gridContainer = document.getElementById('categoryGridView');
             let html = '<div class="grid grid-cols-2 gap-2 overflow-y-auto max-h-[55vh] popup-scrollbar p-1">';
 
             foodGroupsData.forEach(group => {
                 const groupId = String(group.food_group_id || group.id);
-                // Use food_group_name according to the schema
                 const groupName = group.food_group_name || 'หมวดหมู่ทั่วไป';
                 const foodsInGroup = allFoodsData.filter(f => String(f.food_group_id) === groupId);
                 
@@ -839,7 +885,7 @@
                 foodsInGroup = allFoodsData.filter(f => !foodGroupsData.some(g => String(g.food_group_id || g.id) === String(f.food_group_id)));
             } else {
                 const group = foodGroupsData.find(g => String(g.food_group_id || g.id) === String(groupId));
-                if (group) groupName = group.food_group_name; // Use food_group_name according to the schema
+                if (group) groupName = group.food_group_name;
                 foodsInGroup = allFoodsData.filter(f => String(f.food_group_id) === String(groupId));
             }
 
@@ -853,7 +899,6 @@
             let html = '';
             foodsInGroup.forEach(food => {
                 const foodId = String(food.food_id || food.id);
-                // Use food_name according to the schema
                 const foodName = food.food_name || 'เมนูไม่มีชื่อ';
                 const isChecked = linkedFoodIdsCache.includes(foodId) ? 'checked' : '';
 
@@ -891,9 +936,11 @@
             const checkboxes = document.querySelectorAll('input[name="recipeCheckbox"]');
             checkboxes.forEach(cb => { cb.checked = status; });
         }
+        /* END BLOCK 2.9 */
 
-        // BLOCK 2.10: SAVE RECIPE LINKS AND ADMIN NAVIGATION
-
+        /* ----------------------------------------------------------
+           BLOCK 2.10: SAVE RECIPE LINKS AND ADMIN NAVIGATION
+           ---------------------------------------------------------- */
         async function saveRecipeLinks() {
             if (!selectedStockId) return;
 
@@ -934,6 +981,11 @@
         function goBack() {
             window.location.href = 'index_admin.html';
         }
+        /* END BLOCK 2.10 */
+
+        /* ==========================================================
+           END BLOCK 2: STOCK AND RECIPE MANAGEMENT LOGIC
+           ========================================================== */
     </script>
 </body>
 </html>

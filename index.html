@@ -1,37 +1,38 @@
-
 <!--
   ========================================================================
   FILE NAME: index.html
-  SUMMARY:
-  มีทั้งหมด 2 บล็อกหลัก | 7 บล็อกย่อย ดังนี้
+  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 7 บล็อกย่อย ดังนี้
 
-  [บล็อก 1] ส่วนแสดงผลหน้าจอผู้ใช้ (UI Components & Layout)
-    - [บล็อก 1.1] โครงสร้างหลัก Main Card
-    - [บล็อก 1.2] ส่วนหัว Header และชื่อร้าน
-    - [บล็อก 1.3] รายการปุ่มเมนูหลัก
-    - [บล็อก 1.4] รูปแบบการแสดงผล CSS
+   - [บล็อก 1] UI COMPONENTS & LAYOUT (ส่วนแสดงผลหน้าจอผู้ใช้)
+     (ประกอบด้วย 4 หัวข้อ)
+       - [บล็อก 1.1] โครงสร้างหลัก Main Card (Main Card Layout)
+       - [บล็อก 1.2] ส่วนหัว Header และชื่อร้าน (Header and Restaurant Name)
+       - [บล็อก 1.3] รายการปุ่มเมนูหลัก (Main Menu Buttons)
+       - [บล็อก 1.4] รูปแบบการแสดงผล CSS (CSS Styles)
 
-  [บล็อก 2] ระบบการทำงานและจัดการเหตุการณ์ (Logic & Event Handlers)
-    - [บล็อก 2.1] ป้องกันการซูมหน้าจอด้วย Gesture
-    - [บล็อก 2.2] ป้องกัน Double Tap Zoom และการแตะหลายนิ้ว
-    - [บล็อก 2.3] ฟังก์ชันเปลี่ยนหน้าเว็บ goToPage
+   - [บล็อก 2] LOGIC & EVENT HANDLERS (ระบบการทำงานและจัดการเหตุการณ์)
+     (ประกอบด้วย 3 หัวข้อ)
+       - [บล็อก 2.1] PREVENT GESTURE-BASED ZOOM (ป้องกันการซูมหน้าจอด้วย Gesture)
+       - [บล็อก 2.2] PREVENT DOUBLE-TAP ZOOM AND MULTI-TOUCH (ป้องกัน Double Tap Zoom และการแตะหลายนิ้ว)
+       - [บล็อก 2.3] NAVIGATE TO THE SPECIFIED PAGE (ฟังก์ชันเปลี่ยนหน้าเว็บ goToPage)
   ========================================================================
 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
     <script src="appInit.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
 
     <title>ลาบหนองบัวลำภู @เขื่อนขุนด่านปราการชล</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="supabaseClient.js"></script>
 
-    <!-- ==========================================================
+    <!-- ----------------------------------------------------------
          BLOCK 1.4: CSS STYLES
-         ========================================================== -->
+         ---------------------------------------------------------- -->
     <style>
         html, body {
             height: 100%;
@@ -129,6 +130,7 @@
         .btn-slate { background-color: #334155; }
         .btn-rose { background-color: #e11d48; }
     </style>
+    <!-- END BLOCK 1.4 -->
 </head>
 
 <body>
@@ -138,10 +140,14 @@
          BLOCK 1: UI COMPONENTS & LAYOUT
          ========================================================== -->
 
-    <!-- BLOCK 1.1: MAIN CARD LAYOUT -->
+    <!-- ----------------------------------------------------------
+         BLOCK 1.1: MAIN CARD LAYOUT
+         ---------------------------------------------------------- -->
     <div id="homeView" class="main-card">
 
-        <!-- BLOCK 1.2: HEADER AND RESTAURANT NAME -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.2: HEADER AND RESTAURANT NAME
+             ---------------------------------------------------------- -->
         <div class="header-section">
             <h1 class="font-extrabold text-lg text-slate-800 leading-snug">
                 ลาบหนองบัวลำภู
@@ -153,8 +159,11 @@
                 ระบบจัดการร้านอาหารและสั่งอาหาร
             </p>
         </div>
+        <!-- END BLOCK 1.2 -->
 
-        <!-- BLOCK 1.3: MAIN MENU BUTTONS -->
+        <!-- ----------------------------------------------------------
+             BLOCK 1.3: MAIN MENU BUTTONS
+             ---------------------------------------------------------- -->
         <div class="menu-list">
 
             <button type="button"
@@ -195,7 +204,12 @@
             </button>
 
         </div>
+        <!-- END BLOCK 1.3 -->
+
     </div>
+    <!-- END BLOCK 1.1 -->
+
+    <!-- END BLOCK 1 -->
 
 </div>
 
@@ -204,7 +218,9 @@
        BLOCK 2: LOGIC & EVENT HANDLERS
        ========================================================== */
 
-    /* BLOCK 2.1: PREVENT GESTURE-BASED ZOOM */
+    /* ----------------------------------------------------------
+       BLOCK 2.1: PREVENT GESTURE-BASED ZOOM
+       ---------------------------------------------------------- */
     document.addEventListener('gesturestart', function (e) {
         e.preventDefault();
     }, { passive: false });
@@ -216,10 +232,13 @@
     document.addEventListener('gestureend', function (e) {
         e.preventDefault();
     }, { passive: false });
+    /* END BLOCK 2.1 */
 
     let lastTouchEnd = 0;
 
-    /* BLOCK 2.2: PREVENT DOUBLE-TAP ZOOM AND MULTI-TOUCH */
+    /* ----------------------------------------------------------
+       BLOCK 2.2: PREVENT DOUBLE-TAP ZOOM AND MULTI-TOUCH
+       ---------------------------------------------------------- */
     document.addEventListener('touchend', function (event) {
         const now = new Date().getTime();
 
@@ -235,11 +254,19 @@
             event.preventDefault();
         }
     }, { passive: false });
+    /* END BLOCK 2.2 */
 
-    /* BLOCK 2.3: NAVIGATE TO THE SPECIFIED PAGE */
+    /* ----------------------------------------------------------
+       BLOCK 2.3: NAVIGATE TO THE SPECIFIED PAGE
+       ---------------------------------------------------------- */
     function goToPage(url) {
         window.location.href = url;
     }
+    /* END BLOCK 2.3 */
+
+    /* ==========================================================
+       END BLOCK 2: LOGIC & EVENT HANDLERS
+       ========================================================== */
 </script>
 </body>
 </html>
