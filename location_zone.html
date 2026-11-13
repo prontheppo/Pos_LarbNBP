@@ -164,10 +164,20 @@
                 btn.type = 'button';
                 btn.className = 'py-3 px-3 bg-amber-50/60 hover:bg-amber-100 border border-amber-200/80 rounded-2xl text-center font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm truncate';
                 btn.innerHTML = `<div class="truncate">${loc.location_name}</div>`;
-                btn.onclick = () => {
-                    selectedLocationForZone = loc;
-                    renderZonesView(loc);
-                };
+                
+                // ตรวจสอบว่าถ้าชื่อสถานที่ประกอบด้วยคำว่า "หน้าร้าน" ให้ส่งค่าเลือกจบในคลิกเดียวทันที
+                if (loc.location_name.includes('หน้าร้าน')) {
+                    btn.onclick = () => {
+                        selectLocationAndZone(loc.location_id, loc.location_name, null, '');
+                    };
+                } else {
+                    // สถานที่อื่นๆ ให้พาเข้าไปเลือกโซนปกติ
+                    btn.onclick = () => {
+                        selectedLocationForZone = loc;
+                        renderZonesView(loc);
+                    };
+                }
+                
                 grid.appendChild(btn);
             });
 
@@ -227,9 +237,27 @@
 
             try {
                 if (typeof supabaseClient !== 'undefined') {
-                    const { data, error } = await supabaseClient.from('locations').insert([{ location_name: name, min_order_for_free_delivery: 300, delivery_fee: 20 }]).select().single();
-                    if (!error && data) {
-                        locationsData.push(data);
+                    // 1. เพิ่ม Location ใหม่
+                    const { data: locData, error: locError } = await supabaseClient
+                        .from('locations')
+                        .insert([{ location_name: name, min_order_for_free_delivery: 300, delivery_fee: 20 }])
+                        .select()
+                        .single();
+
+                    if (!locError && locData) {
+                        locationsData.push(locData);
+
+                        // 2. สร้างโซนเริ่มต้น "Front" ให้กับ Location ใหม่นี้ทันที
+                        const { data: zoneData, error: zoneError } = await supabaseClient
+                            .from('location_zone')
+                            .insert([{ zone_name: 'Front', location_id: locData.location_id }])
+                            .select()
+                            .single();
+
+                        if (!zoneError && zoneData) {
+                            zonesData.push(zoneData);
+                        }
+
                         input.value = '';
                         renderLocationsView();
                     }

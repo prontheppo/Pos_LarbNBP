@@ -132,20 +132,27 @@
                     <span id="txtDailyDate" class="font-bold text-blue-600">--/--/----</span>
                 </button>
             </div>
-            <div class="grid grid-cols-2 gap-2">
-                <div class="bg-white p-2 rounded-lg border border-slate-200 shadow-xs">
+            <!-- ปรับเป็น grid 3 คอลัมน์: สีม่วง (col-span-1) และ สีเหลือง (col-span-2) -->
+            <div class="grid grid-cols-3 gap-2">
+                <div class="bg-white p-2 rounded-lg border border-slate-200 shadow-xs col-span-1 flex flex-col justify-center">
                     <div class="text-[10px] text-slate-500 font-bold">จำนวนบิลวันนี้</div>
                     <div class="text-xs font-black text-slate-800" id="dailySummaryCount">0 บิล</div>
                 </div>
-                <div class="bg-emerald-50 p-2 rounded-lg border border-emerald-200 shadow-xs">
-                    <div class="text-[10px] text-emerald-700 font-bold">ยอดรับสุทธิรวม</div>
-                    <div class="text-xs font-black text-emerald-600" id="dailySummaryTotal">0 บาท</div>
+                <div class="bg-emerald-50 p-2 rounded-lg border border-emerald-200 shadow-xs col-span-2">
+                    <div class="text-[10px] text-emerald-700 font-bold mb-0.5">ยอดรับสุทธิรวม</div>
+                    <!-- จัดเรียงด้านในให้เป็น 3 คอลัมน์ย่อย (รายรับ / รายจ่าย / สุทธิ) -->
+                    <div class="grid grid-cols-3 gap-1 text-[11px]" id="dailySummaryTotal">
+                        <div>รายรับ: <strong>฿0</strong></div>
+                        <div>รายจ่าย: <strong>฿0</strong></div>
+                        <div class="font-black text-emerald-600">สุทธิ: <strong>฿0</strong></div>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="p-3 overflow-y-auto space-y-3 bg-slate-100 flex-1" id="dailyOrdersContainer" style="-webkit-overflow-scrolling: touch;"></div>
     </div>
     <!-- END BLOCK 1.3 -->
+
 
     <!-- ----------------------------------------------------------
          BLOCK 1.4: GROUP SALES TAB
@@ -310,11 +317,11 @@
                 if (typeof rawNote === 'string') {
                     note = rawNote.trim();
                 } else if (typeof rawNote === 'object') {
-                    note = JSON.stringify(rawNote);
-                }
+isConsignment = item.isS                }
             }
 
-            let isConsignment = item.isSpecialMenu || String(item.food_group_id || item.group_id) === '98' || String(item.food_group_id || item.group_id) === '99' || name.includes('สินค้าฝากซื้อ');
+let isConsignment = String(item.food_group_id || item.group_id) === '99';
+
             let costPrice = Number(item.cost_price || 0) * q;
 
             if (isConsignment) {
@@ -588,7 +595,11 @@
         if (filtered.length === 0) {
             container.innerHTML = `<div class="text-center text-xs text-slate-400 py-8 font-medium">📭 ไม่พบออร์เดอร์ในวันที่ ${formatDateThai(currentSelectedDate)}</div>`;
             document.getElementById('dailySummaryCount').textContent = '0 บิล';
-            document.getElementById('dailySummaryTotal').textContent = '0 บาท';
+            document.getElementById('dailySummaryTotal').innerHTML = `
+                <div>รายรับ: <strong>฿0</strong></div>
+                <div>รายจ่าย: <strong>฿0</strong></div>
+                <div class="font-black text-emerald-600">สุทธิ: <strong>฿0</strong></div>
+            `;
             return;
         }
 
@@ -604,38 +615,38 @@
             let redItemsHtml = order.parsedItems.map(item => {
                 let comment = item.note ? ` <span class="text-amber-800 font-semibold bg-amber-50 px-1.5 py-0.5 rounded text-[11px]">(${item.note})</span>` : '';
                 let badge = item.isConsignment ? ` <span class="text-[9px] bg-amber-100 text-amber-800 px-1 rounded font-bold">ฝากซื้อ</span>` : '';
-                return `<tr class="border-b border-red-100">
+                return `<tr class="border-b border-emerald-100">
                     <td class="p-1.5 text-xs text-slate-800 font-medium">${item.name}${badge}${comment}</td>
                     <td class="p-1.5 text-xs text-center font-bold">x${item.qty}</td>
-                    <td class="p-1.5 text-xs text-right font-bold text-red-600">${item.totalPrice.toLocaleString()}.-</td>
+                    <td class="p-1.5 text-xs text-right font-bold text-emerald-700">${item.totalPrice.toLocaleString()}.-</td>
                 </tr>`;
             }).join('');
 
             if (order.deliveryFee > 0) {
-                redItemsHtml += `<tr class="border-b border-red-100 bg-red-50/40">
-                    <td class="p-1.5 text-xs text-red-900 font-bold flex items-center gap-1"><span>🛵</span><span>ค่าบริการจัดส่ง</span></td>
-                    <td class="p-1.5 text-xs text-center font-bold text-red-900">-</td>
-                    <td class="p-1.5 text-xs text-right font-bold text-red-900">${order.deliveryFee.toLocaleString()}.-</td>
+                redItemsHtml += `<tr class="border-b border-emerald-100 bg-emerald-50/40">
+                    <td class="p-1.5 text-xs text-emerald-900 font-bold flex items-center gap-1"><span>🛵</span><span>ค่าบริการจัดส่ง</span></td>
+                    <td class="p-1.5 text-xs text-center font-bold text-emerald-900">-</td>
+                    <td class="p-1.5 text-xs text-right font-bold text-emerald-900">${order.deliveryFee.toLocaleString()}.-</td>
                 </tr>`;
             }
 
             let yellowGreenSection = '';
             if (order.hasConsignment) {
                 let yellowItemsHtml = order.parsedItems.filter(i => i.isConsignment).map(item => {
-                    return `<tr class="border-b border-yellow-100">
-                        <td class="p-1 text-[11px] text-yellow-900 font-medium">${item.name}</td>
+                    return `<tr class="border-b border-red-100">
+                        <td class="p-1 text-[11px] text-red-900 font-medium">${item.name}</td>
                         <td class="p-1 text-[11px] text-center font-bold">x${item.qty}</td>
-                        <td class="p-1 text-[11px] text-right font-bold text-yellow-700">${item.costPrice.toLocaleString()}.-</td>
+                        <td class="p-1 text-[11px] text-right font-bold text-red-700">${item.costPrice.toLocaleString()}.-</td>
                     </tr>`;
                 }).join('');
 
                 yellowGreenSection = `
-                    <div class="bg-yellow-50/80 border border-yellow-300 rounded-lg p-2 space-y-1">
-                        <div class="text-[11px] font-bold text-yellow-900 flex items-center gap-1">
+                    <div class="bg-red-50/80 border border-red-300 rounded-lg p-2 space-y-1">
+                        <div class="text-[11px] font-bold text-red-900 flex items-center gap-1">
                             <span>🟡</span> <span>รายจ่าย (ซื้อของมาขายต่อ - ราคาต้นทุน):</span>
                         </div>
                         <table class="w-full text-left"><tbody>${yellowItemsHtml}</tbody></table>
-                        <div class="flex justify-between items-center text-[11px] font-extrabold text-yellow-900 pt-1 border-t border-yellow-200">
+                        <div class="flex justify-between items-center text-[11px] font-extrabold text-red-900 pt-1 border-t border-red-200">
                             <span>รวมรายจ่ายซื้อของ:</span>
                             <span>฿${order.consignmentTotal.toLocaleString()}.-</span>
                         </div>
@@ -651,18 +662,18 @@
             let orderId = order.order_id || order.id;
 
             container.innerHTML += `
-                <div onclick="goToEditOrder(${orderId})" class="bg-white border-2 border-red-500 rounded-xl p-3 shadow-md space-y-3 cursor-pointer transition active:scale-95">
+                <div onclick="goToEditOrder(${orderId})" class="bg-white border-2 border-emerald-500 rounded-xl p-3 shadow-md space-y-3 cursor-pointer transition active:scale-95">
                     <div class="flex justify-between border-b border-slate-200 pb-2">
                         <span class="font-bold text-xs text-amber-900 bg-amber-100 px-2.5 py-0.5 rounded">${order.groupTypeName} ✏️</span>
                         <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded truncate max-w-[200px]">👤 ${order.displayCustomerName}</span>
                     </div>
 
-                    <div class="border border-red-300 rounded-lg p-2 bg-red-50/20 shadow-xs">
-                        <div class="text-[11px] font-bold text-red-800 mb-1">🔴 รายรับทั้งหมด (ยอดขายในบิล):</div>
+                    <div class="border border-emerald-300 rounded-lg p-2 bg-emerald-50/20 shadow-xs">
+                        <div class="text-[11px] font-bold text-emerald-800 mb-1">🟢 รายรับทั้งหมด (ยอดขายในบิล):</div>
                         <table class="w-full text-left"><tbody>${redItemsHtml}</tbody></table>
-                        <div class="flex justify-between items-center text-xs font-bold text-red-900 pt-1 border-t border-red-200 mt-1">
+                        <div class="flex justify-between items-center text-xs font-bold text-emerald-900 pt-1 border-t border-emerald-200 mt-1">
                             <span>รวมรายรับ:</span>
-                            <span class="text-red-600">฿${order.computedTotal.toLocaleString()}.-</span>
+                            <span class="text-emerald-700">฿${order.computedTotal.toLocaleString()}.-</span>
                         </div>
                     </div>
 
@@ -672,9 +683,9 @@
 
         document.getElementById('dailySummaryCount').textContent = `${filtered.length} บิล`;
         document.getElementById('dailySummaryTotal').innerHTML = `
-            <div class="text-[11px] text-emerald-800">รายรับ: <strong>฿${totalIncome.toLocaleString()}</strong></div>
-            <div class="text-[11px] text-yellow-800">รายจ่าย: <strong>฿${totalExpense.toLocaleString()}</strong></div>
-            <div class="text-xs font-black text-emerald-600 mt-0.5">สุทธิ: <strong>฿${totalNet.toLocaleString()} บาท</strong></div>
+            <div>รายรับ: <strong>฿${totalIncome.toLocaleString()}</strong></div>
+            <div>รายจ่าย: <strong>฿${totalExpense.toLocaleString()}</strong></div>
+            <div class="font-black text-emerald-600">สุทธิ: <strong>฿${totalNet.toLocaleString()}</strong></div>
         `;
     }
 

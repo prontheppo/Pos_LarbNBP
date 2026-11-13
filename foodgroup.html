@@ -259,7 +259,6 @@
                 return;
             }
 
-            // Sort categories by food_group_id in ascending order
             const sortedCategories = [...categories].sort((a, b) => Number(a.food_group_id) - Number(b.food_group_id));
 
             navContainer.innerHTML = '';
@@ -276,29 +275,35 @@
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 
-                // Expand the final category button across two columns when the total count is odd
                 const isLastAndOdd = (index === sortedCategories.length - 1) && (sortedCategories.length % 2 !== 0);
                 btn.className = `cat-nav-btn ${isLastAndOdd ? 'col-span-2' : ''}`;
 
-                // Select the category icon based on its index
                 const icon = categoryIcons[index % categoryIcons.length];
                 const catName = cat.food_group_name || '';
-                
-                // Calculate the total cart quantity for the current category
                 let catTotalQty = 0;
-                const isSpecialCat = specialCategoryNames.includes(catName) || Number(cat.food_group_id) === 98;
+                const catId = Number(cat.food_group_id);
 
-                if (isSpecialCat) {
+                // การคำนวณจำนวนในตะกร้าแยกตาม ID
+                if (catId === 98) {
+                    // ID 98: เมนูพิเศษ
                     catTotalQty = (cart || []).reduce((sum, item) => {
-                        const isExplicitSpecial = item.is_custom === true || item.is_special === true || item.isSpecialMenu === true || item.category === 'เมนูพิเศษ' || Number(item.food_group_id) === Number(cat.food_group_id);
-                        const isRegularItem = item.food_id && regularFoodIds.has(Number(item.food_id));
-                        return (isExplicitSpecial && !isRegularItem) ? sum + (Number(item.qty) || 1) : sum;
+                        const itemGroupId = Number(item.food_group_id || item.group_id || 0);
+                        const is98 = itemGroupId === 98 || item.is_special === true || item.isSpecialMenu === true || (item.name && item.name.includes('เมนูพิเศษ'));
+                        return is98 ? sum + (Number(item.qty) || 1) : sum;
+                    }, 0);
+                } else if (catId === 99 || catName.includes('ลูกค้าฝากซื้อ')) {
+                    // ID 99: สินค้าฝากซื้อ
+                    catTotalQty = (cart || []).reduce((sum, item) => {
+                        const itemGroupId = Number(item.food_group_id || item.group_id || 0);
+                        const is99 = itemGroupId === 99 || item.is_buying_resell === true || (item.name && item.name.includes('สินค้าฝากซื้อ'));
+                        return is99 ? sum + (Number(item.qty) || 1) : sum;
                     }, 0);
                 } else {
-                    const catFoodIds = (foods || []).filter(f => Number(f.food_group_id) === Number(cat.food_group_id)).map(f => Number(f.food_id));
+                    // หมวดหมู่ปกติทั่วไป
+                    const catFoodIds = (foods || []).filter(f => Number(f.food_group_id) === catId).map(f => Number(f.food_id));
                     catTotalQty = (cart || []).reduce((sum, item) => {
                         const matchById = item.food_id && catFoodIds.includes(Number(item.food_id));
-                        const matchByGroup = item.food_group_id && Number(item.food_group_id) === Number(cat.food_group_id);
+                        const matchByGroup = item.food_group_id && Number(item.food_group_id) === catId;
                         return (matchById || matchByGroup) ? sum + (Number(item.qty) || 1) : sum;
                     }, 0);
                 }
@@ -306,17 +311,26 @@
                 const badgeHTML = catTotalQty > 0 ? `<span class="badge-main">${catTotalQty}</span>` : '';
                 const textClass = catName.length > 8 ? 'cat-text-long' : '';
                 
+                // กำหนดเนื้อหาไอคอน ชื่อหมวดหมู่ และป้ายแจ้งเตือนให้ปุ่มแสดงผลปกติ
                 btn.innerHTML = `<span class="cat-nav-icon">${icon}</span> <span class="${textClass}">${catName}</span>${badgeHTML}`;
-                
-                // Handle category button clicks
+
                 btn.onclick = () => {
                     if (window.self !== window.top) {
-                        window.parent.postMessage({
-                            type: 'SELECT_CATEGORY',
-                            catId: cat.food_group_id,
-                            catName: `${icon} ${catName}`,
-                            isSpecial: isSpecialCat
-                        }, '*');
+                        // ปรับให้ทั้ง ID 99 และ ID 98 เรียกใช้งานหน้า consignment รายการพิเศษ/ฝากซื้อ
+                        if (catId === 99 || catId === 98 || catName.includes('ลูกค้าฝากซื้อ') || catName.includes('เมนูพิเศษ')) {
+                            window.parent.postMessage({
+                                type: 'OPEN_CONSIGNMENT_LIST',
+                                catId: cat.food_group_id,
+                                catName: catName
+                            }, '*');
+                        } else {
+                            window.parent.postMessage({
+                                type: 'SELECT_CATEGORY',
+                                catId: cat.food_group_id,
+                                catName: `${icon} ${catName}`,
+                                isSpecial: false
+                            }, '*');
+                        }
                     } else {
                         showCustomModal(`เลือกหมวดหมู่: ${catName} (ID: ${cat.food_group_id})`);
                     }
@@ -325,11 +339,8 @@
                 navContainer.appendChild(btn);
             });
         }
-        /* END BLOCK 2.6 */
 
-        /* ==========================================================
-           END BLOCK 2: LOGIC & DATABASE OPERATIONS
-           ========================================================== */
+
     </script>
 </body>
 </html>

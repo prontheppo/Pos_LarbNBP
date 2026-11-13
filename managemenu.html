@@ -150,9 +150,9 @@
                class="bg-slate-800 hover:bg-slate-900 active:scale-95 text-white font-bold py-3 px-2 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md transition cursor-pointer">
                 📁 จัดการกลุ่มอาหาร
             </button>
-            <a href="index_admin.html" 
+            <a href="index.html" 
                class="bg-rose-500 hover:bg-rose-600 active:scale-95 text-white font-bold py-3 px-2 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md no-underline text-center transition">
-                🏠 กลับหน้าผู้ดูแลระบบ
+                🏠 กลับหน้าหลัก
             </a>
         </div>
         <!-- END BLOCK 1.3 -->
@@ -413,7 +413,7 @@
                 }
             }
 
-            if (type === 'SELECT_CATEGORY') {
+            if (type === 'SELECT_CATEGORY' || type === 'OPEN_CONSIGNMENT_LIST') {
                 const matchedGroup = foodGroups.find(g => String(g.id) === String(catId));
                 if (matchedGroup) {
                     openCategoryPriceModalHTML(matchedGroup);
@@ -468,6 +468,7 @@
             if (id === 'editCategoryModal') activeEditingCategoryId = null;
         }
         /* END BLOCK 2.2 */
+
 
         /* ----------------------------------------------------------
            BLOCK 2.3: ALERT AND CONFIRMATION DIALOGS

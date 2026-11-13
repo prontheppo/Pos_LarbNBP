@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <script src="appInit.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <title>บันทึกรายจ่าย - ลาบหนองบัวลำภู</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --bg-color: #f1f5f9; }
+        html, body {
+            width: 100%; height: 100%; overflow: hidden;
+            background-color: var(--bg-color); color: #1e293b;
+            font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none;
+        }
+        .page-container { display: flex; flex-direction: column; height: 100vh; max-width: 672px; margin: 0 auto; box-sizing: border-box; }
+        
+        .icon-choice-btn {
+            background-color: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            transition: all 0.15s ease;
+        }
+        .icon-choice-btn:active {
+            transform: scale(0.95);
+            background-color: #fee2e2;
+            border-color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-container">
+    <div class="p-3 bg-white border-b border-slate-200 shrink-0">
+        <div class="flex items-center justify-between">
+            <h1 class="font-extrabold text-sm text-slate-800">💸 บันทึกรายจ่ายของร้าน</h1>
+            <a href="index.html" class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-bold no-underline">🏠 หน้าหลัก</a>
+        </div>
+    </div>
+
+    <div class="flex-1 p-3 space-y-3 overflow-y-auto">
+        <div class="bg-white border-2 border-red-500/30 rounded-2xl p-4 shadow-sm space-y-4">
+            
+            <div>
+                <label class="font-bold text-xs text-slate-600 block mb-1.5">📝 รายการที่ซื้อ</label>
+                <button type="button" onclick="openPopup('item')" class="w-full h-12 px-3 border-2 border-slate-300 hover:border-red-400 rounded-xl text-sm bg-slate-50 flex items-center justify-between text-left cursor-pointer transition">
+                    <span id="itemDisplay" class="font-bold text-slate-400">👆 แตะเพื่อเลือกรายการ...</span>
+                    <span class="bg-slate-200 text-slate-600 text-[11px] font-bold px-2 py-1 rounded-lg">เลือก</span>
+                </button>
+                <input type="hidden" id="itemNameInput">
+            </div>
+
+            <div>
+                <label class="font-extrabold text-xs text-slate-700 block mb-1.5">💰 จำนวนเงิน (บาท)</label>
+                <div class="relative flex items-center">
+                    <input type="number" id="expenseAmountInput" placeholder="0" inputmode="numeric" class="w-full h-14 pl-3 pr-10 text-2xl font-black text-red-600 border-2 border-red-300 rounded-xl outline-none focus:ring-2 focus:ring-red-500 bg-red-50/20">
+                    <span class="absolute right-3 font-bold text-slate-400 text-sm">บาท</span>
+                </div>
+            </div>
+            
+            <div>
+                <label class="font-bold text-xs text-slate-600 block mb-1.5">📌 หมายเหตุ / ร้านค้า (ถ้ามี)</label>
+                <button type="button" onclick="openPopup('note')" class="w-full h-11 px-3 border border-slate-300 hover:border-red-400 rounded-xl text-xs bg-slate-50 flex items-center justify-between text-left cursor-pointer transition">
+                    <span id="noteDisplay" class="font-bold text-slate-400">👆 แตะเพื่อเลือกหมายเหตุ / ร้านค้า...</span>
+                    <span class="bg-slate-200 text-slate-600 text-[11px] font-bold px-2 py-0.5 rounded-lg">เลือก</span>
+                </button>
+                <input type="hidden" id="expenseNoteInput">
+            </div>
+
+        </div>
+    </div>
+
+    <div class="p-3 bg-white border-t border-slate-200 shrink-0">
+        <button type="button" onclick="submitExpenseOrder()" id="btnSubmitExpense" class="w-full bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold py-3.5 rounded-xl text-sm shadow transition flex items-center justify-center gap-1.5 cursor-pointer">
+            <span>💾</span> <span>บันทึกรายจ่ายนี้</span>
+        </button>
+    </div>
+</div>
+
+<!-- POPUP MODAL -->
+<div id="selectionModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-xs">
+    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-4 shadow-2xl flex flex-col max-h-[85vh]">
+        
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
+            <h2 id="modalTitle" class="font-extrabold text-base text-slate-800">เลือกรายการ</h2>
+            <button type="button" onclick="closePopup()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center cursor-pointer">✕</button>
+        </div>
+
+        <div id="iconGrid" class="grid grid-cols-3 gap-2 py-3 overflow-y-auto flex-1">
+            <!-- โหลดข้อมูลจากฐานข้อมูลมาแสดงตรงนี้ -->
+            <div class="col-span-3 text-center text-xs text-slate-400 py-4">⏳ กำลังโหลดข้อมูลจากฐานข้อมูล...</div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 shrink-0 bg-white">
+            <label class="text-xs font-bold text-slate-500 block mb-1.5">✍️ หรือพิมพ์ระบุเพิ่มเอง (ถ้าไม่มีในรายการ):</label>
+            <div class="flex gap-2">
+                <input type="text" id="customInput" placeholder="พิมพ์ข้อความที่นี่..." class="flex-1 h-11 px-3 border border-slate-300 rounded-xl text-sm font-bold outline-none focus:border-red-500 bg-slate-50">
+                <button type="button" onclick="confirmCustomInput()" class="bg-red-600 text-white font-bold px-4 rounded-xl text-sm shadow-sm active:scale-95 cursor-pointer">ตกลง</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    let currentPopupType = '';
+
+    async function openPopup(type) {
+        currentPopupType = type;
+        const modal = document.getElementById('selectionModal');
+        const title = document.getElementById('modalTitle');
+        const grid = document.getElementById('iconGrid');
+        const customInput = document.getElementById('customInput');
+        
+        customInput.value = '';
+        grid.innerHTML = '<div class="col-span-3 text-center text-xs text-slate-400 py-4">⏳ กำลังดึงข้อมูลจากตาราง...</div>';
+        modal.classList.remove('hidden');
+
+        title.innerText = (type === 'item') ? '📝 เลือกรายการที่ซื้อ (จากประวัติ)' : '📌 เลือกหมายเหตุ / ร้านค้า (จากประวัติ)';
+        customInput.placeholder = (type === 'item') ? 'เช่น ซื้อหมูยอ, ซื้อน้ำมันพืช...' : 'เช่น ตลาดสด, โอนจ่าย...';
+
+        try {
+            const db = window.supabaseClient || supabaseClient;
+            if (!db) throw new Error("ไม่พบการเชื่อมต่อฐานข้อมูล Supabase");
+
+            // ดึงข้อมูลจริงจากตาราง expenses
+            const columnName = (type === 'item') ? 'item_name' : 'note';
+            const { data, error } = await db.from('expenses').select(columnName);
+
+            if (error) throw error;
+
+            // กรองเอาเฉพาะข้อมูลที่ไม่เป็นค่าว่าง และไม่ซ้ำกัน
+            let uniqueValues = [...new Set(data.map(row => row[columnName]).filter(val => val && val.trim() !== ''))];
+
+            grid.innerHTML = '';
+
+            if (uniqueValues.length === 0) {
+                grid.innerHTML = '<div class="col-span-3 text-center text-xs text-slate-400 py-6">ยังไม่มีประวัติในระบบ สามารถพิมพ์เพิ่มด้านล่างได้เลยครับ</div>';
+                return;
+            }
+
+            // เพิ่มปุ่มตัวเลือก "ไม่ระบุ / ล้างค่า" ไว้ด้านบนสุด
+            const clearBtn = document.createElement('button');
+            clearBtn.type = 'button';
+            clearBtn.className = 'icon-choice-btn rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 cursor-pointer border-dashed border-red-300 bg-red-50/50';
+            clearBtn.innerHTML = `
+                <span class="text-xl">❌</span>
+                <span class="text-xs font-bold text-red-600 text-center leading-tight">ไม่ระบุ (ล้างค่า)</span>
+            `;
+            clearBtn.onclick = () => selectValue('', '');
+            grid.appendChild(clearBtn);
+
+            // สร้างปุ่มจากข้อมูลจริงในตาราง
+            uniqueValues.forEach(val => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'icon-choice-btn rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 cursor-pointer';
+                btn.innerHTML = `
+                    <span class="text-xl">📋</span>
+                    <span class="text-xs font-bold text-slate-700 text-center leading-tight line-clamp-2">${val}</span>
+                `;
+                btn.onclick = () => selectValue(val, val);
+                grid.appendChild(btn);
+            });
+
+        } catch (err) {
+            console.error('Error fetching data:', err);
+            grid.innerHTML = `<div class="col-span-3 text-center text-xs text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดข้อมูล: ${err.message}</div>`;
+        }
+    }
+
+    function closePopup() {
+        document.getElementById('selectionModal').classList.add('hidden');
+    }
+
+    function confirmCustomInput() {
+        const val = document.getElementById('customInput').value.trim();
+        if (!val) {
+            alert('กรุณาพิมพ์ข้อความก่อนกดตกลงครับ');
+            return;
+        }
+        selectValue(val, val);
+    }
+
+    function selectValue(actualValue, displayText) {
+        if (currentPopupType === 'item') {
+            document.getElementById('itemNameInput').value = actualValue;
+            const display = document.getElementById('itemDisplay');
+            if (actualValue) {
+                display.innerText = displayText;
+                display.classList.remove('text-slate-400');
+                display.classList.add('text-slate-800');
+            } else {
+                display.innerText = '👆 แตะเพื่อเลือกรายการ...';
+                display.classList.add('text-slate-400');
+                display.classList.remove('text-slate-800');
+            }
+        } else if (currentPopupType === 'note') {
+            document.getElementById('expenseNoteInput').value = actualValue;
+            const display = document.getElementById('noteDisplay');
+            if (actualValue) {
+                display.innerText = displayText;
+                display.classList.remove('text-slate-400');
+                display.classList.add('text-slate-800');
+            } else {
+                display.innerText = '👆 แตะเพื่อเลือกหมายเหตุ / ร้านค้า...';
+                display.classList.add('text-slate-400');
+                display.classList.remove('text-slate-800');
+            }
+        }
+        closePopup();
+    }
+
+    async function submitExpenseOrder() {
+        const itemName = document.getElementById('itemNameInput').value.trim();
+        const amountInput = document.getElementById('expenseAmountInput').value;
+        const note = document.getElementById('expenseNoteInput').value.trim();
+        const amount = Number(amountInput);
+
+        if (!itemName) {
+            alert('กรุณาเลือกรายการที่ซื้อ');
+            openPopup('item');
+            return;
+        }
+        if (!amount || amount <= 0) {
+            alert('กรุณากรอกจำนวนเงินให้ถูกต้อง');
+            document.getElementById('expenseAmountInput').focus();
+            return;
+        }
+
+        const btn = document.getElementById('btnSubmitExpense');
+        btn.disabled = true;
+        btn.innerText = '⏳ กำลังบันทึก...';
+
+        try {
+            const db = window.supabaseClient || supabaseClient;
+            if (!db) throw new Error("ไม่พบการเชื่อมต่อฐานข้อมูล Supabase");
+
+            const now = new Date();
+            const thaiTime = new Date(now.getTime() + (7 * 60 * 60 * 1000)).toISOString().replace('Z', '+07:00');
+
+            const { error } = await db.from('expenses').insert([{
+                created_at: thaiTime,
+                category: 'ทั่วไป',
+                item_name: itemName,
+                amount: amount,
+                note: note
+            }]);
+
+            if (error) throw error;
+
+            alert('บันทึกรายจ่ายเรียบร้อยแล้ว!');
+            
+            selectValue('', '');
+            currentPopupType = 'note';
+            selectValue('', '');
+            document.getElementById('expenseAmountInput').value = '';
+            
+            btn.disabled = false;
+            btn.innerHTML = '<span>💾</span> <span>บันทึกรายจ่ายนี้</span>';
+
+        } catch (err) {
+            console.error('Error saving expense:', err);
+            alert('เกิดข้อผิดพลาดในการบันทึก: ' + err.message);
+            btn.disabled = false;
+            btn.innerHTML = '<span>💾</span> <span>บันทึกรายจ่ายนี้</span>';
+        }
+    }
+</script>
+</body>
+</html>

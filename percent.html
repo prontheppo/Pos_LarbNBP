@@ -1,0 +1,909 @@
+<!--
+  ========================================================================
+  FILE NAME: salereport.html
+  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 10 บล็อกย่อย ดังသည်။
+
+   - [บล็อก 1] UI Components & Layout (ส่วนแสดงผลหน้าจอผู้ใช้)
+     (ประกอบด้วย 6 หัวข้อ)
+       - [บล็อก 1.1] HEADER AND TAB NAVIGATION (ส่วนหัวและแถบสลับแท็บเมนู)
+       - [บล็อก 1.2] SALES OVERVIEW TAB (แท็บสรุปยอดขายย้อนหลัง)
+       - [บล็อก 1.3] DAILY ORDERS TAB (แท็บรายงานออร์เดอร์รายวัน)
+       - [บล็อก 1.4] GROUP SALES TAB (แท็บยอดขายแยกตามกลุ่มลูกค้า)
+       - [บล็อก 1.5] GROUP SALES DETAIL MODAL (Modal รายละเอียดกลุ่มลูกค้า)
+       - [บล็อก 1.6] DATE PICKER CALENDAR MODAL (Modal ปฏิทินเลือกวันที่)
+       - [บล็อก 1.7] CSS STYLES (รูปแบบ CSS)
+
+   - [บล็อก 2] Logic & Database Operations (ระบบการทำงานและการจัดการฐานข้อมูล)
+     (ประกอบด้วย 4 หัวข้อ)
+       - [บล็อก 2.1] DATE UTILITIES, DATA STRUCTURE, AND INITIALIZATION (ฟังก์ชันวันที่ โครงสร้างข้อมูล และการเริ่มต้นทำงาน)
+       - [บล็อก 2.2] FETCH SUPABASE DATA AND MANAGE CACHE (การดึงข้อมูลจาก Supabase และการจัดเก็บแคช)
+       - [บล็อก 2.3] TAB NAVIGATION AND CALENDAR MANAGEMENT (การสลับแท็บและจัดการปฏิทิน)
+       - [บล็อก 2.4] RENDER OVERVIEW, DAILY ORDERS, GROUP SALES, AND MODALS (การแสดงผลรายการออร์เดอร์ รายงานกลุ่มลูกค้า และ Modal)
+  ========================================================================
+-->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <script src="appInit.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <title>รายงานการขายและการจัดการ - ลาบหนองบัวลำภู</title>
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- ----------------------------------------------------------
+         BLOCK 1.7: CSS STYLES
+         ---------------------------------------------------------- -->
+    <style>
+      :root { --bg-color: #f8fafc; }
+      html, body {
+        height: 100dvh; margin: 0; padding: 0;
+        font-family: 'Sarabun', system-ui, -apple-system, sans-serif;
+        background-color: var(--bg-color);
+        touch-action: pan-y; -webkit-text-size-adjust: 100%;
+        -webkit-user-select: none; user-select: none;
+      }
+      .app-container {
+        max-width: 500px; margin: 0 auto; height: 100dvh;
+        background: #ffffff; display: flex; flex-direction: column;
+        box-sizing: border-box; overflow: hidden;
+      }
+      ::-webkit-scrollbar { display: none; }
+      .tab-content { display: none; height: 100%; width: 100%; flex-direction: column; overflow: hidden; }
+      .tab-content.active { display: flex; }
+      .tab-btn { transition: all 0.2s ease; border: 1px solid transparent; }
+      .tab-btn.tab-overview { background-color: #faf5ff; color: #7e22ce; }
+      .tab-btn.tab-daily { background-color: #eff6ff; color: #1d4ed8; }
+      .tab-btn.tab-group { background-color: #fdf4ff; color: #a21caf; }
+      .tab-btn.active-tab {
+        background-color: #ffffff !important;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        font-weight: 800; border-color: #cbd5e1; transform: scale(1.02);
+      }
+    </style>
+    <!-- END BLOCK 1.7 -->
+</head>
+<body class="bg-slate-100 flex items-center justify-center antialiased">
+
+<div class="app-container shadow-2xl w-full border border-slate-100">
+    <!-- ==========================================================
+       BLOCK 1: UI COMPONENTS & LAYOUT
+       ========================================================== -->
+
+    <!-- ----------------------------------------------------------
+         BLOCK 1.1: HEADER AND TAB NAVIGATION
+         ---------------------------------------------------------- -->
+    <header class="bg-white border-b border-slate-200 shrink-0">
+        <div class="px-4 pt-3 pb-2 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span class="text-xl">📊</span>
+                <h1 class="font-extrabold text-base text-slate-800 tracking-tight">รายงานการขาย</h1>
+            </div>
+            <a href="index.html" class="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 no-underline">
+                🏠 หน้าหลัก
+            </a>
+        </div>
+
+        <div class="p-1.5 mx-3 mb-2 bg-slate-200/80 rounded-xl grid grid-cols-3 gap-1">
+            <button type="button" onclick="switchTab('overview', this)" class="tab-btn tab-overview active-tab py-2 px-2 rounded-lg transition flex flex-row items-center justify-center gap-1.5 cursor-pointer">
+                <span class="text-sm">📋</span>
+                <span class="text-[11px]">สรุป</span>
+            </button>
+            <button type="button" onclick="switchTab('daily', this)" class="tab-btn tab-daily py-2 px-2 rounded-lg transition flex flex-row items-center justify-center gap-1.5 cursor-pointer">
+                <span class="text-sm">📅</span>
+                <span class="text-[11px]">รายวัน</span>
+            </button>
+            <button type="button" onclick="switchTab('groupsales', this)" class="tab-btn tab-group py-2 px-2 rounded-lg transition flex flex-row items-center justify-center gap-1.5 cursor-pointer">
+                <span class="text-sm">📁</span>
+                <span class="text-[11px]">กลุ่ม</span>
+            </button>
+        </div>
+    </header>
+    <!-- END BLOCK 1.1 -->
+
+    <!-- ----------------------------------------------------------
+         BLOCK 1.2: SALES OVERVIEW TAB
+         ---------------------------------------------------------- -->
+    <div id="tabOverview" class="tab-content">
+        <div class="p-3 bg-slate-50 border-b border-slate-100 shrink-0">
+            <div class="bg-purple-50 p-2.5 rounded-xl border border-purple-100 flex justify-between items-center">
+                <span class="text-xs font-bold text-purple-900">📅 สรุปยอดขายย้อนหลัง 15 วัน</span>
+                <span id="overviewTotalBillCount" class="text-xs font-extrabold text-purple-700 bg-white px-2 py-0.5 rounded-md border border-purple-200">0 วัน</span>
+            </div>
+        </div>
+        <div id="overviewDateListContainer" class="p-3 overflow-y-auto space-y-2.5 bg-slate-100 flex-1" style="-webkit-overflow-scrolling: touch;">
+            <div class="text-center text-slate-400 py-10 text-xs font-medium">⏳ กำลังโหลดสรุปยอดขาย...</div>
+        </div>
+    </div>
+    <!-- END BLOCK 1.2 -->
+
+    <!-- ----------------------------------------------------------
+         BLOCK 1.3: DAILY ORDERS TAB
+         ---------------------------------------------------------- -->
+    <div id="tabDaily" class="tab-content">
+        <div class="p-3 bg-slate-50 border-b border-slate-100 space-y-2 shrink-0">
+            <div class="bg-blue-50 p-2 rounded-xl border border-blue-100 flex items-center justify-between">
+                <span class="text-xs font-bold text-blue-900">📅 เลือกวันที่:</span>
+                <button type="button" onclick="openCalendar()" class="px-3 py-1 border border-slate-200 rounded-lg text-xs font-bold bg-white text-blue-700 shadow-xs flex items-center gap-1 cursor-pointer">
+                    <span id="txtDailyDate" class="font-bold text-blue-600">--/--/----</span>
+                </button>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+                <div class="bg-white p-2 rounded-lg border border-slate-200 shadow-xs col-span-1 flex flex-col justify-between">
+                    <div class="text-[10px] text-slate-500 font-bold">จำนวนบิลวันนี้</div>
+                    <div class="text-xs font-black text-slate-800 mt-1" id="dailySummaryCount">0 บิล</div>
+                </div>
+                <div class="bg-emerald-50 p-2 rounded-lg border border-emerald-200 shadow-xs col-span-2">
+                    <div class="text-[10px] text-emerald-700 font-bold mb-1">ยอดรับสุทธิรวม</div>
+                    <div class="grid grid-cols-3 gap-1 text-center" id="dailySummaryTotal">
+                        <div class="text-[10px] text-emerald-800">รายรับ<br><strong class="text-emerald-900">฿0</strong></div>
+                        <div class="text-[10px] text-yellow-800">รายจ่าย<br><strong class="text-yellow-900">฿0</strong></div>
+                        <div class="text-[10px] text-emerald-600">สุทธิ<br><strong class="text-emerald-600 font-black">฿0</strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="p-3 overflow-y-auto space-y-3 bg-slate-100 flex-1" id="dailyOrdersContainer" style="-webkit-overflow-scrolling: touch;"></div>
+    </div>
+    <!-- END BLOCK 1.3 -->
+
+    <!-- ----------------------------------------------------------
+         BLOCK 1.4: GROUP SALES TAB
+         ---------------------------------------------------------- -->
+    <div id="tabGroupSales" class="tab-content">
+        <div class="p-3 bg-slate-50 border-b border-slate-100 shrink-0 space-y-2.5">
+            <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100 flex items-center justify-between">
+                <span class="text-xs font-bold text-emerald-900">📅 วันที่ดูยอดขาย:</span>
+                <button type="button" onclick="openCalendar()" class="px-3 py-1 border border-slate-200 rounded-lg text-xs font-bold bg-white text-emerald-700 shadow-xs flex items-center gap-1 cursor-pointer">
+                    <span id="txtGroupDate" class="font-bold text-emerald-600">--/--/----</span>
+                </button>
+            </div>
+            <div id="groupHeaderSummaryBox"></div>
+        </div>
+        <div id="groupSummaryContainer" class="p-3 overflow-y-auto space-y-3 bg-slate-100 flex-1" style="-webkit-overflow-scrolling: touch;">
+            <div class="text-center text-slate-400 py-10 text-xs font-medium">กำลังโหลดข้อมูลยอดขาย...</div>
+        </div>
+    </div>
+    <!-- END BLOCK 1.4 -->
+</div>
+
+<!-- ----------------------------------------------------------
+     BLOCK 1.5: GROUP SALES DETAIL MODAL
+     ---------------------------------------------------------- -->
+<div id="groupDetailModal" onclick="handleOutsideModalClick(event)" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+    <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl flex flex-col max-h-[80vh] overflow-hidden transform scale-95 transition-transform duration-200" id="groupDetailBox">
+        <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
+            <div>
+                <h3 id="modalGroupName" class="font-extrabold text-sm text-amber-400">กลุ่มลูกค้า</h3>
+                <p id="modalGroupMeta" class="text-[11px] text-slate-300 mt-0.5">จำนวน 0 บิล</p>
+            </div>
+            <button type="button" onclick="closeGroupModal()" class="bg-slate-700 hover:bg-slate-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer">✕</button>
+        </div>
+        <div id="modalOrderList" class="p-4 overflow-y-auto space-y-3 flex-1 bg-slate-100"></div>
+        <div class="p-3 bg-white border-t border-slate-100 flex justify-between items-center px-4">
+            <span class="text-xs font-bold text-slate-600">ยอดสุทธิของกลุ่มนี้:</span>
+            <span id="modalGroupTotal" class="text-sm font-black text-emerald-600">฿0.-</span>
+        </div>
+    </div>
+</div>
+<!-- END BLOCK 1.5 -->
+
+<!-- ----------------------------------------------------------
+     BLOCK 1.6: DATE PICKER CALENDAR MODAL
+     ---------------------------------------------------------- -->
+<div id="calendarModal" onclick="handleCalendarOutsideClick(event)" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+    <div class="bg-white w-full max-w-xs rounded-2xl shadow-2xl overflow-hidden relative flex flex-col transform scale-95 transition-transform duration-200" id="calendarBox">
+        <div class="bg-slate-800 text-white p-3 flex justify-between items-center">
+            <h3 class="text-xs font-bold text-amber-400">📅 เลือกวันที่</h3>
+            <button type="button" onclick="closeCalendarModal()" class="w-7 h-7 rounded-full bg-slate-700 text-white flex items-center justify-center font-bold text-xs cursor-pointer">✕</button>
+        </div>
+        <iframe id="calendarIframe" src="" class="w-full h-[380px] border-none"></iframe>
+    </div>
+</div>
+<!-- END BLOCK 1.6 -->
+
+<!-- END BLOCK 1 -->
+
+<script>
+    /* ==========================================================
+       BLOCK 2: LOGIC & DATABASE OPERATIONS
+       ========================================================== */
+    let db;
+    let allOrdersCache = [];
+    let locationsCache = [];
+    let fetchedDatesSet = new Set();
+    let currentActiveTab = 'overview';
+    let currentSelectedDate = '';
+    let globalGroupData = {};
+
+    /* ----------------------------------------------------------
+       BLOCK 2.1: DATE UTILITIES, DATA STRUCTURE, AND INITIALIZATION
+       ---------------------------------------------------------- */
+    function getTodayString() {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function getOrderDateStr(order) {
+        const rawDate = order.created_at || order.order_date || order.date || '';
+        if (!rawDate) return '';
+        return String(rawDate).split('T')[0].split(' ')[0];
+    }
+
+    function formatDateThai(dateString) {
+        if (!dateString) return '';
+        const parts = dateString.split('-');
+        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        return dateString;
+    }
+
+    window.onload = async function() {
+        currentSelectedDate = getTodayString();
+        updateDateDisplays();
+
+        if (typeof window.supabaseClient !== 'undefined') db = window.supabaseClient;
+        else if (typeof supabaseClient !== 'undefined') db = supabaseClient;
+
+        await fetchMasterData();
+        await fetchInitialOrders();
+    };
+
+    function normalizeOrder(order) {
+        let items = [];
+        if (typeof order.items === 'string') {
+            try { items = JSON.parse(order.items); } catch(e) { items = []; }
+        } else if (Array.isArray(order.items)) {
+            items = order.items;
+        }
+
+        let computedItems = items.map(item => {
+            let q = Number(item.qty || item.quantity || 1);
+            let unitPrice = Number(item.price || item.unit_price || 0);
+            let itemTotal = Number(item.total_price || item.sum || (unitPrice * q));
+            let name = item.name || item.food_name || '';
+            
+            let rawNote = item.note || item.comment || item.remark || item.details || item.option || item.note_text || item.topping || item.extras || '';
+            
+            let friedEgg = Number(item.friedEggQty || item.khaiDaoQty || item.fried_egg || item.egg_dao || 0);
+            if (friedEgg > 0) {
+                let eggText = `ไข่ดาว ${friedEgg}`;
+                rawNote = rawNote ? `${rawNote}, ${eggText}` : eggText;
+            }
+
+            let omelet = Number(item.omeletQty || item.khaiJiaoQty || item.omelet || item.egg_jiao || 0);
+            if (omelet > 0) {
+                let jiaoText = `ไข่เจียว ${omelet}`;
+                rawNote = rawNote ? `${rawNote}, ${jiaoText}` : jiaoText;
+            }
+
+            if (!rawNote && item.selectedOptions) {
+                if (typeof item.selectedOptions === 'string') rawNote = item.selectedOptions;
+                else if (Array.isArray(item.selectedOptions)) rawNote = item.selectedOptions.join(', ');
+            }
+            
+            if (!rawNote && Array.isArray(item.options)) {
+                rawNote = item.options.map(opt => opt.name || opt).join(', ');
+            }
+
+            if (!rawNote && item.selectedToppings) {
+                if (Array.isArray(item.selectedToppings)) {
+                    rawNote = item.selectedToppings.map(t => t.name || t).join(', ');
+                }
+            }
+
+            if (name.includes('(') && name.includes(')')) {
+                const match = name.match(/^(.*?)\s*\((.*?)\)$/);
+                if (match) {
+                    name = match[1].trim();
+                    let bracketNote = match[2].trim();
+                    rawNote = rawNote ? `${rawNote}, ${bracketNote}` : bracketNote;
+                }
+            }
+
+            name = name.replace(/\s*\(สินค้าฝากซื้อ.*?\)/g, '').trim();
+
+            let note = '';
+            if (rawNote) {
+                if (typeof rawNote === 'string') {
+                    note = rawNote.trim();
+                } else if (typeof rawNote === 'object') {
+                    note = JSON.stringify(rawNote);
+                }
+            }
+
+            let isConsignment = item.isSpecialMenu || String(item.food_group_id || item.group_id) === '98' || String(item.food_group_id || item.group_id) === '99' || name.includes('สินค้าฝากซื้อ');
+            let costPrice = Number(item.cost_price || 0) * q;
+
+            if (isConsignment) {
+                note = '';
+            }
+
+            return { name: name || 'รายการ', qty: q, unitPrice, totalPrice: itemTotal, note, isConsignment, costPrice };
+        });
+
+        let deliveryFee = Number(order.delivery_fee || 0);
+        let subtotal = computedItems.reduce((sum, item) => sum + item.totalPrice, 0);
+        let billTotal = Number(order.total_price || order.subtotal || 0);
+        
+        if (billTotal === 0 && subtotal > 0) {
+            billTotal = subtotal + deliveryFee;
+        }
+
+        // --- ต้นทุนสินค้าฝากซื้อ ---
+        let consignmentTotal = 0;
+        computedItems.forEach(item => {
+            if (item.isConsignment) {
+                consignmentTotal += item.costPrice;
+            }
+        });
+
+        // --- คำนวณเปอร์เซ็นต์ค่าคอมมิชชันของรีสอร์ตตามเงื่อนไขใหม่ ---
+        let commissionPercent = 0;
+        let resortName = "";
+        if (order.location_id) {
+            const foundLoc = locationsCache.find(l => String(l.location_id) === String(order.location_id));
+            if (foundLoc) {
+                resortName = foundLoc.location_name || "";
+                commissionPercent = Number(foundLoc.commission_percent || 0);
+            }
+        }
+
+        // ฐานในการคิดเปอร์เซ็นต์: ยอดรวมอาหาร (subtotal) - ต้นทุนสินค้าฝากซื้อ - ค่าส่ง
+        let commissionBase = subtotal - consignmentTotal - deliveryFee;
+        if (commissionBase < 0) commissionBase = 0;
+
+        // ปัดเศษลงทุกๆ หลักร้อย (เช่น 120 -> 100, 190 -> 100, 350 -> 300)
+        let roundedBase = Math.floor(commissionBase / 100) * 100;
+        let commissionBaht = commissionPercent > 0 ? Math.round(roundedBase * (commissionPercent / 100)) : 0;
+
+        // --- รายจ่ายรวม (ต้นทุนสินค้าฝากซื้อ + คอมมิชชันรีสอร์ต) ---
+        let totalExpense = consignmentTotal + commissionBaht;
+        let netProfitTotal = billTotal - totalExpense;
+
+        let groupTypeName = "ชาวบ้าน";
+        let typeId = Number(order.customer_type_id);
+        if (typeId === 2) {
+            groupTypeName = resortName ? resortName : "นักท่องเที่ยว";
+        } else if (typeId === 3) {
+            groupTypeName = "สบายดี";
+        }
+
+        let rawCustomerName = order.customer_name || '';
+        let zoneOnly = rawCustomerName;
+        if (rawCustomerName.includes('(') && rawCustomerName.includes(')')) {
+            const matches = rawCustomerName.match(/\((.*?)\)/g);
+            if (matches && matches.length > 0) {
+                zoneOnly = matches[matches.length - 1].replace(/[()]/g, '').trim();
+            }
+        } else if (rawCustomerName.toLowerCase().startsWith(groupTypeName.toLowerCase())) {
+            zoneOnly = rawCustomerName.replace(new RegExp(groupTypeName, 'gi'), '').trim();
+        }
+
+        if (!zoneOnly || zoneOnly === '' || zoneOnly === groupTypeName) {
+            zoneOnly = groupTypeName;
+        }
+
+        return {
+            ...order,
+            parsedItems: computedItems,
+            computedTotal: billTotal,
+            deliveryFee: deliveryFee,
+            consignmentTotal,
+            commissionPercent,
+            commissionBase,
+            roundedBase,
+            commissionBaht,
+            totalExpense,
+            netProfitTotal,
+            hasExpense: totalExpense > 0,
+            groupTypeName,
+            displayCustomerName: zoneOnly,
+            dateStr: getOrderDateStr(order)
+        };
+    }
+    /* END BLOCK 2.1 */
+
+    /* ----------------------------------------------------------
+       BLOCK 2.2: FETCH SUPABASE DATA AND MANAGE CACHE
+       ---------------------------------------------------------- */
+    async function fetchMasterData() {
+        if (!db) return;
+        try {
+            const locRes = await db.from('locations').select('*').order('location_name', { ascending: true });
+            if (locRes.data) locationsCache = locRes.data;
+        } catch (err) { console.error("Error fetching locations:", err); }
+    }
+
+    async function fetchInitialOrders() {
+        if (!db) return;
+        
+        const pastDate = new Date();
+        pastDate.setDate(pastDate.getDate() - 15);
+        const pastDateStr = pastDate.toISOString().split('T')[0] + 'T00:00:00';
+        
+        const { data, error } = await db.from('orders')
+            .select('*')
+            .gte('created_at', pastDateStr)
+            .order('order_id', { ascending: true });
+
+        if (error) { console.error("Error fetching initial orders:", error); return; }
+        
+        const normalized = (data || []).map(o => normalizeOrder(o));
+        normalized.forEach(o => { if (o.dateStr) fetchedDatesSet.add(o.dateStr); });
+        allOrdersCache = normalized;
+        
+        switchTab(currentActiveTab, document.querySelector('.tab-btn.active-tab'));
+    }
+
+    async function ensureOrdersForDate(targetDateStr) {
+        if (!db || fetchedDatesSet.has(targetDateStr)) return;
+
+        if (currentActiveTab === 'daily') {
+            document.getElementById('dailyOrdersContainer').innerHTML = `<div class="text-center text-slate-400 py-10 text-xs font-medium">⏳ กำลังค้นหาออร์เดอร์ของวันที่ ${formatDateThai(targetDateStr)}...</div>`;
+        } else if (currentActiveTab === 'groupsales') {
+            document.getElementById('groupSummaryContainer').innerHTML = `<div class="text-center text-slate-400 py-10 text-xs font-medium">⏳ กำลังค้นหาออร์เดอร์ของวันที่ ${formatDateThai(targetDateStr)}...</div>`;
+        }
+
+        const startStr = `${targetDateStr}T00:00:00`;
+        const endStr = `${targetDateStr}T23:59:59.999`;
+
+        const { data, error } = await db.from('orders')
+            .select('*')
+            .gte('created_at', startStr)
+            .lte('created_at', endStr)
+            .order('order_id', { ascending: true });
+
+        if (!error && data) {
+            const newOrders = data.map(o => normalizeOrder(o));
+            newOrders.forEach(no => {
+                const idKey = no.order_id || no.id;
+                if (!allOrdersCache.some(o => (o.order_id || o.id) === idKey)) {
+                    allOrdersCache.push(no);
+                }
+            });
+        }
+        
+        fetchedDatesSet.add(targetDateStr);
+    }
+
+    function updateDateDisplays() {
+        const text = formatDateThai(currentSelectedDate);
+        if (document.getElementById('txtDailyDate')) document.getElementById('txtDailyDate').textContent = text;
+        if (document.getElementById('txtGroupDate')) document.getElementById('txtGroupDate').textContent = text;
+    }
+    /* END BLOCK 2.2 */
+
+    /* ----------------------------------------------------------
+       BLOCK 2.3: TAB NAVIGATION AND CALENDAR MANAGEMENT
+       ---------------------------------------------------------- */
+    async function switchTab(tabName, btnEl) {
+        currentActiveTab = tabName;
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active-tab'));
+        if (btnEl) btnEl.classList.add('active-tab');
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+        if (tabName === 'overview') {
+            document.getElementById('tabOverview').classList.add('active');
+            renderOverviewData();
+        } else if (tabName === 'daily') {
+            document.getElementById('tabDaily').classList.add('active');
+            await ensureOrdersForDate(currentSelectedDate);
+            filterDailyOrders();
+        } else if (tabName === 'groupsales') {
+            document.getElementById('tabGroupSales').classList.add('active');
+            await ensureOrdersForDate(currentSelectedDate);
+            renderGroupSalesData();
+        }
+    }
+
+    function openCalendar() {
+        const iframe = document.getElementById('calendarIframe');
+        const countsMap = {};
+        allOrdersCache.forEach(item => {
+            const d = item.dateStr;
+            if (d) countsMap[d] = (countsMap[d] || 0) + 1;
+        });
+        sessionStorage.setItem('calendarEventsData', JSON.stringify(countsMap));
+        iframe.src = 'calendar.html';
+        
+        const modal = document.getElementById('calendarModal');
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        document.getElementById('calendarBox').classList.remove('scale-95');
+    }
+
+    function closeCalendarModal() {
+        const modal = document.getElementById('calendarModal');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        document.getElementById('calendarBox').classList.add('scale-95');
+        setTimeout(() => { document.getElementById('calendarIframe').src = ''; }, 200);
+    }
+
+    function handleCalendarOutsideClick(e) {
+        if (e.target.id === 'calendarModal') closeCalendarModal();
+    }
+
+    window.addEventListener('message', async function(event) {
+        if (!event.data || typeof event.data !== 'object') return;
+        if (event.data.action === 'SELECT_DATE' || event.data.selectedDate) {
+            const selectedDateStr = event.data.selectedDate || event.data.date;
+            if (selectedDateStr) {
+                currentSelectedDate = selectedDateStr;
+                updateDateDisplays();
+                
+                await ensureOrdersForDate(currentSelectedDate);
+                
+                if (currentActiveTab === 'daily') filterDailyOrders();
+                else if (currentActiveTab === 'groupsales') renderGroupSalesData();
+            }
+            closeCalendarModal();
+        }
+        if (event.data.action === 'CLOSE_MODAL') closeCalendarModal();
+    });
+    /* END BLOCK 2.3 */
+
+    /* ----------------------------------------------------------
+       BLOCK 2.4: RENDER OVERVIEW, DAILY ORDERS, GROUP SALES, AND MODALS
+       ---------------------------------------------------------- */
+    function renderOverviewData() {
+        const container = document.getElementById('overviewDateListContainer');
+        if (!container) return;
+        if (allOrdersCache.length === 0) {
+            container.innerHTML = `<div class="text-center text-slate-400 py-10 text-xs font-medium">📭 ไม่พบข้อมูลออร์เดอร์ในช่วง 15 วันที่ผ่านมา</div>`;
+            document.getElementById('overviewTotalBillCount').textContent = '0 วัน';
+            return;
+        }
+
+        let dateGroups = {};
+        allOrdersCache.forEach(order => {
+            let dateStr = order.dateStr;
+            if (!dateStr) return;
+            if (!dateGroups[dateStr]) dateGroups[dateStr] = { totalIncome: 0, totalExpense: 0, netTotal: 0, count: 0 };
+
+            dateGroups[dateStr].totalIncome += order.computedTotal;
+            dateGroups[dateStr].totalExpense += order.totalExpense;
+            dateGroups[dateStr].netTotal += order.netProfitTotal;
+            dateGroups[dateStr].count += 1;
+        });
+
+        let sortedDates = Object.keys(dateGroups).sort((a, b) => b.localeCompare(a));
+        document.getElementById('overviewTotalBillCount').textContent = `${sortedDates.length} วัน`;
+
+        container.innerHTML = sortedDates.map(dateStr => {
+            const data = dateGroups[dateStr];
+            return `
+                <div onclick="goToDailyTab('${dateStr}')" class="bg-white p-3.5 rounded-xl border border-slate-200 hover:border-purple-400 active:scale-95 transition cursor-pointer shadow-xs flex justify-between items-center">
+                    <div>
+                        <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <span>📅 วันที่:</span> <span class="text-purple-700 font-extrabold">${formatDateThai(dateStr)}</span>
+                        </div>
+                        <div class="text-[11px] text-slate-500 mt-1">จำนวนบิล: <span class="font-bold text-slate-700">${data.count} บิล</span></div>
+                        <div class="text-[10px] text-slate-500 mt-0.5 space-x-2">
+                            <span>รายรับ: <strong class="text-red-600">฿${data.totalIncome.toLocaleString()}</strong></span>
+                            <span>รายจ่าย: <strong class="text-yellow-700">฿${data.totalExpense.toLocaleString()}</strong></span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs font-black text-emerald-600">สุทธิ ฿${data.netTotal.toLocaleString()}.-</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">แตะเพื่อดูบิลประจำวัน 🔍</div>
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
+    function goToDailyTab(dateStr) {
+        currentSelectedDate = dateStr;
+        updateDateDisplays();
+        switchTab('daily', document.querySelector('.tab-btn.tab-daily'));
+    }
+
+    function filterDailyOrders() {
+        const container = document.getElementById('dailyOrdersContainer');
+        if (!container) return;
+        container.innerHTML = '';
+
+        let filtered = allOrdersCache.filter(o => o.dateStr === currentSelectedDate);
+        filtered.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+
+        if (filtered.length === 0) {
+            container.innerHTML = `<div class="text-center text-xs text-slate-400 py-8 font-medium">📭 ไม่พบออร์เดอร์ในวันที่ ${formatDateThai(currentSelectedDate)}</div>`;
+            document.getElementById('dailySummaryCount').textContent = '0 บิล';
+            document.getElementById('dailySummaryTotal').innerHTML = `
+                <div class="text-[10px] text-emerald-800">รายรับ<br><strong class="text-emerald-900">฿0</strong></div>
+                <div class="text-[10px] text-yellow-800">รายจ่าย<br><strong class="text-yellow-900">฿0</strong></div>
+                <div class="text-[10px] text-emerald-600">สุทธิ<br><strong class="text-emerald-600 font-black">฿0</strong></div>
+            `;
+            return;
+        }
+
+        let totalIncome = 0;
+        let totalExpense = 0;
+        let totalNet = 0;
+
+        filtered.forEach(order => {
+            totalIncome += order.computedTotal;
+            totalExpense += order.totalExpense;
+            totalNet += order.netProfitTotal;
+
+            let redItemsHtml = order.parsedItems.map(item => {
+                let comment = item.note ? ` <span class="text-amber-800 font-semibold bg-amber-50 px-1.5 py-0.5 rounded text-[11px]">(${item.note})</span>` : '';
+                let badge = item.isConsignment ? ` <span class="text-[9px] bg-amber-100 text-amber-800 px-1 rounded font-bold">ฝากซื้อ</span>` : '';
+                return `<tr class="border-b border-red-100">
+                    <td class="p-1.5 text-xs text-slate-800 font-medium">${item.name}${badge}${comment}</td>
+                    <td class="p-1.5 text-xs text-center font-bold">x${item.qty}</td>
+                    <td class="p-1.5 text-xs text-right font-bold text-red-600">${item.totalPrice.toLocaleString()}.-</td>
+                </tr>`;
+            }).join('');
+
+            if (order.deliveryFee > 0) {
+                redItemsHtml += `<tr class="border-b border-red-100 bg-red-50/40">
+                    <td class="p-1.5 text-xs text-red-900 font-bold flex items-center gap-1"><span>🛵</span><span>ค่าบริการจัดส่ง</span></td>
+                    <td class="p-1.5 text-xs text-center font-bold text-red-900">-</td>
+                    <td class="p-1.5 text-xs text-right font-bold text-red-900">${order.deliveryFee.toLocaleString()}.-</td>
+                </tr>`;
+            }
+
+            let expenseSection = '';
+            if (order.hasExpense) {
+                let yellowItemsHtml = order.parsedItems.filter(i => i.isConsignment).map(item => {
+                    return `<tr class="border-b border-yellow-100">
+                        <td class="p-1 text-[11px] text-yellow-900 font-medium">${item.name}</td>
+                        <td class="p-1 text-[11px] text-center font-bold">x${item.qty}</td>
+                        <td class="p-1 text-[11px] text-right font-bold text-yellow-700">${item.costPrice.toLocaleString()}.-</td>
+                    </tr>`;
+                }).join('');
+
+                let consignmentBox = order.consignmentTotal > 0 ? `
+                    <div class="bg-yellow-50/80 border border-yellow-300 rounded-lg p-2 space-y-1 mb-1.5">
+                        <div class="text-[11px] font-bold text-yellow-900 flex items-center gap-1">
+                            <span>🟡</span> <span>รายจ่ายซื้อของฝากขาย (ต้นทุน):</span>
+                        </div>
+                        <table class="w-full text-left"><tbody>${yellowItemsHtml}</tbody></table>
+                        <div class="flex justify-between items-center text-[11px] font-extrabold text-yellow-900 pt-1 border-t border-yellow-200">
+                            <span>รวมต้นทุนสินค้า:</span>
+                            <span>฿${order.consignmentTotal.toLocaleString()}.-</span>
+                        </div>
+                    </div>` : '';
+
+                let commissionBox = order.commissionBaht > 0 ? `
+                    <div class="bg-purple-50 border border-purple-300 rounded-lg p-2 space-y-1 text-[11px]">
+                        <div class="flex justify-between items-center font-bold text-purple-900">
+                            <span>🟣 ค่าคอมมิชชันรีสอร์ต (${order.commissionPercent}%):</span>
+                            <span class="font-extrabold text-purple-700 text-xs">฿${order.commissionBaht.toLocaleString()}.-</span>
+                        </div>
+                        <div class="text-[10px] text-slate-500">
+                            (จากฐานรายรับสุทธิ ฿${order.commissionBase} ➔ ปัดเศษลงเหลือ ฿${order.roundedBase})
+                        </div>
+                    </div>` : '';
+
+                expenseSection = `
+                    <div class="space-y-1">
+                        ${consignmentBox}
+                        ${commissionBox}
+                    </div>
+
+                    <div class="bg-emerald-50 border border-emerald-300 rounded-lg p-2 flex justify-between items-center text-xs mt-1.5">
+                        <span class="font-bold text-emerald-900 flex items-center gap-1"><span>🟢</span> <span>สรุปยอดรับสุทธิ (หักรายจ่ายทั้งหมด):</span></span>
+                        <span class="font-black text-emerald-600 text-sm">฿${order.netProfitTotal.toLocaleString()}.-</span>
+                    </div>
+                `;
+            }
+
+            let orderId = order.order_id || order.id;
+
+            container.innerHTML += `
+                <div onclick="goToEditOrder(${orderId})" class="bg-white border-2 border-red-500 rounded-xl p-3 shadow-md space-y-3 cursor-pointer transition active:scale-95">
+                    <div class="flex justify-between border-b border-slate-200 pb-2">
+                        <span class="font-bold text-xs text-amber-900 bg-amber-100 px-2.5 py-0.5 rounded">${order.groupTypeName} ✏️</span>
+                        <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded truncate max-w-[200px]">👤 ${order.displayCustomerName}</span>
+                    </div>
+
+                    <div class="border border-red-300 rounded-lg p-2 bg-red-50/20 shadow-xs">
+                        <div class="text-[11px] font-bold text-red-800 mb-1">🔴 รายรับทั้งหมด (ยอดขายในบิล):</div>
+                        <table class="w-full text-left"><tbody>${redItemsHtml}</tbody></table>
+                        <div class="flex justify-between items-center text-xs font-bold text-red-900 pt-1 border-t border-red-200 mt-1">
+                            <span>รวมรายรับ:</span>
+                            <span class="text-red-600">฿${order.computedTotal.toLocaleString()}.-</span>
+                        </div>
+                    </div>
+
+                    ${expenseSection}
+                </div>`;
+        });
+
+        document.getElementById('dailySummaryCount').textContent = `${filtered.length} บิล`;
+        document.getElementById('dailySummaryTotal').innerHTML = `
+            <div class="text-[10px] text-emerald-800">รายรับ<br><strong class="text-emerald-900">฿${totalIncome.toLocaleString()}</strong></div>
+            <div class="text-[10px] text-yellow-800">รายจ่าย<br><strong class="text-yellow-900">฿${totalExpense.toLocaleString()}</strong></div>
+            <div class="text-[10px] text-emerald-600">สุทธิ<br><strong class="text-emerald-600 font-black">฿${totalNet.toLocaleString()}</strong></div>
+        `;
+    }
+
+    function renderGroupSalesData() {
+        const headerBox = document.getElementById('groupHeaderSummaryBox');
+        const container = document.getElementById('groupSummaryContainer');
+        if (!container || !headerBox) return;
+
+        let filteredOrders = allOrdersCache.filter(o => o.dateStr === currentSelectedDate);
+        if (filteredOrders.length === 0) {
+            headerBox.innerHTML = `<div class="bg-slate-800 text-white p-3.5 rounded-xl shadow-xs"><div class="text-[11px] text-slate-300">ยอดรวมประจำวัน (${formatDateThai(currentSelectedDate)})</div><div class="text-lg font-black text-emerald-400">สุทธิ ฿0.-</div><div class="text-[10px] text-slate-300 mt-1">รายรับ: ฿0 | รายจ่าย: ฿0 (0 บิล)</div></div>`;
+            container.innerHTML = `<div class="text-center text-slate-400 py-12 text-xs font-medium">📭 ไม่พบข้อมูลการขาย</div>`;
+            return;
+        }
+
+        globalGroupData = {};
+        let grandTotalOrders = 0, grandTotalIncome = 0, grandTotalExpense = 0, grandTotalNet = 0;
+
+        filteredOrders.forEach(order => {
+            let groupKey = order.groupTypeName;
+
+            if (!globalGroupData[groupKey]) {
+                globalGroupData[groupKey] = { orderCount: 0, totalIncome: 0, totalExpense: 0, netTotal: 0, orders: [] };
+            }
+
+            globalGroupData[groupKey].orderCount += 1;
+            globalGroupData[groupKey].totalIncome += order.computedTotal;
+            globalGroupData[groupKey].totalExpense += order.totalExpense;
+            globalGroupData[groupKey].netTotal += order.netProfitTotal;
+            globalGroupData[groupKey].orders.push(order);
+
+            grandTotalOrders += 1;
+            grandTotalIncome += order.computedTotal;
+            grandTotalExpense += order.totalExpense;
+            grandTotalNet += order.netProfitTotal;
+        });
+
+        headerBox.innerHTML = `
+            <div class="bg-slate-800 text-white p-3.5 rounded-xl shadow-xs">
+                <div class="text-[11px] text-slate-300">สรุปยอดรวมประจำวัน (${formatDateThai(currentSelectedDate)})</div>
+                <div class="text-xl font-black text-emerald-400">สุทธิ ฿${grandTotalNet.toLocaleString()}.-</div>
+                <div class="text-[11px] text-slate-300 mt-1 flex justify-between">
+                    <span>รายรับ: <strong class="text-red-400">฿${grandTotalIncome.toLocaleString()}</strong></span>
+                    <span>รายจ่าย: <strong class="text-yellow-400">฿${grandTotalExpense.toLocaleString()}</strong></span>
+                    <span>บิล: <strong class="text-white">${grandTotalOrders} บิล</strong></span>
+                </div>
+            </div>`;
+
+        let html = '';
+        for (let [groupName, data] of Object.entries(globalGroupData)) {
+            html += `
+                <div onclick="openGroupModal('${groupName}')" class="bg-white border border-slate-200 hover:border-blue-400 active:scale-95 cursor-pointer transition rounded-xl p-3.5 flex justify-between items-center shadow-xs">
+                    <div>
+                        <div class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                            <span>👥 กลุ่ม:</span> <span class="text-blue-600 font-extrabold truncate max-w-[180px]">${groupName}</span>
+                        </div>
+                        <div class="text-[11px] text-slate-500 mt-1">จำนวนบิล: <span class="font-bold text-slate-700">${data.orderCount} บิล</span> <span class="text-blue-500 ml-1 font-semibold">(ดูรายละเอียด 🔍)</span></div>
+                        <div class="text-[10px] text-slate-500 mt-0.5 space-x-2">
+                            <span>รายรับ: <strong class="text-red-600">฿${data.totalIncome.toLocaleString()}</strong></span>
+                            <span>รายจ่าย: <strong class="text-yellow-700">฿${data.totalExpense.toLocaleString()}</strong></span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs font-black text-emerald-600">สุทธิ ฿${data.netTotal.toLocaleString()}.-</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">กดเพื่อเปิดบิล</div>
+                    </div>
+                </div>`;
+        }
+        container.innerHTML = html;
+    }
+
+    function openGroupModal(groupName) {
+        const group = globalGroupData[groupName];
+        if (!group) return;
+
+        document.getElementById('modalGroupName').textContent = `👥 กลุ่ม: ${groupName}`;
+        document.getElementById('modalGroupMeta').textContent = `จำนวนบิลทั้งหมด: ${group.orderCount} บิล (รายรับ ฿${group.totalIncome.toLocaleString()} | รายจ่าย ฿${group.totalExpense.toLocaleString()})`;
+        document.getElementById('modalGroupTotal').textContent = `฿${group.netTotal.toLocaleString()}.-`;
+
+        let listHtml = '';
+        group.orders.forEach(o => {
+            let redItemsHtml = o.parsedItems.map(item => {
+                let comment = item.note ? ` <span class="text-amber-800 font-semibold bg-amber-50 px-1.5 py-0.5 rounded text-[10px]">(${item.note})</span>` : '';
+                let badge = item.isConsignment ? ` <span class="text-[9px] bg-amber-100 text-amber-800 px-1 rounded font-bold">ฝากซื้อ</span>` : '';
+                return `<div class="text-[11px] flex justify-between items-start text-slate-600 py-1 border-b border-red-50 last:border-none">
+                    <div><span class="font-medium text-slate-800">• ${item.name}${badge}${comment}</span> <span class="text-red-600 font-bold ml-1">x${item.qty}</span></div>
+                    <span class="font-bold text-slate-700 shrink-0 ml-2">฿${item.totalPrice.toLocaleString()}</span>
+                </div>`;
+            }).join('');
+
+            if (o.deliveryFee > 0) {
+                redItemsHtml += `<div class="text-[11px] flex justify-between items-center text-red-900 py-1 bg-red-50/40 px-1 rounded border-b border-red-50">
+                    <div><span class="font-bold">🛵 ค่าบริการจัดส่ง</span></div>
+                    <span class="font-bold shrink-0 ml-2">฿${o.deliveryFee.toLocaleString()}</span>
+                </div>`;
+            }
+
+            let expenseSection = '';
+            if (o.hasExpense) {
+                let yellowItemsHtml = o.parsedItems.filter(i => i.isConsignment).map(item => {
+                    return `<div class="text-[10px] flex justify-between items-center text-yellow-900 py-0.5">
+                        <span>• ${item.name} x${item.qty}</span>
+                        <span class="font-bold">฿${item.costPrice.toLocaleString()}</span>
+                    </div>`;
+                }).join('');
+
+                let consignmentBox = o.consignmentTotal > 0 ? `
+                    <div class="bg-yellow-50/80 border border-yellow-300 rounded-lg p-2 space-y-1 mb-1">
+                        <div class="text-[10px] font-bold text-yellow-900">🟡 รายจ่ายซื้อของฝากขาย (ต้นทุน):</div>
+                        ${yellowItemsHtml}
+                        <div class="flex justify-between items-center text-[10px] font-extrabold text-yellow-900 pt-1 border-t border-yellow-200">
+                            <span>รวมต้นทุนสินค้า:</span>
+                            <span>฿${o.consignmentTotal.toLocaleString()}.-</span>
+                        </div>
+                    </div>` : '';
+
+                let commissionBox = o.commissionBaht > 0 ? `
+                    <div class="bg-purple-50 border border-purple-300 rounded-lg p-1.5 text-[10px] mb-1">
+                        <div class="flex justify-between items-center font-bold text-purple-900">
+                            <span>🟣 ค่าคอมมิชชันรีสอร์ต (${o.commissionPercent}%):</span>
+                            <span class="font-extrabold text-purple-700">฿${o.commissionBaht.toLocaleString()}.-</span>
+                        </div>
+                        <div class="text-[9px] text-slate-500">
+                            (ฐาน ฿${o.commissionBase} ➔ ปัดลง ฿${o.roundedBase})
+                        </div>
+                    </div>` : '';
+
+                expenseSection = `
+                    <div class="space-y-1 my-1">
+                        ${consignmentBox}
+                        ${commissionBox}
+                    </div>
+                    <div class="bg-emerald-50 border border-emerald-300 rounded-lg p-1.5 flex justify-between items-center text-[11px]">
+                        <span class="font-bold text-emerald-900">🟢 สรุปยอดรับสุทธิ:</span>
+                        <span class="font-black text-emerald-600">฿${o.netProfitTotal.toLocaleString()}.-</span>
+                    </div>
+                `;
+            }
+
+            let orderId = o.order_id || o.id;
+            listHtml += `
+                <div onclick="goToEditOrder(${orderId})" class="bg-white p-3 rounded-xl border-2 border-red-500 shadow-md space-y-3 cursor-pointer transition active:scale-95">
+                    <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+                        <span class="font-bold text-xs text-amber-900 bg-amber-100 px-2.5 py-0.5 rounded">${groupName} ✏️</span>
+                        <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded truncate max-w-[200px]">👤 ${o.displayCustomerName}</span>
+                    </div>
+                    <div class="border border-red-300 rounded-lg p-2 bg-red-50/20 shadow-xs">
+                        <div class="text-[10px] font-bold text-red-800 mb-1">🔴 รายรับทั้งหมด:</div>
+                        <div class="space-y-1">${redItemsHtml}</div>
+                    </div>
+                    ${expenseSection}
+                    <div class="flex justify-between pt-1 text-xs font-bold border-t border-slate-200">
+                        <span>ยอดรวมบิล:</span>
+                        <span class="text-emerald-600 text-sm font-black">฿${o.computedTotal.toLocaleString()}.-</span>
+                    </div>
+                </div>`;
+        });
+
+        document.getElementById('modalOrderList').innerHTML = listHtml;
+        const modal = document.getElementById('groupDetailModal');
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        document.getElementById('groupDetailBox').classList.remove('scale-95');
+    }
+
+    function closeGroupModal() {
+        const modal = document.getElementById('groupDetailModal');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        document.getElementById('groupDetailBox').classList.add('scale-95');
+    }
+
+    function handleOutsideModalClick(e) {
+        if (e.target.id === 'groupDetailModal') closeGroupModal();
+    }
+
+    function goToEditOrder(orderId) {
+        window.location.href = `editorder.html?order_id=${orderId}`;
+    }
+    /* END BLOCK 2.4 */
+
+    /* ==========================================================
+       END BLOCK 2: LOGIC & DATABASE OPERATIONS
+       ========================================================== */
+</script>
+</body>
+</html>

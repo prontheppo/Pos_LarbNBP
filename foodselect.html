@@ -8,7 +8,7 @@
        - [บล็อก 1.1] HEADER (ส่วนหัว)
        - [บล็อก 1.2] FOOD DETAILS AND SAVE BUTTON (ส่วนแสดงรายละเอียดสินค้าและปุ่มบันทึก)
        - [บล็อก 1.3] SELECTED CART ITEMS (รายการสินค้าที่เลือกไว้แล้วในตะกร้า)
-       - [บล็อก 1.4] PRICE AND QUANTITY INPUTS (ส่วนกำหนดราคาและจำนวนสินค้า)
+       - [บล็อก 1.4] PRICE (COST & SELL) AND QUANTITY INPUTS (ส่วนกำหนดราคาต้นทุน/ราคาขาย และจำนวนสินค้า)
        - [บล็อก 1.5] EGG OPTIONS (ส่วนเลือกไข่ดาวและไข่เจียว)
        - [บล็อก 1.6] FOOD NOTE (ส่วนกรอกหมายเหตุ)
        - [บล็อก 1.7] CSS STYLES (รูปแบบการแสดงผล CSS)
@@ -98,14 +98,18 @@
         <!-- END BLOCK 1.3 -->
 
         <!-- ----------------------------------------------------------
-             BLOCK 1.4: PRICE AND QUANTITY INPUTS
+             BLOCK 1.4: PRICE (COST & SELL) AND QUANTITY INPUTS
              ---------------------------------------------------------- -->
-        <div class="grid grid-cols-2 gap-2.5 items-center">
-            <div>
-                <label id="priceLabel" class="block custom-label text-slate-700 mb-1">ราคาพิเศษ (ถ้ามี)</label>
-                <input type="number" id="foodPrice" placeholder="ระบุราคา" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-800 text-center text-base outline-none focus:border-emerald-500">
+        <div id="priceAndQtyGrid" class="grid grid-cols-2 gap-2.5 items-center">
+            <div id="costPriceBox" class="hidden">
+                <label id="costLabel" class="block custom-label text-slate-700 mb-1">ต้นทุน (บาท)</label>
+                <input type="number" id="foodCostPrice" placeholder="ระบุต้นทุน" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-800 text-center text-base outline-none focus:border-emerald-500">
             </div>
-            <div>
+            <div id="sellPriceBox">
+                <label id="priceLabel" class="block custom-label text-slate-700 mb-1">ราคาขาย</label>
+                <input type="number" id="foodPrice" placeholder="ระบุราคาขาย" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-800 text-center text-base outline-none focus:border-emerald-500">
+            </div>
+            <div id="qtyBox">
                 <label class="block custom-label text-slate-700 mb-1">จำนวน</label>
                 <div class="flex items-center justify-between bg-slate-50 border border-slate-300 rounded-xl px-2 py-1.5">
                     <button type="button" onclick="adjustQty(-1)" class="w-7 h-7 bg-white border border-slate-200 rounded-lg text-slate-600 font-bold flex items-center justify-center text-base cursor-pointer">-</button>
@@ -121,16 +125,16 @@
              ---------------------------------------------------------- -->
         <div id="eggSection" class="grid grid-cols-2 gap-2 items-center hidden">
             <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl flex items-center justify-between">
-                <span class="custom-label text-slate-700">ไข่ดาว</span>
-                <div class="flex items-center gap-1.5">
+                <span class="custom-label text-slate-700 whitespace-nowrap">ไข่ดาว</span>
+                <div class="flex items-center gap-1.5 shrink-0">
                     <button type="button" onclick="adjustExtra('friedEgg', -1)" class="w-6 h-6 bg-white border rounded-lg font-bold text-base cursor-pointer">-</button>
                     <span id="friedEggQty" class="font-bold text-base w-5 text-center">0</span>
                     <button type="button" onclick="adjustExtra('friedEgg', 1)" class="w-6 h-6 bg-white border rounded-lg font-bold text-base cursor-pointer">+</button>
                 </div>
             </div>
             <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl flex items-center justify-between">
-                <span class="custom-label text-slate-700">ไข่เจียว</span>
-                <div class="flex items-center gap-1.5">
+                <span class="custom-label text-slate-700 whitespace-nowrap">ไข่เจียว</span>
+                <div class="flex items-center gap-1.5 shrink-0">
                     <button type="button" onclick="adjustExtra('omelet', -1)" class="w-6 h-6 bg-white border rounded-lg font-bold text-base cursor-pointer">-</button>
                     <span id="omeletQty" class="font-bold text-base w-5 text-center">0</span>
                     <button type="button" onclick="adjustExtra('omelet', 1)" class="w-6 h-6 bg-white border rounded-lg font-bold text-base cursor-pointer">+</button>
@@ -161,7 +165,7 @@
         let currentQty = 1;
         let friedEgg = 0;
         let omelet = 0;
-        const EGG_CATEGORY_IDS = ['1', '2'];
+        const EGG_CATEGORY_IDS = ['1', '2', '3'];
 
         const urlParams = new URLSearchParams(window.location.search);
         const urlFoodId = urlParams.get('food_id');
@@ -213,20 +217,43 @@
            ---------------------------------------------------------- */
         function initDetail() {
             if (!currentFood) return;
-            currentQty = 1; friedEgg = 0; omelet = 0;
+            currentQty = 1;
+            friedEgg = 0;
+            omelet = 0;
             
-            let defaultVal = '';
-            if (String(currentCatId) === '99') {
-                let lastCostPrices = JSON.parse(localStorage.getItem('lastCostPrices_99') || '{}');
-                defaultVal = lastCostPrices[currentFood.food_name] !== undefined ? lastCostPrices[currentFood.food_name] : '';
-                document.getElementById('priceLabel').textContent = 'ต้นทุน (บาท)';
-                document.getElementById('foodPrice').placeholder = 'ระบุต้นทุน';
+            const isConsignment99 = (String(currentCatId) === '99');
+            const isSpecialMenu98 = (String(currentCatId) === '98');
+
+            const costPriceBox = document.getElementById('costPriceBox');
+            const sellPriceBox = document.getElementById('sellPriceBox');
+            const priceLabel = document.getElementById('priceLabel');
+            const priceAndQtyGrid = document.getElementById('priceAndQtyGrid');
+            const eggSection = document.getElementById('eggSection');
+
+            let defaultCost = '';
+            let defaultPrice = '';
+
+            // ทั้ง ID 98 และ 99 ต้องแสดงช่องกรอกต้นทุนและราคาขายเหมือนกัน
+            if (isConsignment99 || isSpecialMenu98) {
+                if (costPriceBox) costPriceBox.classList.remove('hidden');
+                if (sellPriceBox) sellPriceBox.classList.remove('hidden');
+                if (priceLabel) priceLabel.textContent = 'ราคาขาย';
+                document.getElementById('foodPrice').placeholder = 'ระบุราคาขาย';
+                if (priceAndQtyGrid) priceAndQtyGrid.className = "grid grid-cols-2 gap-2.5 items-center";
+
+                let storageKey = isConsignment99 ? 'lastCostPrices_99' : 'lastCostPrices_98';
+                let lastCostPrices = JSON.parse(localStorage.getItem(storageKey) || '{}');
+                defaultCost = lastCostPrices[currentFood.food_name] !== undefined ? lastCostPrices[currentFood.food_name] : '';
             } else {
-                document.getElementById('priceLabel').textContent = 'ราคาพิเศษ (ถ้ามี)';
+                if (costPriceBox) costPriceBox.classList.add('hidden');
+                if (sellPriceBox) sellPriceBox.classList.remove('hidden');
+                if (priceLabel) priceLabel.textContent = 'ราคาพิเศษ (ถ้ามี)';
                 document.getElementById('foodPrice').placeholder = 'ระบุราคา';
+                if (priceAndQtyGrid) priceAndQtyGrid.className = "grid grid-cols-2 gap-2.5 items-center";
             }
 
-            document.getElementById('foodPrice').value = defaultVal;
+            document.getElementById('foodCostPrice').value = defaultCost;
+            document.getElementById('foodPrice').value = defaultPrice;
             document.getElementById('foodNote').value = '';
             document.getElementById('foodQty').textContent = currentQty;
             document.getElementById('friedEggQty').textContent = friedEgg;
@@ -234,17 +261,19 @@
             document.getElementById('foodTitleHeader').textContent = currentFood.food_name;
             document.getElementById('foodTitleName').textContent = `📌 ${currentFood.food_name}`;
 
-            const eggSection = document.getElementById('eggSection');
-            if (String(currentCatId) === '99') {
-                eggSection.classList.add('hidden');
-                document.getElementById('selectedCartItemsBox').classList.add('hidden');
-            } else {
-                if (currentCatId && EGG_CATEGORY_IDS.includes(String(currentCatId))) {
+            // แสดงไข่ดาว/ไข่เจียว เฉพาะหมวด 1, 2, 3 และ ID 98 เท่านั้น (ID 99 จะถูกซ่อน)
+            if (eggSection) {
+                if (EGG_CATEGORY_IDS.includes(String(currentCatId)) || isSpecialMenu98) {
                     eggSection.classList.remove('hidden');
                 } else {
                     eggSection.classList.add('hidden');
                 }
+            }
+
+            if (!isConsignment99 && !isSpecialMenu98) {
                 renderSelectedCartList();
+            } else {
+                document.getElementById('selectedCartItemsBox').classList.add('hidden');
             }
             updateParentHeight();
         }
@@ -277,7 +306,10 @@
            BLOCK 2.7: RENDER SELECTED CART ITEMS
            ---------------------------------------------------------- */
         function renderSelectedCartList() {
-            if (String(currentCatId) === '99') return;
+            const isConsignment99 = (String(currentCatId) === '99');
+            const isSpecialMenu98 = (String(currentCatId) === '98');
+            if (isConsignment99 || isSpecialMenu98) return;
+
             let cart = JSON.parse(localStorage.getItem('cart')) || [];
             const boxContainer = document.getElementById('selectedCartItemsBox');
             const listContainer = document.getElementById('selectedCartList');
@@ -330,7 +362,6 @@
             }
         }
         /* END BLOCK 2.8 */
-
         /* ----------------------------------------------------------
            BLOCK 2.9: SAVE FOOD DATA TO CART
            ---------------------------------------------------------- */
@@ -340,53 +371,37 @@
                 return;
             }
 
-            const inputVal = document.getElementById('foodPrice').value;
+            const isConsignment99 = (String(currentCatId) === '99');
+            const isSpecialMenu98 = (String(currentCatId) === '98');
+            const costInput = document.getElementById('foodCostPrice').value;
+            const priceInput = document.getElementById('foodPrice').value.trim();
             const noteInput = document.getElementById('foodNote').value.trim();
 
             let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
-            if (String(currentCatId) === '99') {
-                const cost = parseFloat(inputVal);
-                if (isNaN(cost)) {
-                    alert('กรุณากรอกราคาต้นทุนให้ถูกต้อง');
-                    return;
-                }
+            const cost = ((isConsignment99 || isSpecialMenu98) && costInput !== "" && !isNaN(costInput)) ? parseFloat(costInput) : 0;
+            
+            // ถ้ามีการกรอกราคาขาย ให้ใช้ราคานั้น แต่ถ้าปล่อยว่างไว้ ให้เป็น null เพื่อไปดึงราคา price_1, 2, 3 ตามกลุ่มลูกค้า
+            const price = (priceInput !== "" && !isNaN(priceInput) && parseFloat(priceInput) > 0) ? parseFloat(priceInput) : null;
 
+            if (isConsignment99) {
                 let lastCostPrices = JSON.parse(localStorage.getItem('lastCostPrices_99') || '{}');
                 lastCostPrices[currentFood.food_name] = cost;
                 localStorage.setItem('lastCostPrices_99', JSON.stringify(lastCostPrices));
-
-                cart.push({
-                    item_id: Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-                    food_id: currentFood.food_id,
-                    name: currentFood.food_name,
-                    price: null,
-                    base_price: null,
-                    cost_price: cost,
-                    qty: currentQty,
-                    note: noteInput ? `สินค้าฝากซื้อ (${noteInput})` : 'สินค้าฝากซื้อ',
-                    food_group_id: 99,
-                    is_buying_resell: true
-                });
-                localStorage.setItem('cart', JSON.stringify(cart));
-                
-                if (window.self !== window.top) {
-                    window.top.postMessage({ type: 'CLOSE_POPUP' }, '*');
-                    window.top.postMessage({ type: 'BACK_TO_CATEGORY' }, '*');
-                } else {
-                    window.location.href = 'ordersystem.html';
-                }
-                return;
+            } else if (isSpecialMenu98) {
+                let lastCostPrices = JSON.parse(localStorage.getItem('lastCostPrices_98') || '{}');
+                lastCostPrices[currentFood.food_name] = cost;
+                localStorage.setItem('lastCostPrices_98', JSON.stringify(lastCostPrices));
             }
 
-            const price = inputVal !== "" ? parseFloat(inputVal) : null;
             let existingItemIndex = cart.findIndex(item => {
                 const sameFoodId = String(item.food_id) === String(currentFood.food_id);
                 const samePrice = Number(item.price || 0) === Number(price || 0);
+                const sameCost = Number(item.cost_price || 0) === Number(cost || 0);
                 const sameFriedEgg = Number(item.friedEggQty || 0) === Number(friedEgg);
                 const sameOmelet = Number(item.omeletQty || 0) === Number(omelet);
                 const sameNote = (item.note || '').trim() === noteInput;
-                return sameFoodId && samePrice && sameFriedEgg && sameOmelet && sameNote;
+                return sameFoodId && samePrice && sameCost && sameFriedEgg && sameOmelet && sameNote;
             });
 
             if (existingItemIndex > -1) {
@@ -396,23 +411,35 @@
                     item_id: Date.now() + '_' + Math.random().toString(36).substring(2, 6),
                     food_id: currentFood.food_id,
                     name: currentFood.food_name,
-                    price: price,
-                    base_price: price,
+                    price: price,         
+                    base_price: price,    
+                    cost_price: cost,     
                     friedEggQty: friedEgg,
                     omeletQty: omelet,
                     qty: currentQty,
                     note: noteInput,
                     food_group_id: currentCatId,
-                    isSpecialMenu: (String(currentCatId) === '98')
+                    is_buying_resell: isConsignment99,
+                    isSpecialMenu: isSpecialMenu98
                 });
             }
 
             localStorage.setItem('cart', JSON.stringify(cart));
+            
             if (window.self !== window.top) {
-                window.top.postMessage({ type: 'CLOSE_POPUP' }, '*');
+                window.top.postMessage({ type: 'UPDATE_CART' }, '*');
+                
+                if (isConsignment99 || isSpecialMenu98) {
+                    window.top.postMessage({ type: 'BACK_TO_CATEGORY' }, '*');
+                } else {
+                    window.top.postMessage({ type: 'CLOSE_POPUP' }, '*');
+                }
+            } else {
+                window.location.href = 'ordersystem.html';
             }
         }
         /* END BLOCK 2.9 */
+
 
         /* ----------------------------------------------------------
            BLOCK 2.10: RETURN TO CATEGORY AND CLOSE POPUP

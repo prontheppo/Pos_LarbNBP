@@ -1,3 +1,4 @@
+
 <!--
   ========================================================================
   FILE NAME: adjus_schema.html
@@ -51,11 +52,35 @@
   <script src="supabaseClient.js"></script>
 
   <style>
-    body { background-color: #000000; color: #ffffff; touch-action: manipulation; }
+    html, body {
+      background-color: #000000;
+      color: #ffffff;
+      touch-action: manipulation;
+      overflow-x: hidden;
+      overflow-y: auto !important;
+      height: auto;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Customize Scrollbar */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #18181b;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #3f3f46;
+      border-radius: 9999px;
+    }
   </style>
 </head>
 
-<body class="min-h-screen p-4 pt-24 relative">
+<body class="min-h-screen pt-28 pb-16 px-3 relative">
 
   <!-- ==========================================================
        BLOCK 1: UI LAYOUT & COMPONENTS
@@ -67,17 +92,22 @@
   <div class="fixed top-0 left-0 right-0 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800 p-3 z-40 shadow-xl">
     <div class="max-w-7xl mx-auto space-y-2">
       <div class="grid grid-cols-3 gap-2">
+
         <a href="index.html" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 px-1.5 rounded-xl text-xs transition active:scale-95 shadow flex flex-col items-center justify-center text-center leading-tight no-underline">
-          <span>🔑</span><span>หน้าหลัก</span>
+          <span>🔑</span>
+          <span>หน้าหลัก</span>
         </a>
 
-        <button onclick="fetchAllTablesData()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-1.5 rounded-xl text-xs transition active:scale-95 shadow flex flex-col items-center justify-center text-center leading-tight">
-          <span>🚀</span><span>ดึงตาราง</span>
+        <button onclick="fetchAllTablesData()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-1.5 rounded-xl text-xs transition active:scale-95 shadow flex flex-col items-center justify-center text-center leading-tight cursor-pointer">
+          <span>🚀</span>
+          <span>ดึงตาราง</span>
         </button>
 
-        <button onclick="exportSchemaOnly()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 px-1.5 rounded-xl text-xs transition active:scale-95 shadow flex flex-col items-center justify-center text-center leading-tight">
-          <span>⚡</span><span>คัดลอก schema.sql</span>
+        <button onclick="exportSchemaOnly()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 px-1.5 rounded-xl text-xs transition active:scale-95 shadow flex flex-col items-center justify-center text-center leading-tight cursor-pointer">
+          <span>⚡</span>
+          <span>คัดลอก schema.sql</span>
         </button>
+
       </div>
 
       <!-- Header Status Display -->
@@ -88,15 +118,17 @@
   </div>
   <!-- END BLOCK 1.1 -->
 
+
   <!-- ----------------------------------------------------------
        BLOCK 1.2: TABLES DISPLAY CONTAINER
        ---------------------------------------------------------- -->
   <div class="max-w-7xl mx-auto space-y-6">
-    <div id="tablesContainer" class="space-y-8"></div>
+    <div id="tablesContainer" class="space-y-6"></div>
   </div>
   <!-- END BLOCK 1.2 -->
 
   <!-- END BLOCK 1 -->
+
 
   <script>
 
@@ -113,6 +145,7 @@
 
     // Stores actual database comments for each table
     let tableCommentsMap = {};
+
     /* END BLOCK 2.1 */
 
 
@@ -130,6 +163,7 @@
       'orders': 'order_id',
       'zones': 'zone_id'
     };
+
     /* END BLOCK 2.2 */
 
 
@@ -139,19 +173,27 @@
 
     // Resolves the primary key column for a specified table
     function getPrimaryKey(tableName, sampleRow) {
-      if (primaryKeyMap[tableName]) return primaryKeyMap[tableName];
+      if (primaryKeyMap[tableName]) {
+        return primaryKeyMap[tableName];
+      }
 
       if (sampleRow) {
         const keys = Object.keys(sampleRow);
-        const found = keys.find(k => k.endsWith('_id') || k === 'id');
 
-        if (found) return found;
+        const found = keys.find(
+          k => k.endsWith('_id') || k === 'id'
+        );
+
+        if (found) {
+          return found;
+        }
 
         return keys[0];
       }
 
       return 'id';
     }
+
     /* END BLOCK 2.3 */
 
     /* END BLOCK 2 */
@@ -168,7 +210,10 @@
     // Retrieves table names and their comments from Supabase
     async function fetchTablesWithComments() {
       try {
-        const { data, error } = await supabaseClient.rpc('get_tables_with_comments');
+        const {
+          data,
+          error
+        } = await supabaseClient.rpc('get_tables_with_comments');
 
         if (error || !data) {
           console.error("RPC Error:", error);
@@ -179,7 +224,8 @@
 
         data.forEach(item => {
           if (item.table_comment) {
-            tableCommentsMap[item.table_name] = item.table_comment;
+            tableCommentsMap[item.table_name] =
+              item.table_comment;
           }
         });
 
@@ -190,6 +236,7 @@
         return [];
       }
     }
+
     /* END BLOCK 3.1 */
 
 
@@ -202,16 +249,19 @@
       const status = document.getElementById('statusText');
       const container = document.getElementById('tablesContainer');
 
-      status.innerHTML = "⏳ กำลังดึงตารางและ Comment ของจริงจาก Supabase...";
+      status.innerHTML =
+        "⏳ กำลังดึงตารางและ Comment ของจริงจาก Supabase...";
 
       const tableList = await fetchTablesWithComments();
 
       if (tableList.length === 0) {
-        status.innerHTML = `<span class="text-rose-400">❌ ไม่พบตาราง หรือฟังก์ชัน get_tables_with_comments มีปัญหาการเข้าถึง</span>`;
+        status.innerHTML =
+          `<span class="text-rose-400">❌ ไม่พบตาราง หรือฟังก์ชัน get_tables_with_comments มีปัญหาการเข้าถึง</span>`;
         return;
       }
 
-      status.innerHTML = `⏳ กำลังดึงข้อมูลจาก ${tableList.length} ตาราง...`;
+      status.innerHTML =
+        `⏳ กำลังดึงข้อมูลจาก ${tableList.length} ตาราง...`;
 
       container.innerHTML = "";
       tablesDataCache = {};
@@ -220,36 +270,63 @@
 
       for (const tableName of tableList) {
         try {
-          let query = supabaseClient.from(tableName).select('*');
+          let query = supabaseClient
+            .from(tableName)
+            .select('*');
 
           // Restricts order records to the latest 90 days and 500 rows
           if (tableName === 'orders') {
             const date90DaysAgo = new Date();
-            date90DaysAgo.setDate(date90DaysAgo.getDate() - 90);
+
+            date90DaysAgo.setDate(
+              date90DaysAgo.getDate() - 90
+            );
 
             query = query
               .gte('created_at', date90DaysAgo.toISOString())
-              .order('created_at', { ascending: false })
+              .order('created_at', {
+                ascending: false
+              })
               .limit(500);
           }
 
-          const { data, error } = await query;
+          const {
+            data,
+            error
+          } = await query;
 
           if (error) {
-            renderTableCard(tableName, null, error.message);
+            renderTableCard(
+              tableName,
+              null,
+              error.message
+            );
+
           } else {
             tablesDataCache[tableName] = data || [];
-            renderTableCard(tableName, data, null);
-            totalCount += (data ? data.length : 0);
+
+            renderTableCard(
+              tableName,
+              data,
+              null
+            );
+
+            totalCount += data ? data.length : 0;
           }
 
         } catch (err) {
-          renderTableCard(tableName, null, err.message);
+          renderTableCard(
+            tableName,
+            null,
+            err.message
+          );
         }
       }
 
-      status.innerHTML = `<span class="text-emerald-400">✅ ดึงข้อมูลสำเร็จทั้งหมด ${tableList.length} ตาราง (รวม ${totalCount} รายการ)</span>`;
+      status.innerHTML =
+        `<span class="text-emerald-400">✅ ดึงข้อมูลสำเร็จทั้งหมด ${tableList.length} ตาราง (รวม ${totalCount} รายการ)</span>`;
     }
+
     /* END BLOCK 3.2 */
 
     /* END BLOCK 3 */
@@ -266,56 +343,78 @@
     // Creates and displays a card containing the specified table data
     function renderTableCard(tableName, rows, errorMsg) {
       const container = document.getElementById('tablesContainer');
+
       const section = document.createElement('div');
 
-      section.className = `bg-zinc-900 border ${errorMsg ? 'border-rose-900/50' : 'border-zinc-800'} rounded-2xl p-5 shadow-lg space-y-3`;
+      // Sets the table card layout
+      section.className =
+        `bg-zinc-900 border ${errorMsg ? 'border-rose-900/50' : 'border-zinc-800'} rounded-2xl p-4 sm:p-5 shadow-lg space-y-3`;
 
       // Appends actual database comments when available
-      const dbComment = tableCommentsMap[tableName] ? ` (${tableCommentsMap[tableName]})` : '';
+      const dbComment = tableCommentsMap[tableName]
+        ? ` (${tableCommentsMap[tableName]})`
+        : '';
 
       let noteBadge = '';
 
       if (tableName === 'orders') {
-        noteBadge = `<span class="bg-amber-500/20 text-amber-300 text-[10px] px-2 py-0.5 rounded-md border border-amber-500/30">⚡ ย้อนหลัง 90 วัน / สูงสุด 500 แถว</span>`;
+        noteBadge =
+          `<span class="bg-amber-500/20 text-amber-300 text-[10px] px-2 py-0.5 rounded-md border border-amber-500/30">⚡ ย้อนหลัง 90 วัน / สูงสุด 500 แถว</span>`;
       }
 
       let html = `
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b ${errorMsg ? 'border-rose-900/40' : 'border-zinc-800'} pb-3">
-            <div class="flex items-center gap-2 flex-wrap">
+        <div class="flex flex-col gap-2.5 border-b ${errorMsg ? 'border-rose-900/40' : 'border-zinc-800'} pb-3">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
                 <h2 class="text-base font-bold ${errorMsg ? 'text-rose-400' : 'text-amber-400'}">📌 ตาราง: <span class="text-white">${tableName}</span><span class="text-zinc-400 text-xs font-normal">${dbComment}</span></h2>
-                ${!errorMsg ? `<span class="bg-zinc-800 text-zinc-300 text-xs px-2.5 py-1 rounded-full border border-zinc-700">${rows ? rows.length : 0} รายการ</span>` : ''}
-                ${noteBadge}
+
+                <div class="flex items-center gap-2">
+                    ${!errorMsg ? `<span class="bg-zinc-800 text-zinc-300 text-xs px-2.5 py-1 rounded-full border border-zinc-700">${rows ? rows.length : 0} รายการ</span>` : ''}
+                    ${noteBadge}
+                </div>
             </div>
-            <div class="flex items-center gap-2 w-full sm:w-auto">
-                <button onclick="exportSingleTableSQL('${tableName}')" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition active:scale-95 shadow whitespace-nowrap">
+
+            <div class="grid grid-cols-2 gap-2 w-full pt-1">
+                <button onclick="exportSingleTableSQL('${tableName}', false)" class="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 px-3 rounded-lg transition active:scale-95 shadow text-center truncate cursor-pointer">
                     📋 Copy SQL
+                </button>
+
+                <button onclick="exportSingleTableSQL('${tableName}', true)" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2 px-3 rounded-lg transition active:scale-95 shadow text-center truncate cursor-pointer">
+                    📦 SQL + Data
                 </button>
             </div>
         </div>
       `;
 
       if (errorMsg) {
-        html += `<p class="text-xs text-rose-300 bg-black/50 p-2.5 rounded-lg border border-rose-900/30">❌ เกิดข้อผิดพลาด: ${errorMsg}</p>`;
+        html +=
+          `<p class="text-xs text-rose-300 bg-black/50 p-2.5 rounded-lg border border-rose-900/30">❌ เกิดข้อผิดพลาด: ${errorMsg}</p>`;
 
       } else if (!rows || rows.length === 0) {
-        html += `<p class="text-xs text-zinc-500 py-2 italic">-- ไม่มีข้อมูลในตารางนี้ --</p>`;
+        html +=
+          `<p class="text-xs text-zinc-500 py-2 italic">-- ไม่มีข้อมูลในตารางนี้ --</p>`;
 
       } else {
         const headers = Object.keys(rows[0]);
 
         html += `
-          <div class="overflow-x-auto max-h-[210px]">
+          <div class="overflow-x-auto overflow-y-auto max-h-[130px] rounded-lg border border-zinc-800 bg-black/40">
               <table class="w-full text-left text-xs border-collapse">
-                  <thead class="sticky top-0 bg-black text-emerald-400 z-10">
-                      <tr>${headers.map(h => `<th class="p-2 border-b border-zinc-800 font-semibold uppercase tracking-wider">${h}</th>`).join('')}</tr>
+                  <thead class="bg-zinc-950 text-emerald-400 sticky top-0 z-20 shadow-sm">
+                      <tr>
+                        ${headers.map(h => `<th class="p-2 border-b border-zinc-800 font-semibold uppercase tracking-wider whitespace-nowrap">${h}</th>`).join('')}
+                      </tr>
                   </thead>
-                  <tbody class="divide-y divide-zinc-800 text-zinc-300">
+
+                  <tbody class="divide-y divide-zinc-800/80 text-zinc-300">
                     ${rows.map(row => `
-                      <tr class="hover:bg-zinc-800/50">
+                      <tr class="hover:bg-zinc-800/50 transition-colors">
                         ${headers.map(h => {
                           let val = row[h];
 
-                          if (typeof val === 'object' && val !== null) {
+                          if (
+                            typeof val === 'object' &&
+                            val !== null
+                          ) {
                             val = JSON.stringify(val);
                           }
 
@@ -330,8 +429,10 @@
       }
 
       section.innerHTML = html;
+
       container.appendChild(section);
     }
+
     /* END BLOCK 4.1 */
 
     /* END BLOCK 4 */
@@ -347,20 +448,34 @@
 
     // Determines the SQL data type based on the column value
     function getSqlType(col, val, pkName) {
-      if (col === pkName) return "BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY";
-
-      if (typeof val === "number") {
-        return Number.isInteger(val) ? "BIGINT" : "NUMERIC";
+      if (col === pkName) {
+        return "BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY";
       }
 
-      if (typeof val === "boolean") return "BOOLEAN";
+      if (typeof val === "number") {
+        return Number.isInteger(val)
+          ? "BIGINT"
+          : "NUMERIC";
+      }
 
-      if (typeof val === "object" && val !== null) return "JSONB";
+      if (typeof val === "boolean") {
+        return "BOOLEAN";
+      }
 
-      if (col.includes("_at") || col.includes("date")) return "TIMESTAMPTZ";
+      if (typeof val === "object" && val !== null) {
+        return "JSONB";
+      }
+
+      if (
+        col.includes("_at") ||
+        col.includes("date")
+      ) {
+        return "TIMESTAMPTZ";
+      }
 
       return "TEXT";
     }
+
     /* END BLOCK 5.1 */
 
 
@@ -369,26 +484,54 @@
        ---------------------------------------------------------- */
 
     // Builds CREATE TABLE and optional INSERT SQL statements
-    function buildTableSQL(tableName, rows, includeData = true) {
-      const sampleRow = (rows && rows.length > 0) ? rows[0] : null;
-      const pkName = getPrimaryKey(tableName, sampleRow);
+    function buildTableSQL(
+      tableName,
+      rows,
+      includeData = true
+    ) {
+      const sampleRow =
+        (rows && rows.length > 0)
+          ? rows[0]
+          : null;
 
-      let sql = [`-- TABLE: public.${tableName}`, `CREATE TABLE IF NOT EXISTS public.${tableName} (`];
+      const pkName = getPrimaryKey(
+        tableName,
+        sampleRow
+      );
+
+      let sql = [
+        `-- TABLE: public.${tableName}`,
+        `CREATE TABLE IF NOT EXISTS public.${tableName} (`
+      ];
+
       let colDefs = [];
 
       if (sampleRow) {
         Object.keys(sampleRow).forEach(col => {
-          colDefs.push(`    ${col} ${getSqlType(col, sampleRow[col], pkName)}`);
+          colDefs.push(
+            `    ${col} ${getSqlType(col, sampleRow[col], pkName)}`
+          );
         });
 
       } else {
-        colDefs.push(`    ${pkName} BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY`);
+        colDefs.push(
+          `    ${pkName} BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY`
+        );
       }
 
-      sql.push(colDefs.join(",\n"), `);\n`);
+      sql.push(
+        colDefs.join(",\n"),
+        `);\n`
+      );
 
-      if (includeData && rows && rows.length > 0) {
-        sql.push(`-- DATA INSERTS: public.${tableName}`);
+      if (
+        includeData &&
+        rows &&
+        rows.length > 0
+      ) {
+        sql.push(
+          `-- DATA INSERTS: public.${tableName}`
+        );
 
         const columns = Object.keys(rows[0]);
 
@@ -396,9 +539,17 @@
           const values = columns.map(h => {
             const val = row[h];
 
-            if (val === null || val === undefined) return "NULL";
+            if (
+              val === null ||
+              val === undefined
+            ) {
+              return "NULL";
+            }
 
-            if (typeof val === 'number' || typeof val === 'boolean') {
+            if (
+              typeof val === 'number' ||
+              typeof val === 'boolean'
+            ) {
               return val;
             }
 
@@ -409,7 +560,9 @@
             return `'${String(val).replace(/'/g, "''")}'`;
           });
 
-          sql.push(`INSERT INTO public.${tableName} (${columns.join(', ')}) VALUES (${values.join(', ')});`);
+          sql.push(
+            `INSERT INTO public.${tableName} (${columns.join(', ')}) VALUES (${values.join(', ')});`
+          );
         });
 
         sql.push("\n");
@@ -417,6 +570,7 @@
 
       return sql.join("\n");
     }
+
     /* END BLOCK 5.2 */
 
 
@@ -424,49 +578,132 @@
        BLOCK 5.3: EXPORT SINGLE TABLE SQL
        ---------------------------------------------------------- */
 
-    // Exports the selected table schema and data to the clipboard
-    async function exportSingleTableSQL(tableName) {
+    // Exports either the selected table structure or its structure and data
+    async function exportSingleTableSQL(
+      tableName,
+      includeData = true
+    ) {
       const status = document.getElementById('statusText');
 
-      status.innerHTML = `⏳ กำลังคัดลอก SQL ของตาราง ${tableName}...`;
+      const exportType = includeData
+        ? "SQL + Data"
+        : "SQL เฉพาะโครงสร้าง";
+
+      status.innerHTML =
+        `⏳ กำลังเตรียม ${exportType} ของตาราง ${tableName}...`;
 
       try {
-        let rows = tablesDataCache[tableName];
+        let rows = [];
 
-        if (!rows) {
-          let query = supabaseClient.from(tableName).select('*');
+        if (includeData) {
+          if (
+            Object.prototype.hasOwnProperty.call(
+              tablesDataCache,
+              tableName
+            )
+          ) {
+            rows = tablesDataCache[tableName] || [];
 
-          // Restricts order records to the latest 90 days and 500 rows
-          if (tableName === 'orders') {
-            const date90DaysAgo = new Date();
-            date90DaysAgo.setDate(date90DaysAgo.getDate() - 90);
+          } else {
+            let query = supabaseClient
+              .from(tableName)
+              .select('*');
 
-            query = query
-              .gte('created_at', date90DaysAgo.toISOString())
-              .order('created_at', { ascending: false })
-              .limit(500);
+            if (tableName === 'orders') {
+              const date90DaysAgo = new Date();
+
+              date90DaysAgo.setDate(
+                date90DaysAgo.getDate() - 90
+              );
+
+              query = query
+                .gte('created_at', date90DaysAgo.toISOString())
+                .order('created_at', {
+                  ascending: false
+                })
+                .limit(500);
+            }
+
+            const {
+              data,
+              error
+            } = await query;
+
+            if (error) {
+              throw error;
+            }
+
+            rows = data || [];
+
+            tablesDataCache[tableName] = rows;
           }
 
-          const { data } = await query;
+        } else {
+          if (
+            Object.prototype.hasOwnProperty.call(
+              tablesDataCache,
+              tableName
+            ) &&
+            tablesDataCache[tableName] &&
+            tablesDataCache[tableName].length > 0
+          ) {
+            rows = [
+              tablesDataCache[tableName][0]
+            ];
 
-          rows = data || [];
-          tablesDataCache[tableName] = rows;
+          } else {
+            const {
+              data,
+              error
+            } = await supabaseClient
+              .from(tableName)
+              .select('*')
+              .limit(1);
+
+            if (error) {
+              throw error;
+            }
+
+            rows = data || [];
+          }
         }
 
-        const header = `-- ========================================================\n-- TABLE SCHEMA & DATA: public.${tableName}\n-- Date: ${new Date().toLocaleString()}\n-- ========================================================\n\n`;
+        const header =
+          `-- ========================================================\n` +
+          `-- ${includeData ? 'TABLE SCHEMA & DATA' : 'TABLE STRUCTURE ONLY'}: public.${tableName}\n` +
+          `-- Date: ${new Date().toLocaleString()}\n` +
+          `-- ========================================================\n\n`;
 
-        const finalSQL = header + buildTableSQL(tableName, rows, true);
+        const finalSQL =
+          header +
+          buildTableSQL(
+            tableName,
+            rows,
+            includeData
+          );
 
         await navigator.clipboard.writeText(finalSQL);
 
-        status.innerHTML = `<span class="text-blue-300">📋 คัดลอก SQL ตาราง ${tableName} ลง Clipboard แล้ว</span>`;
+        if (includeData) {
+          status.innerHTML =
+            `<span class="text-emerald-300">📦 คัดลอก SQL พร้อมข้อมูลของตาราง ${tableName} แล้ว (${rows.length} รายการ)</span>`;
+
+        } else {
+          status.innerHTML =
+            `<span class="text-blue-300">📋 คัดลอกเฉพาะโครงสร้าง SQL ของตาราง ${tableName} แล้ว</span>`;
+        }
 
       } catch (err) {
-        status.innerHTML = `<span class="text-rose-400">❌ เกิดข้อผิดพลาดในการคัดลอก SQL</span>`;
+        status.innerHTML =
+          `<span class="text-rose-400">❌ เกิดข้อผิดพลาดในการคัดลอก SQL ของตาราง ${tableName}</span>`;
 
-        console.error(err);
+        console.error(
+          `Export table SQL error (${tableName}):`,
+          err
+        );
       }
     }
+
     /* END BLOCK 5.3 */
 
 
@@ -474,56 +711,129 @@
        BLOCK 5.4: EXPORT COMPLETE SCHEMA SQL
        ---------------------------------------------------------- */
 
-    // Exports the structure of all available database tables
+    // Exports all table structures directly without rendering table cards
     async function exportSchemaOnly() {
       const status = document.getElementById('statusText');
 
-      status.innerHTML = "⏳ กำลังดึงโครงสร้าง Schema ทุกตาราง...";
+      status.innerHTML =
+        "⏳ กำลังดึงโครงสร้าง Schema จาก Supabase...";
 
-      const tableList = await fetchTablesWithComments();
+      try {
+        // Retrieves table names directly from Supabase
+        const tableList = await fetchTablesWithComments();
 
-      if (tableList.length === 0) {
-        status.innerHTML = `<span class="text-rose-400">❌ ไม่พบตาราง หรือไม่สามารถเชื่อมต่อฐานข้อมูลได้</span>`;
-        return;
-      }
-
-      let sqlStatements = [
-        "-- ========================================================",
-        "-- FILE: schema.sql (Structure Only)",
-        `-- Date: ${new Date().toLocaleString()}`,
-        "-- ========================================================\n"
-      ];
-
-      for (const tableName of tableList) {
-        try {
-          let sampleData = [];
-
-          if (tablesDataCache[tableName] && tablesDataCache[tableName].length > 0) {
-            sampleData = [tablesDataCache[tableName][0]];
-
-          } else {
-            const { data } = await supabaseClient.from(tableName).select('*').limit(1);
-            sampleData = data || [];
-          }
-
-          sqlStatements.push(buildTableSQL(tableName, sampleData, false));
-
-        } catch (err) {
-          console.error(`Error processing table ${tableName}:`, err);
+        if (
+          !tableList ||
+          tableList.length === 0
+        ) {
+          status.innerHTML =
+            `<span class="text-rose-400">❌ ไม่พบตาราง หรือไม่สามารถดึงรายชื่อตารางได้</span>`;
+          return;
         }
-      }
 
-      const schemaSQL = sqlStatements.join("\n");
+        // Generates the Thailand local date and time
+        const now = new Date();
 
-      if (schemaSQL) {
+        const dateText = now.toLocaleString('en-GB', {
+          timeZone: 'Asia/Bangkok',
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        });
+
+        // Prepares the SQL file header
+        let sqlStatements = [
+          "-- ========================================================",
+          "-- FILE: schema.sql (Structure Only)",
+          `-- Date: ${dateText}`,
+          "-- ========================================================\n"
+        ];
+
+        let successCount = 0;
+        let errorTables = [];
+
+        // Fetches one sample row from each table directly
+        // Does not render table cards or modify the table display
+        for (const tableName of tableList) {
+          try {
+            const {
+              data,
+              error
+            } = await supabaseClient
+              .from(tableName)
+              .select('*')
+              .limit(1);
+
+            if (error) {
+              throw error;
+            }
+
+            // Uses sample data only to identify column names and types
+            const sampleData = data || [];
+
+            // Generates CREATE TABLE statements only
+            const tableSQL = buildTableSQL(
+              tableName,
+              sampleData,
+              false
+            );
+
+            sqlStatements.push(tableSQL);
+
+            successCount++;
+
+          } catch (err) {
+            console.error(
+              `Schema export error (${tableName}):`,
+              err
+            );
+
+            errorTables.push(tableName);
+          }
+        }
+
+        // Checks whether any table was successfully exported
+        if (successCount === 0) {
+          status.innerHTML =
+            `<span class="text-rose-400">❌ ไม่สามารถสร้าง Schema ได้</span>`;
+          return;
+        }
+
+        // Combines all table structures into one SQL document
+        const schemaSQL = sqlStatements.join("\n");
+
+        // Copies the complete schema to Clipboard
         await navigator.clipboard.writeText(schemaSQL);
 
-        status.innerHTML = `<span class="text-amber-300">📋 คัดลอกโค้ด schema.sql (เฉพาะโครงสร้าง) ลง Clipboard แล้ว (${tableList.length} ตาราง)</span>`;
+        if (errorTables.length === 0) {
+          status.innerHTML =
+            `<span class="text-emerald-300">✅ คัดลอก schema.sql สำเร็จ (${successCount} ตาราง) โดยไม่ต้องดึงตารางมาแสดงก่อน</span>`;
 
-      } else {
-        status.innerHTML = `<span class="text-rose-400">❌ ไม่สามารถคัดลอก SQL ได้</span>`;
+        } else {
+          status.innerHTML =
+            `<span class="text-amber-300">⚠️ คัดลอก Schema สำเร็จ ${successCount} จาก ${tableList.length} ตาราง แต่มี ${errorTables.length} ตารางที่ไม่สามารถดึงได้</span>`;
+
+          console.warn(
+            "Tables not exported:",
+            errorTables
+          );
+        }
+
+      } catch (err) {
+        console.error(
+          "Schema export error:",
+          err
+        );
+
+        status.innerHTML =
+          `<span class="text-rose-400">❌ เกิดข้อผิดพลาดในการส่งออก schema.sql หรือคัดลอก Clipboard ไม่สำเร็จ</span>`;
       }
     }
+
     /* END BLOCK 5.4 */
 
     /* END BLOCK 5 */

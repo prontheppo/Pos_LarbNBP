@@ -33,7 +33,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>ระบบรับออเดอร์ - ลาบหนองบัวลำภู</title>
     
-    <!-- ----------------------------------------------------------
+     <!-- ----------------------------------------------------------
          BLOCK 1.6: CSS STYLES
          ---------------------------------------------------------- -->
     <!-- Supabase JS Client & Tailwind CSS & SweetAlert2 & FontAwesome -->
@@ -72,7 +72,7 @@
             box-shadow: none !important;
             display: flex; 
             flex-direction: column; 
-            overflow: visible !important;
+            overflow: hidden !important;
             position: relative;
             animation: popupFadeIn 0.2s ease-out;
         }
@@ -88,7 +88,7 @@
             overflow: hidden; 
             display: flex;
             flex-direction: column;
-            flex: 1 1 auto; 
+            flex: 0 1 auto; 
             border-radius: 1.5rem !important;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
         }
@@ -96,10 +96,11 @@
         #popupIframe {
             width: 100%;
             height: auto;
-            min-height: 200px;
+            min-height: 150px;
             max-height: calc(90vh - 2rem);
             border: 0;
             display: block;
+            background: transparent;
             transition: height 0.15s ease;
         }
 
@@ -131,6 +132,8 @@
         }
     </style>
     <!-- END BLOCK 1.6 -->
+
+
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased flex flex-col min-h-screen">
 
@@ -143,23 +146,22 @@
         <!-- ----------------------------------------------------------
              BLOCK 1.1: TAB 1 - FOOD SELECTION
              ---------------------------------------------------------- -->
-        <div id="tabContent1" class="flex flex-col w-full">
-            <div class="pb-1 flex-shrink-0">
+        <div id="tabContent1" class="flex flex-col w-full flex-1 min-h-0">
+            <div class="pb-2 flex-shrink-0">
                 <div class="bg-white p-2.5 px-4 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
                     <span class="font-bold text-sm text-slate-700">🛒 ตะกร้าสินค้าปัจจุบัน:</span>
                     <span class="text-emerald-600 font-extrabold text-base" id="cartCountTextTab1">0 รายการ | 0 ชิ้น</span>
                 </div>
             </div>
             
-            <div class="w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden" style="height: 65vh; min-height: 420px;">
+            <div class="w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1 min-h-[300px]">
                 <iframe id="foodGroupFrame" src="foodgroup.html" class="w-full h-full border-0"></iframe>
             </div>
 
-            <div class="pt-2 pb-4 grid grid-cols-2 gap-2 flex-shrink-0">
+            <div class="pt-2 pb-4 grid grid-cols-3 gap-2 flex-shrink-0">
                 <button type="button" onclick="window.location.href='index.html'" class="bg-white text-slate-700 border border-slate-300 font-bold py-2.5 px-2 rounded-2xl text-xs flex items-center justify-center gap-1 shadow active:scale-95 transition cursor-pointer">🏠 หน้าหลัก</button>
                 <button type="button" onclick="confirmClearCart()" class="bg-rose-50 text-rose-600 border border-rose-200 font-bold py-2.5 px-2 rounded-2xl text-xs flex items-center justify-center gap-1 shadow active:scale-95 transition cursor-pointer">🗑️ ล้างตะกร้า</button>
                 <button type="button" onclick="switchTab(2)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-2 rounded-2xl text-xs flex items-center justify-center gap-1 shadow active:scale-95 transition cursor-pointer">🔍 ไปตรวจสอบ</button>
-                <button type="button" onclick="window.location.href='QuickOrder.html'" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 px-2 rounded-2xl text-xs flex items-center justify-center gap-1 shadow active:scale-95 transition cursor-pointer">⚡ สั่งด่วน</button>
             </div>
         </div>
         <!-- END BLOCK 1.1 -->
@@ -339,9 +341,38 @@
                 renderOrderSummary();
             }
 
-            if (type === 'SELECT_CATEGORY') {
+
+
+
+
+if (type === 'SELECT_CATEGORY') {
+    lastSelectedCategory = { catId, catName };
+    // ถ้าเป็นหมวดหมู่ 98 หรือ 99 ให้เรียกใช้ไฟล์ food_consignment.html
+    if (Number(catId) === 98 || Number(catId) === 99) {
+        openDynamicPopup(`food_consignment.html?group_id=${catId}&name=${encodeURIComponent(catName)}`);
+    } else {
+        openDynamicPopup(`foodmenu.html?group_id=${catId}&name=${encodeURIComponent(catName)}`);
+    }
+}
+
+            if (type === 'OPEN_CONSIGNMENT_LIST') {
                 lastSelectedCategory = { catId, catName };
-                openDynamicPopup(`foodmenu.html?group_id=${catId}&name=${encodeURIComponent(catName)}`);
+                previousPopupUrl = `food_consignment.html?group_id=${catId}&name=${encodeURIComponent(catName)}`;
+                openDynamicPopup(previousPopupUrl);
+            }
+
+            if (type === 'SELECT_CONSIGNMENT_ITEM' && food) {
+                openDynamicPopup(`foodselect.html?food_id=${food.food_id}&group_id=${catId}`, true);
+                setTimeout(() => {
+                    const iframe = document.getElementById('popupIframe');
+                    if (iframe && iframe.contentWindow) {
+                        iframe.contentWindow.postMessage({
+                            type: 'INIT_FOOD_SELECT',
+                            food: food,
+                            catId: catId
+                        }, '*');
+                    }
+                }, 150);
             }
             
             if (type === 'OPEN_FOOD_SELECT') {
@@ -357,14 +388,15 @@
                     }
                 }, 150);
             }
-
-            if (type === 'OPEN_ADD_MENU') {
-                const addUrl = `food_add_new.html?group_id=${group_id || ''}&group_name=${encodeURIComponent(group_name || '')}`;
-                window.location.href = addUrl;
-            }
+        if (type === 'OPEN_ADD_MENU') {
+            const addUrl = `foodaddnew.html?group_id=${group_id || ''}&group_name=${encodeURIComponent(group_name || '')}`;
+            openDynamicPopup(addUrl);
+        }
 
             if (type === 'BACK_TO_CATEGORY') {
-                if (lastSelectedCategory) {
+                if (lastSelectedCategory && (Number(lastSelectedCategory.catId) === 99 || Number(lastSelectedCategory.catId) === 98)) {
+                    openDynamicPopup(`food_consignment.html?group_id=${lastSelectedCategory.catId}&name=${encodeURIComponent(lastSelectedCategory.catName)}`, true);
+                } else if (lastSelectedCategory) {
                     openDynamicPopup(`foodmenu.html?group_id=${lastSelectedCategory.catId}&name=${encodeURIComponent(lastSelectedCategory.catName)}`);
                 } else {
                     closeDynamicPopup();
@@ -385,6 +417,7 @@
             }
         });
         /* END BLOCK 2.2 */
+
 
 
         /* ----------------------------------------------------------
@@ -626,11 +659,12 @@
         }
         /* END BLOCK 2.5 */
 
+
         /* ----------------------------------------------------------
            BLOCK 2.6: PRICE CALCULATION AND ORDER SUMMARY
            ---------------------------------------------------------- */
         function getGroupBasePrice(item, groupId) {
-            if (item.price !== undefined && item.price !== null && Number(item.price) > 0 && (item.is_buying_resell || Number(item.food_group_id) === 99)) {
+            if (item.price !== undefined && item.price !== null && item.price !== "" && !isNaN(Number(item.price)) && Number(item.price) > 0) {
                 return Number(item.price);
             }
 
@@ -646,13 +680,11 @@
                 const pLocal = Number(foodObj.price_1 || 0);
                 const pTourist = Number(foodObj.price_2 || 0);
                 const pSabaidee = Number(foodObj.price_3 || 0);
+                
                 if (gId === 1) return pLocal > 0 ? pLocal : (pTourist > 0 ? pTourist : Number(item.price || 0));
                 if (gId === 2) return pTourist > 0 ? pTourist : (pLocal > 0 ? pLocal : Number(item.price || 0));
                 if (gId === 3) return pSabaidee > 0 ? pSabaidee : (pLocal > 0 ? pLocal : Number(item.price || 0));
             }
-
-            const hasCustomPrice = item.price !== undefined && item.price !== null;
-            if (hasCustomPrice && Number(item.price) > 0) return Number(item.price);
 
             return Number(item.price || item.unit_price || 0);
         }
@@ -706,10 +738,17 @@
                     else if (gId === 3) standardPrice = Number(foodObj.price_3 || 0);
                 }
 
-                const isConsignmentItem = item.is_buying_resell || item.isSpecialMenu || String(item.food_group_id || item.group_id) === '98' || String(item.food_group_id || item.group_id) === '99' || (item.name && item.name.includes('สินค้าฝากซื้อ'));
+                const groupIdStr = String(item.food_group_id || item.group_id || '');
+                const isGroup98 = groupIdStr === '98';
+                const isGroup99 = groupIdStr === '99';
+                const isConsignmentItem = isGroup98 || isGroup99 || item.is_buying_resell || item.isSpecialMenu || (item.name && item.name.includes('สินค้าฝากซื้อ'));
 
-                if (isConsignmentItem) {
-                    details.push(`สินค้าฝากซื้อ`);
+                if (isGroup98) {
+                    details.push(`เมนูพิเศษ`);
+                } else if (isGroup99) {
+                    details.push(`รายการฝากซื้อ`);
+                } else if (isConsignmentItem) {
+                    details.push(`รายการฝากซื้อ`);
                 } else {
                     const hasCustomPriceTag = (item.price !== undefined && item.price !== null && item.price > 0 && standardPrice > 0 && Number(item.price) !== standardPrice);
                     if (hasCustomPriceTag) {
@@ -814,10 +853,17 @@
                     else if (gId === 3) standardPrice = Number(foodObj.price_3 || 0);
                 }
 
-                const isConsignmentItem = item.is_buying_resell || item.isSpecialMenu || String(item.food_group_id || item.group_id) === '98' || String(item.food_group_id || item.group_id) === '99' || (item.name && item.name.includes('สินค้าฝากซื้อ'));
+                const groupIdStr = String(item.food_group_id || item.group_id || '');
+                const isGroup98 = groupIdStr === '98';
+                const isGroup99 = groupIdStr === '99';
+                const isConsignmentItem = isGroup98 || isGroup99 || item.is_buying_resell || item.isSpecialMenu || (item.name && item.name.includes('สินค้าฝากซื้อ'));
 
-                if (isConsignmentItem) {
-                    details.push(`สินค้าฝากซื้อ`);
+                if (isGroup98) {
+                    details.push(`เมนูพิเศษ`);
+                } else if (isGroup99) {
+                    details.push(`รายการฝากซื้อ`);
+                } else if (isConsignmentItem) {
+                    details.push(`รายการฝากซื้อ`);
                 } else {
                     const hasCustomPriceTag = (item.price !== undefined && item.price !== null && item.price > 0 && standardPrice > 0 && Number(item.price) !== standardPrice);
                     if (hasCustomPriceTag) details.push(`⭐ ราคาพิเศษ ${item.price}.-`);
@@ -855,6 +901,8 @@
             document.getElementById('summaryTotal').textContent = currentOrderSummary.grandTotal.toLocaleString();
         }
         /* END BLOCK 2.6 */
+
+
 
         /* ----------------------------------------------------------
            BLOCK 2.7: CHECKOUT AND PRINT NAVIGATION

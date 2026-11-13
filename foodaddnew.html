@@ -142,20 +142,27 @@
            BLOCK 2.2: AUTOMATIC POPUP HEIGHT ADJUSTMENT
            ---------------------------------------------------------- */
         function updateParentHeight() {
-            setTimeout(() => {
-                if (window.self !== window.top) {
-                    // เพิ่มตัวเลขชดเชยจาก +30 เป็น +60 เพื่อให้กรอบขยายลงมาคลุมปุ่มพอดี
-                    const totalHeight = document.body.scrollHeight + 60;
-                    window.top.postMessage({
-                        type: 'RESIZE_POPUP',
-                        height: totalHeight
-                    }, '*');
-                }
-            }, 100);
+            if (window.self !== window.top) {
+                // ใช้ scrollHeight จริงของเนื้อหาบวกเผื่อขอบเล็กน้อย
+                const totalHeight = document.body.scrollHeight;
+                window.top.postMessage({
+                    type: 'RESIZE_POPUP',
+                    height: totalHeight
+                }, '*');
+            }
         }
 
+        // ตรวจจับการเปลี่ยนแปลงของเนื้อหาแบบอัตโนมัติ (Auto-resize)
+        const resizeObserver = new ResizeObserver(() => {
+            updateParentHeight();
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            resizeObserver.observe(document.body);
+            updateParentHeight();
+        });
+
         window.addEventListener('load', updateParentHeight);
-        window.addEventListener('resize', updateParentHeight);
 
 
         /* ----------------------------------------------------------

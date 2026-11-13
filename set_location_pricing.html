@@ -120,6 +120,15 @@
           border: 1px solid #3b82f6;
           border-radius: 2px;
       }
+
+      /* สไตล์ช่องชื่ออาหารเพื่อให้รู้ว่าคลิกดูชื่อเต็มได้ */
+      .food-name-cell {
+          cursor: pointer;
+      }
+      .food-name-cell:hover span {
+          color: #2563eb;
+          text-decoration: underline;
+      }
     </style>
     <!-- END BLOCK 1.8 -->
 </head>
@@ -239,19 +248,13 @@
     <!-- END BLOCK 1.6 -->
 
     <!-- ----------------------------------------------------------
-         BLOCK 1.7: CUSTOM ALERT MODAL
+         BLOCK 1.7: CUSTOM ALERT MODAL (ปรับแก้: ตัดไอคอนและปุ่มตกลงออก เหลือเฉพาะกล่องข้อความขนาด 150%)
          ---------------------------------------------------------- -->
-    <div id="customAlertModal" class="custom-modal-overlay" onclick="handleOutsideClick(event, 'customAlertModal')">
-        <div class="custom-modal-box max-w-xs text-center space-y-3" onclick="event.stopPropagation()">
-            <div id="alertIconContainer" class="w-12 h-12 rounded-full flex items-center justify-center mx-auto text-2xl">⚠️</div>
-            <div>
-                <h3 id="alertTitle" class="font-bold text-sm text-slate-800">แจ้งเตือน</h3>
-                <p id="alertMessageText" class="text-xs text-slate-600 mt-1 font-medium leading-relaxed"></p>
-            </div>
-            <div class="pt-1">
-                <button onclick="closeModal('customAlertModal')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-xs transition cursor-pointer">
-                    ตกลง
-                </button>
+    <div id="customAlertModal" class="custom-modal-overlay" onclick="closeModal('customAlertModal')">
+        <div class="custom-modal-box max-w-xs text-center py-6 px-5 relative" onclick="event.stopPropagation()">
+            <button onclick="closeModal('customAlertModal')" class="absolute top-2 right-3 text-slate-400 hover:text-slate-600 font-bold text-lg px-1 cursor-pointer">✕</button>
+            <div class="py-2">
+                <p id="alertMessageText" class="text-emerald-700 font-bold text-xl leading-relaxed tracking-wide select-all"></p>
             </div>
         </div>
     </div>
@@ -299,13 +302,19 @@
            BLOCK 2.2: IFRAME MESSAGING AND MODAL UTILITIES
            ---------------------------------------------------------- */
         window.addEventListener('message', (event) => {
-            const { type, catName } = event.data || {};
-            if (type === 'SELECT_CATEGORY') {
+            const data = event.data || {};
+            const type = data.type;
+            const catName = data.catName || data.categoryName || data.name;
+
+            // รองรับทั้ง SELECT_CATEGORY และ OPEN_CONSIGNMENT_LIST จาก Iframe
+            if (type === 'SELECT_CATEGORY' || type === 'OPEN_CONSIGNMENT_LIST' || catName) {
                 if (!selectedLocationId) {
                     showAlertModal('กรุณาเลือกสถานที่/รีสอร์ต ด้านบนก่อนเลือกหมวดหมู่อาหารครับ', 'warning');
                     return;
                 }
-                openCategoryModal(catName);
+                
+                const cleanCatName = (catName || '').replace(/^[^\w\u0e00-\u0e7f]+/, '').trim();
+                openCategoryModal(cleanCatName || catName);
             }
         });
 
@@ -326,21 +335,8 @@
         function handleOutsideClick(e, id) { if (e.target.id === id) closeModal(id); }
 
         function showAlertModal(message, type = 'warning') {
-            const iconContainer = document.getElementById('alertIconContainer');
-            const titleEl = document.getElementById('alertTitle');
             const textEl = document.getElementById('alertMessageText');
             textEl.textContent = message;
-
-            if (type === 'error') {
-                iconContainer.className = 'w-12 h-12 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto text-2xl';
-                iconContainer.textContent = '❌'; titleEl.textContent = 'เกิดข้อผิดพลาด';
-            } else if (type === 'success') {
-                iconContainer.className = 'w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl';
-                iconContainer.textContent = '✅'; titleEl.textContent = 'สำเร็จ';
-            } else {
-                iconContainer.className = 'w-12 h-12 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto text-2xl';
-                iconContainer.textContent = '⚠️'; titleEl.textContent = 'แจ้งเตือน';
-            }
             openModal('customAlertModal');
         }
         /* END BLOCK 2.2 */
@@ -468,15 +464,29 @@
                 await loadCustomPricesForLocation(locationId);
 
                 let foods = [];
-                const matchedGroup = rawFoodGroupsData.find(g => g.food_group_name === groupName);
+                
+                const matchedGroup = rawFoodGroupsData.find(g => 
+                    g.food_group_name === groupName || 
+                    String(g.food_group_id) === String(groupName)
+                );
+
                 if (matchedGroup) {
-                    const { data: f1 } = await db.from('foods').select('*').eq('food_group_id', matchedGroup.food_group_id);
-                    if (f1 && f1.length > 0) foods = f1;
+                    const { data: f1, error: fErr } = await db
+                        .from('foods')
+                        .select('*')
+                        .eq('food_group_id', matchedGroup.food_group_id)
+                        .order('food_id', { ascending: true });
+
+                    if (!fErr && f1) {
+                        foods = f1;
+                    }
                 }
 
-                if (foods.length === 0) {
-                    const { data: allFoods } = await db.from('foods').select('*');
-                    if (allFoods) foods = allFoods;
+                if (foods.length === 0 && cachedFoods.length > 0) {
+                    foods = cachedFoods.filter(f => 
+                        (matchedGroup && f.food_group_id === matchedGroup.food_group_id) || 
+                        String(f.food_group_id) === String(groupName)
+                    );
                 }
 
                 renderFoodRows(foods);
@@ -512,7 +522,7 @@
                 tr.className = "hover:bg-slate-100 transition";
                 
                 tr.innerHTML = `
-                    <td class="font-bold text-slate-800 px-2 truncate" style="font-size: 14px;" title="${foodName}">
+                    <td class="font-bold text-slate-800 px-2 truncate food-name-cell" style="font-size: 14px;" title="คลิกเพื่อดูชื่อเต็ม">
                         🏨 <span class="truncate">${foodName}</span>
                     </td>
                     <td class="text-center text-slate-500 text-[11px] font-medium p-0">
@@ -533,6 +543,13 @@
                             title="กรอกเฉพาะราคาที่สถานที่นี้ไม่เหมือนราคาปกติ">
                     </td>
                 `;
+
+                // เมื่อคลิกที่ชื่ออาหาร จะแสดง Popup เฉพาะชื่อเต็ม ตัวหนังสือขนาด 150% (text-xl) ไม่มีไอคอนและปุ่มตกลง
+                const nameCell = tr.querySelector('.food-name-cell');
+                nameCell.onclick = () => {
+                    showAlertModal(foodName);
+                };
+
                 container.appendChild(tr);
             });
         }
@@ -563,7 +580,7 @@
                 }
             } catch (err) {
                 console.error("Save price error:", err);
-                showAlertModal('บันทึกราคาไม่สำเร็จ: ' + err.message, 'error');
+                showAlertModal('บันทึกราคาไม่สำเร็จ: ' + err.message);
             }
         }
         /* END BLOCK 2.5 */
