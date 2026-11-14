@@ -1,32 +1,3 @@
-<!--
-  ========================================================================
-  FILE NAME: foodselect.html
-  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 17 บล็อกย่อย ดังนี้
-
-   - [บล็อก 1] UI COMPONENTS & LAYOUT (ส่วนประกอบหน้าจอผู้ใช้)
-     (ประกอบด้วย 7 หัวข้อ)
-       - [บล็อก 1.1] HEADER (ส่วนหัว)
-       - [บล็อก 1.2] FOOD DETAILS AND SAVE BUTTON (ส่วนแสดงรายละเอียดสินค้าและปุ่มบันทึก)
-       - [บล็อก 1.3] SELECTED CART ITEMS (รายการสินค้าที่เลือกไว้แล้วในตะกร้า)
-       - [บล็อก 1.4] PRICE (COST & SELL) AND QUANTITY INPUTS (ส่วนกำหนดราคาต้นทุน/ราคาขาย และจำนวนสินค้า)
-       - [บล็อก 1.5] EGG OPTIONS (ส่วนเลือกไข่ดาวและไข่เจียว)
-       - [บล็อก 1.6] FOOD NOTE (ส่วนกรอกหมายเหตุ)
-       - [บล็อก 1.7] CSS STYLES (รูปแบบการแสดงผล CSS)
-
-   - [บล็อก 2] LOGIC & DATABASE OPERATIONS (ระบบการทำงานและจัดการข้อมูล)
-     (ประกอบด้วย 10 หัวข้อ)
-       - [บล็อก 2.1] PAGE INITIALIZATION AND FOOD DATA FETCHING (เริ่มต้นการทำงานและโหลดข้อมูลสินค้า)
-       - [บล็อก 2.2] RECEIVE POSTMESSAGE FROM PARENT WINDOW (รับข้อความ PostMessage จากหน้าต่างแม่)
-       - [บล็อก 2.3] AUTOMATIC PARENT POPUP HEIGHT ADJUSTMENT (ปรับความสูง Popup อัตโนมัติ)
-       - [บล็อก 2.4] INITIALIZE FOOD DETAILS AND CHECK CATEGORY (ตั้งค่ารายละเอียดสินค้าและตรวจสอบหมวดหมู่)
-       - [บล็อก 2.5] ADJUST FOOD QUANTITY (ปรับเพิ่มหรือลดจำนวนสินค้า)
-       - [บล็อก 2.6] ADJUST FRIED EGG AND OMELET QUANTITIES (ปรับจำนวนไข่ดาวและไข่เจียว)
-       - [บล็อก 2.7] RENDER SELECTED CART ITEMS (แสดงรายการสินค้าที่เลือกไว้แล้ว)
-       - [บล็อก 2.8] DELETE A SPECIFIC CART ITEM (ลบรายการสินค้าออกจากตะกร้า)
-       - [บล็อก 2.9] SAVE FOOD DATA TO CART (บันทึกข้อมูลสินค้าลงในตะกร้า)
-       - [บล็อก 2.10] RETURN TO CATEGORY AND CLOSE POPUP (ย้อนกลับไปหน้าหมวดหมู่และปิด Popup)
-  ========================================================================
--->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -40,42 +11,25 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
 
-    <!-- ==========================================================
-         BLOCK 1.7: CSS STYLES
-         ========================================================== -->
     <style>
         html, body {
-            width: 100%; height: auto;
-            background-color: #ffffff; color: #1e293b;
+            width: 100%; height: auto; background-color: #ffffff; color: #1e293b;
             font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none;
-            display: flex; flex-direction: column; overflow: hidden;
-            border-radius: 1.5rem;
+            display: flex; flex-direction: column; overflow: hidden; border-radius: 1.5rem;
         }
         .custom-label { font-size: 16px !important; font-weight: 700; }
         input[type="number"], input[type="text"] { font-size: 16px !important; }
         .back-btn { background-color: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; font-weight: 700; font-size: 14px !important; padding: 0.3rem 0.6rem; border-radius: 0.6rem; cursor: pointer; }
     </style>
-    <!-- END BLOCK 1.7 -->
 </head>
 <body>
 
-    <!-- ==========================================================
-         BLOCK 1: UI COMPONENTS & LAYOUT
-         ========================================================== -->
-
-    <!-- ----------------------------------------------------------
-         BLOCK 1.1: HEADER
-         ---------------------------------------------------------- -->
     <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
         <button type="button" id="popupBackBtn" class="back-btn" onclick="goBackToCategory()">◀ รายการ</button>
         <span id="foodTitleHeader" class="font-extrabold text-sm text-slate-700 truncate px-2">📌 เลือกรายการ</span>
         <button type="button" onclick="closePopup()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
     </div>
-    <!-- END BLOCK 1.1 -->
 
-    <!-- ----------------------------------------------------------
-         BLOCK 1.2: FOOD DETAILS AND SAVE BUTTON
-         ---------------------------------------------------------- -->
     <div class="p-3.5 space-y-3 bg-white w-full">
         <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200">
             <span id="foodTitleName" class="font-extrabold text-slate-900 text-base truncate pr-2">📌 รายการสินค้า</span>
@@ -83,11 +37,7 @@
                 <span>💾 บันทึก</span>
             </button>
         </div>
-        <!-- END BLOCK 1.2 -->
 
-        <!-- ----------------------------------------------------------
-             BLOCK 1.3: SELECTED CART ITEMS
-             ---------------------------------------------------------- -->
         <div id="selectedCartItemsBox" class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 hidden">
             <div class="flex justify-between items-center mb-1.5">
                 <span class="text-[15px] text-slate-600 font-bold">🛒 รายการที่เลือกไว้แล้ว:</span>
@@ -95,11 +45,7 @@
             </div>
             <div id="selectedCartList" class="space-y-1.5 text-[16px] text-slate-700 max-h-36 overflow-y-auto pr-0.5"></div>
         </div>
-        <!-- END BLOCK 1.3 -->
 
-        <!-- ----------------------------------------------------------
-             BLOCK 1.4: PRICE (COST & SELL) AND QUANTITY INPUTS
-             ---------------------------------------------------------- -->
         <div id="priceAndQtyGrid" class="grid grid-cols-2 gap-2.5 items-center">
             <div id="costPriceBox" class="hidden">
                 <label id="costLabel" class="block custom-label text-slate-700 mb-1">ต้นทุน (บาท)</label>
@@ -118,11 +64,7 @@
                 </div>
             </div>
         </div>
-        <!-- END BLOCK 1.4 -->
 
-        <!-- ----------------------------------------------------------
-             BLOCK 1.5: EGG OPTIONS
-             ---------------------------------------------------------- -->
         <div id="eggSection" class="grid grid-cols-2 gap-2 items-center hidden">
             <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl flex items-center justify-between">
                 <span class="custom-label text-slate-700 whitespace-nowrap">ไข่ดาว</span>
@@ -141,80 +83,66 @@
                 </div>
             </div>
         </div>
-        <!-- END BLOCK 1.5 -->
 
-        <!-- ----------------------------------------------------------
-             BLOCK 1.6: FOOD NOTE
-             ---------------------------------------------------------- -->
         <div>
             <label class="block custom-label text-slate-700 mb-1">หมายเหตุ</label>
             <input type="text" id="foodNote" placeholder="(เช่น เผ็ดน้อย, ไม่ใส่ผัก)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-base outline-none focus:border-emerald-500">
         </div>
-        <!-- END BLOCK 1.6 -->
-
     </div>
-    <!-- END BLOCK 1 -->
 
     <script>
-        /* ==========================================================
-           BLOCK 2: LOGIC & DATABASE OPERATIONS
-           ========================================================== */
-
         let currentFood = null;
         let currentCatId = null;
         let currentQty = 1;
         let friedEgg = 0;
         let omelet = 0;
+        let currentCartState = [];
         const EGG_CATEGORY_IDS = ['1', '2', '3'];
 
         const urlParams = new URLSearchParams(window.location.search);
         const urlFoodId = urlParams.get('food_id');
         const urlGroupId = urlParams.get('group_id');
 
-        /* ----------------------------------------------------------
-           BLOCK 2.1: PAGE INITIALIZATION AND FOOD DATA FETCHING
-           ---------------------------------------------------------- */
-        window.addEventListener('DOMContentLoaded', async () => {
-            if (urlFoodId && typeof supabaseClient !== 'undefined') {
-                currentCatId = urlGroupId;
-                const { data } = await supabaseClient.from('foods').select('*').eq('food_id', urlFoodId).single();
-                if (data) {
-                    currentFood = data;
-                    initDetail();
-                }
+        window.addEventListener('DOMContentLoaded', () => {
+            try {
+                const storedCart = JSON.parse(localStorage.getItem('cart') || '[]');
+                currentCartState = Array.isArray(storedCart) ? storedCart : [];
+            } catch (error) {
+                console.error('Invalid cart data:', error);
+                currentCartState = [];
             }
+            // The Host sends INIT_FOOD_SELECT after this iframe finishes loading.
+            // This page does not independently fetch the same food record.
         });
-        /* END BLOCK 2.1 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.2: RECEIVE POSTMESSAGE FROM PARENT WINDOW
-           ---------------------------------------------------------- */
         window.addEventListener('message', (event) => {
-            const { type, food, catId } = event.data || {};
+            if (event.source !== window.parent || event.origin !== window.location.origin) return;
+            const { type, food, catId, cart } = event.data || {};
             if (type === 'INIT_FOOD_SELECT') {
                 currentFood = food;
                 currentCatId = catId;
                 initDetail();
+            } else if (type === 'UPDATE_CART_STATE' && cart) {
+                currentCartState = cart;
+                renderSelectedCartList();
             }
         });
-        /* END BLOCK 2.2 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.3: AUTOMATIC PARENT POPUP HEIGHT ADJUSTMENT
-           ---------------------------------------------------------- */
+        let lastReportedHeight = 0;
+        let resizeTimer = null;
         function updateParentHeight() {
-            setTimeout(() => {
-                if (window.self !== window.top) {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if (window.parent !== window) {
                     const totalHeight = document.body.scrollHeight;
-                    window.top.postMessage({ type: 'RESIZE_POPUP', height: totalHeight }, '*');
+                    if (Math.abs(totalHeight - lastReportedHeight) >= 2) {
+                        lastReportedHeight = totalHeight;
+                        window.parent.postMessage({ type: 'RESIZE_POPUP', height: totalHeight }, window.location.origin);
+                    }
                 }
-            }, 50);
+            }, 60);
         }
-        /* END BLOCK 2.3 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.4: INITIALIZE FOOD DETAILS AND CHECK CATEGORY
-           ---------------------------------------------------------- */
         function initDetail() {
             if (!currentFood) return;
             currentQty = 1;
@@ -233,14 +161,11 @@
             let defaultCost = '';
             let defaultPrice = '';
 
-            // ทั้ง ID 98 และ 99 ต้องแสดงช่องกรอกต้นทุนและราคาขายเหมือนกัน
             if (isConsignment99 || isSpecialMenu98) {
                 if (costPriceBox) costPriceBox.classList.remove('hidden');
                 if (sellPriceBox) sellPriceBox.classList.remove('hidden');
                 if (priceLabel) priceLabel.textContent = 'ราคาขาย';
                 document.getElementById('foodPrice').placeholder = 'ระบุราคาขาย';
-                if (priceAndQtyGrid) priceAndQtyGrid.className = "grid grid-cols-2 gap-2.5 items-center";
-
                 let storageKey = isConsignment99 ? 'lastCostPrices_99' : 'lastCostPrices_98';
                 let lastCostPrices = JSON.parse(localStorage.getItem(storageKey) || '{}');
                 defaultCost = lastCostPrices[currentFood.food_name] !== undefined ? lastCostPrices[currentFood.food_name] : '';
@@ -249,7 +174,6 @@
                 if (sellPriceBox) sellPriceBox.classList.remove('hidden');
                 if (priceLabel) priceLabel.textContent = 'ราคาพิเศษ (ถ้ามี)';
                 document.getElementById('foodPrice').placeholder = 'ระบุราคา';
-                if (priceAndQtyGrid) priceAndQtyGrid.className = "grid grid-cols-2 gap-2.5 items-center";
             }
 
             document.getElementById('foodCostPrice').value = defaultCost;
@@ -261,7 +185,6 @@
             document.getElementById('foodTitleHeader').textContent = currentFood.food_name;
             document.getElementById('foodTitleName').textContent = `📌 ${currentFood.food_name}`;
 
-            // แสดงไข่ดาว/ไข่เจียว เฉพาะหมวด 1, 2, 3 และ ID 98 เท่านั้น (ID 99 จะถูกซ่อน)
             if (eggSection) {
                 if (EGG_CATEGORY_IDS.includes(String(currentCatId)) || isSpecialMenu98) {
                     eggSection.classList.remove('hidden');
@@ -277,20 +200,12 @@
             }
             updateParentHeight();
         }
-        /* END BLOCK 2.4 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.5: ADJUST FOOD QUANTITY
-           ---------------------------------------------------------- */
         function adjustQty(val) {
             currentQty = Math.max(1, currentQty + val);
             document.getElementById('foodQty').textContent = currentQty;
         }
-        /* END BLOCK 2.5 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.6: ADJUST FRIED EGG AND OMELET QUANTITIES
-           ---------------------------------------------------------- */
         function adjustExtra(type, val) {
             if (type === 'friedEgg') {
                 friedEgg = Math.max(0, friedEgg + val);
@@ -300,23 +215,18 @@
                 document.getElementById('omeletQty').textContent = omelet;
             }
         }
-        /* END BLOCK 2.6 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.7: RENDER SELECTED CART ITEMS
-           ---------------------------------------------------------- */
         function renderSelectedCartList() {
             const isConsignment99 = (String(currentCatId) === '99');
             const isSpecialMenu98 = (String(currentCatId) === '98');
             if (isConsignment99 || isSpecialMenu98) return;
 
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
             const boxContainer = document.getElementById('selectedCartItemsBox');
             const listContainer = document.getElementById('selectedCartList');
             const badge = document.getElementById('selectedCartCountBadge');
             listContainer.innerHTML = '';
 
-            let rawFilteredItems = cart.filter(item => 
+            let rawFilteredItems = currentCartState.filter(item => 
                 (currentFood && String(item.food_id) === String(currentFood.food_id)) || 
                 (currentFood && String(item.name).trim() === String(currentFood.food_name).trim())
             );
@@ -347,24 +257,13 @@
             });
             updateParentHeight();
         }
-        /* END BLOCK 2.7 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.8: DELETE A SPECIFIC CART ITEM
-           ---------------------------------------------------------- */
         function deleteCartItemMatch(itemId) {
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
-            cart = cart.filter(item => item.item_id !== itemId);
-            localStorage.setItem('cart', JSON.stringify(cart));
-            renderSelectedCartList();
             if (window.self !== window.top) {
-                window.top.postMessage({ type: 'UPDATE_CART' }, '*');
+                window.parent.postMessage({ type: 'DELETE_CART_ITEM_BY_ID', itemId: itemId }, window.location.origin);
             }
         }
-        /* END BLOCK 2.8 */
-        /* ----------------------------------------------------------
-           BLOCK 2.9: SAVE FOOD DATA TO CART
-           ---------------------------------------------------------- */
+
         function saveToCart() {
             if (!currentFood) {
                 alert('ไม่พบข้อมูลสินค้า กรุณาลองใหม่อีกครั้ง');
@@ -377,89 +276,49 @@
             const priceInput = document.getElementById('foodPrice').value.trim();
             const noteInput = document.getElementById('foodNote').value.trim();
 
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
-
             const cost = ((isConsignment99 || isSpecialMenu98) && costInput !== "" && !isNaN(costInput)) ? parseFloat(costInput) : 0;
-            
-            // ถ้ามีการกรอกราคาขาย ให้ใช้ราคานั้น แต่ถ้าปล่อยว่างไว้ ให้เป็น null เพื่อไปดึงราคา price_1, 2, 3 ตามกลุ่มลูกค้า
             const price = (priceInput !== "" && !isNaN(priceInput) && parseFloat(priceInput) > 0) ? parseFloat(priceInput) : null;
 
-            if (isConsignment99) {
-                let lastCostPrices = JSON.parse(localStorage.getItem('lastCostPrices_99') || '{}');
+            if (isConsignment99 || isSpecialMenu98) {
+                let storageKey = isConsignment99 ? 'lastCostPrices_99' : 'lastCostPrices_98';
+                let lastCostPrices = JSON.parse(localStorage.getItem(storageKey) || '{}');
                 lastCostPrices[currentFood.food_name] = cost;
-                localStorage.setItem('lastCostPrices_99', JSON.stringify(lastCostPrices));
-            } else if (isSpecialMenu98) {
-                let lastCostPrices = JSON.parse(localStorage.getItem('lastCostPrices_98') || '{}');
-                lastCostPrices[currentFood.food_name] = cost;
-                localStorage.setItem('lastCostPrices_98', JSON.stringify(lastCostPrices));
+                localStorage.setItem(storageKey, JSON.stringify(lastCostPrices));
             }
 
-            let existingItemIndex = cart.findIndex(item => {
-                const sameFoodId = String(item.food_id) === String(currentFood.food_id);
-                const samePrice = Number(item.price || 0) === Number(price || 0);
-                const sameCost = Number(item.cost_price || 0) === Number(cost || 0);
-                const sameFriedEgg = Number(item.friedEggQty || 0) === Number(friedEgg);
-                const sameOmelet = Number(item.omeletQty || 0) === Number(omelet);
-                const sameNote = (item.note || '').trim() === noteInput;
-                return sameFoodId && samePrice && sameCost && sameFriedEgg && sameOmelet && sameNote;
-            });
+            const newItem = {
+                item_id: Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+                food_id: currentFood.food_id,
+                name: currentFood.food_name,
+                price: price,         
+                base_price: price,    
+                cost_price: cost,     
+                friedEggQty: friedEgg,
+                omeletQty: omelet,
+                qty: currentQty,
+                note: noteInput,
+                food_group_id: currentCatId,
+                is_buying_resell: isConsignment99,
+                isSpecialMenu: isSpecialMenu98
+            };
 
-            if (existingItemIndex > -1) {
-                cart[existingItemIndex].qty = Number(cart[existingItemIndex].qty || 1) + Number(currentQty);
-            } else {
-                cart.push({
-                    item_id: Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-                    food_id: currentFood.food_id,
-                    name: currentFood.food_name,
-                    price: price,         
-                    base_price: price,    
-                    cost_price: cost,     
-                    friedEggQty: friedEgg,
-                    omeletQty: omelet,
-                    qty: currentQty,
-                    note: noteInput,
-                    food_group_id: currentCatId,
-                    is_buying_resell: isConsignment99,
-                    isSpecialMenu: isSpecialMenu98
-                });
-            }
-
-            localStorage.setItem('cart', JSON.stringify(cart));
-            
             if (window.self !== window.top) {
-                window.top.postMessage({ type: 'UPDATE_CART' }, '*');
-                
+                window.parent.postMessage({ type: 'ADD_TO_CART', cartItem: newItem }, window.location.origin);
                 if (isConsignment99 || isSpecialMenu98) {
-                    window.top.postMessage({ type: 'BACK_TO_CATEGORY' }, '*');
+                    window.parent.postMessage({ type: 'BACK_TO_CATEGORY' }, window.location.origin);
                 } else {
-                    window.top.postMessage({ type: 'CLOSE_POPUP' }, '*');
+                    window.parent.postMessage({ type: 'CLOSE_POPUP' }, window.location.origin);
                 }
-            } else {
-                window.location.href = 'ordersystem.html';
             }
         }
-        /* END BLOCK 2.9 */
 
-
-        /* ----------------------------------------------------------
-           BLOCK 2.10: RETURN TO CATEGORY AND CLOSE POPUP
-           ---------------------------------------------------------- */
         function goBackToCategory() {
-            if (window.self !== window.top) {
-                window.top.postMessage({ type: 'BACK_TO_CATEGORY' }, '*');
-            }
+            if (window.self !== window.top) window.parent.postMessage({ type: 'BACK_TO_CATEGORY' }, window.location.origin);
         }
 
         function closePopup() {
-            if (window.self !== window.top) {
-                window.top.postMessage({ type: 'CLOSE_POPUP' }, '*');
-            }
+            if (window.self !== window.top) window.parent.postMessage({ type: 'CLOSE_POPUP' }, window.location.origin);
         }
-        /* END BLOCK 2.10 */
-
-        /* ==========================================================
-           END BLOCK 2: LOGIC & DATABASE OPERATIONS
-           ========================================================== */
     </script>
 </body>
 </html>

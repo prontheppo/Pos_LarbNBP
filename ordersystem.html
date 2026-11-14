@@ -1,28 +1,3 @@
-<!--
-  ========================================================================
-  FILE NAME: ordersystem.html
-  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 13 บล็อกย่อย ดังသည်။
-
-   - [บล็อก 1] UI Components & Layout (ส่วนแสดงผลหน้าจอผู้ใช้)
-     (ประกอบด้วย 6 หัวข้อ)
-       - [บล็อก 1.1] TAB 1: เลือกรายการอาหาร (Food Selection Tab)
-       - [บล็อก 1.2] TAB 2: ตรวจสอบและระบุลูกค้า (Cart Review and Customer Details Tab)
-       - [บล็อก 1.3] TAB 3: สรุปและพิมพ์ (Order Summary and Print Preview Tab)
-       - [บล็อก 1.4] Modal Pop-up สำหรับแสดง Iframe (Iframe Popup Modal)
-       - [บล็อก 1.5] Modal ยืนยันการล้างตะกร้า (Clear Cart Confirmation Modal)
-       - [บล็อก 1.6] CSS Styles (รูปแบบ CSS Styles)
-
-   - [บล็อก 2] Logic & Database Operations (ระบบการทำงานและการจัดการฐานข้อมูล)
-     (ประกอบด้วย 7 หัวข้อ)
-       - [บล็อก 2.1] Initialization and DOMContentLoaded (เริ่มต้นการทำงานและ DOMContentLoaded)
-       - [บล็อก 2.2] Cross-Window Message Handling (ระบบรับส่งข้อความระหว่างหน้าต่าง)
-       - [บล็อก 2.3] Screen, Tab, Cart, and Popup Controls (ควบคุมหน้าจอ แท็บ ตะกร้า และ Popup)
-       - [บล็อก 2.4] Customer and Location Management (จัดการข้อมูลลูกค้าและสถานที่)
-       - [บล็อก 2.5] Database Fetch Functions (ฟังก์ชันดึงข้อมูลจากฐานข้อมูล)
-       - [บล็อก 2.6] Price Calculation and Order Summary (การคำนวณราคาและสรุปออเดอร์)
-       - [บล็อก 2.7] Checkout and Print Navigation (การดำเนินการสั่งซื้อและนำทางไปหน้าพิมพ์)
-  ========================================================================
--->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -33,10 +8,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>ระบบรับออเดอร์ - ลาบหนองบัวลำภู</title>
     
-     <!-- ----------------------------------------------------------
-         BLOCK 1.6: CSS STYLES
-         ---------------------------------------------------------- -->
-    <!-- Supabase JS Client & Tailwind CSS & SweetAlert2 & FontAwesome -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -49,61 +20,27 @@
             background-color: var(--bg-color); color: #1e293b;
             font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none; 
         }
-        
         .custom-modal-overlay { 
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-            background: rgba(15, 23, 42, 0.6); 
-            backdrop-filter: blur(4px);
-            display: none; 
-            align-items: center; 
-            justify-content: center; 
-            z-index: 9999; 
-            padding: 1rem; 
+            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center; z-index: 9999; padding: 1rem; 
         }
         .custom-modal-overlay.active { display: flex !important; }
-        
         .popup-container {
-            background: transparent !important; 
-            width: 100% !important; 
-            max-width: 28rem !important;
-            height: auto !important;
-            max-height: 90vh !important; 
-            border-radius: 0 !important; 
-            box-shadow: none !important;
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden !important;
-            position: relative;
+            background: transparent !important; width: 100% !important; max-width: 28rem !important;
+            height: auto !important; max-height: 90vh !important; border-radius: 0 !important; box-shadow: none !important;
+            display: flex; flex-direction: column; overflow: hidden !important; position: relative;
             animation: popupFadeIn 0.2s ease-out;
         }
-
-        @keyframes popupFadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
+        @keyframes popupFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         .popup-content-wrapper { 
-            width: 100%; 
-            background: #ffffff; 
-            overflow: hidden; 
-            display: flex;
-            flex-direction: column;
-            flex: 0 1 auto; 
-            border-radius: 1.5rem !important;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+            width: 100%; background: #ffffff; overflow: hidden; display: flex; flex-direction: column; flex: 0 1 auto; 
+            border-radius: 1.5rem !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
         }
-
         #popupIframe {
-            width: 100%;
-            height: auto;
-            min-height: 150px;
-            max-height: calc(90vh - 2rem);
-            border: 0;
-            display: block;
-            background: transparent;
-            transition: height 0.15s ease;
+            width: 100%; height: auto; min-height: 150px; max-height: calc(90vh - 2rem);
+            border: 0; display: block; background: transparent; transition: height 0.15s ease;
         }
-
         .group-btn-v2 { background-color: #ffffff; border: 1.5px solid #fde68a; color: #334155; transition: all 0.2s ease; }
         .group-btn-v2.active { background-color: #f59e0b; border-color: #d97706; color: #ffffff; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3); }
         .customer-autocomplete-wrapper { position: relative; width: 100%; }
@@ -120,10 +57,8 @@
         .customer-dropdown-item:hover { background-color: #fef3c7; }
         .cart-item-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
         .delete-btn { color: #ef4444; font-weight: bold; font-size: 18px; padding: 0 6px; cursor: pointer; background: transparent; border: none; }
-        
         input[type="number"], input[type="text"] { font-size: 16px !important; }
         .custom-label { font-size: 16px !important; font-weight: 700; }
-
         @media print {
             body * { visibility: hidden; }
             #tabContent3, #tabContent3 * { visibility: visible; }
@@ -131,21 +66,12 @@
             .no-print { display: none !important; }
         }
     </style>
-    <!-- END BLOCK 1.6 -->
-
-
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased flex flex-col min-h-screen">
 
     <div class="flex-1 w-full max-w-xl mx-auto p-3 flex flex-col relative">
         
-        <!-- ==========================================================
-             BLOCK 1: UI COMPONENTS & LAYOUT
-             ========================================================== -->
-
-        <!-- ----------------------------------------------------------
-             BLOCK 1.1: TAB 1 - FOOD SELECTION
-             ---------------------------------------------------------- -->
+        <!-- TAB 1 -->
         <div id="tabContent1" class="flex flex-col w-full flex-1 min-h-0">
             <div class="pb-2 flex-shrink-0">
                 <div class="bg-white p-2.5 px-4 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
@@ -164,11 +90,8 @@
                 <button type="button" onclick="switchTab(2)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-2 rounded-2xl text-xs flex items-center justify-center gap-1 shadow active:scale-95 transition cursor-pointer">🔍 ไปตรวจสอบ</button>
             </div>
         </div>
-        <!-- END BLOCK 1.1 -->
 
-        <!-- ----------------------------------------------------------
-             BLOCK 1.2: TAB 2 - CART REVIEW AND CUSTOMER DETAILS
-             ---------------------------------------------------------- -->
+        <!-- TAB 2 -->
         <div id="tabContent2" class="flex flex-col w-full hidden">
             <div id="locationSelectorWrapper" class="flex-shrink-0 mb-2"></div>
             <div class="flex-1 flex flex-col min-h-0 gap-2 mb-4">
@@ -193,11 +116,8 @@
                 <button type="button" onclick="goToPrintOrder()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-3 rounded-xl text-xs flex-1 shadow transition flex items-center justify-center gap-1 cursor-pointer">✅ ไปหน้าสรุป/พิมพ์</button>
             </div>
         </div>
-        <!-- END BLOCK 1.2 -->
 
-        <!-- ----------------------------------------------------------
-             BLOCK 1.3: TAB 3 - ORDER SUMMARY AND PRINT PREVIEW
-             ---------------------------------------------------------- -->
+        <!-- TAB 3 -->
         <div id="tabContent3" class="flex flex-col w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-4 hidden mb-4">
             <div class="text-center mb-2 pb-1 flex-shrink-0">
                 <h2 class="font-extrabold text-slate-800 text-base leading-tight">ลาบหนองบัวลำภู @เขื่อนขุนด่าน</h2>
@@ -232,13 +152,10 @@
                 <button type="button" onclick="goToPrintOrder()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl shadow transition cursor-pointer">🖨️ ไปหน้าพิมพ์ (Print Order)</button>
             </div>
         </div>
-        <!-- END BLOCK 1.3 -->
 
     </div>
 
-    <!-- ----------------------------------------------------------
-         BLOCK 1.4: IFRAME POPUP MODAL
-         ---------------------------------------------------------- -->
+    <!-- POPUP MODAL -->
     <div id="dynamicPopupOverlay" class="custom-modal-overlay" onclick="handleOverlayClick()">
         <div id="popupContainerBox" class="popup-container" onclick="event.stopPropagation()">
             <div class="popup-content-wrapper">
@@ -246,11 +163,8 @@
             </div>
         </div>
     </div>
-    <!-- END BLOCK 1.4 -->
 
-    <!-- ----------------------------------------------------------
-         BLOCK 1.5: CLEAR CART CONFIRMATION MODAL
-         ---------------------------------------------------------- -->
+    <!-- CONFIRM CLEAR MODAL -->
     <div id="confirmClearModalOverlay" class="custom-modal-overlay" onclick="closeConfirmClearModal()">
         <div class="bg-white rounded-3xl max-w-xs w-full p-5 text-center border border-slate-200 shadow-2xl m-4" onclick="event.stopPropagation()">
             <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-3 text-xl font-bold">🗑️</div>
@@ -262,15 +176,9 @@
             </div>
         </div>
     </div>
-    <!-- END BLOCK 1.5 -->
-
-    <!-- END BLOCK 1 -->
 
     <script>
-        /* ==========================================================
-           BLOCK 2: LOGIC & DATABASE OPERATIONS
-           ========================================================== */
-        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        let cart = readCartFromStorage();
         let dbFoodsMap = {};
         let locationsData = [];
         let zonesData = [];
@@ -281,10 +189,27 @@
 
         let cachedCategories = [];
         let cachedFoods = [];
-        let selectedLocationForZone = null;
-        let lastSelectedCategory = null;
+        let popupHistory = [];
+        let pendingFoodSelectInit = null;
+        let lastPopupHeight = 0;
 
-        let previousPopupUrl = null;
+        function readCartFromStorage() {
+            try {
+                const storedCart = JSON.parse(localStorage.getItem('cart') || '[]');
+                return Array.isArray(storedCart) ? storedCart : [];
+            } catch (error) {
+                console.error('Invalid cart data in localStorage:', error);
+                return [];
+            }
+        }
+
+        function persistCart() {
+            localStorage.setItem('cart', JSON.stringify(cart));
+        }
+
+        function getAppOrigin() {
+            return window.location.origin;
+        }
 
         let locationData = {
             groupId: 1, groupName: 'ชาวบ้าน', phone: '', locationName: '', zoneName: '', locationId: null, zoneId: null
@@ -292,9 +217,6 @@
         let currentOrderSummary = { itemsCount: 0, totalQty: 0, subtotal: 0, deliveryFee: 0, grandTotal: 0, processedCart: [] };
         let processedItemsForDb = [];
 
-        /* ----------------------------------------------------------
-           BLOCK 2.1: INITIALIZATION AND DOMCONTENTLOADED
-           ---------------------------------------------------------- */
         window.addEventListener('DOMContentLoaded', async () => {
             await Promise.all([
                 fetchLatestFoods(),
@@ -312,117 +234,118 @@
                 switchTab(parseInt(targetTab, 10));
             }
         });
-        /* END BLOCK 2.1 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.2: CROSS-WINDOW MESSAGE HANDLING
-           ---------------------------------------------------------- */
+        // CENTRALIZED POSTMESSAGE HANDLER
         window.addEventListener('message', (event) => {
-            const { type, catId, catName, food, height, locationObj, group_id, group_name } = event.data || {};
-            
-            if (type === 'RESIZE_POPUP' && height) {
-                const iframe = document.getElementById('popupIframe');
-                if (iframe) {
-                    iframe.style.height = `${height}px`;
+            const foodGroupFrame = document.getElementById('foodGroupFrame');
+            const popupIframe = document.getElementById('popupIframe');
+            const isFoodGroupMessage = !!foodGroupFrame && event.source === foodGroupFrame.contentWindow;
+            const isPopupMessage = !!popupIframe && event.source === popupIframe.contentWindow;
+
+            if (event.origin !== getAppOrigin()) return;
+            if (!isFoodGroupMessage && !isPopupMessage) return;
+            if (!event.data || typeof event.data !== 'object' || typeof event.data.type !== 'string') return;
+
+            const data = event.data;
+            const { type, catId, catName, food, height, locationObj, group_id, group_name, cartItem } = data;
+
+            if (type === 'RESIZE_POPUP' && isPopupMessage) {
+                const requestedHeight = Number(height);
+                if (!Number.isFinite(requestedHeight) || requestedHeight <= 0) return;
+                const maxAllowedHeight = Math.max(150, Math.floor(window.innerHeight * 0.9 - 32));
+                const safeHeight = Math.min(Math.max(Math.round(requestedHeight), 150), maxAllowedHeight);
+                if (Math.abs(safeHeight - lastPopupHeight) >= 2) {
+                    popupIframe.style.height = `${safeHeight}px`;
+                    lastPopupHeight = safeHeight;
                 }
+                return;
             }
 
-            if (type === 'SELECT_LOCATION' && locationObj) {
-                locationData.locationId = locationObj.location_id;
-                locationData.locationName = locationObj.location_name;
-                locationData.zoneId = locationObj.zone_id;
-                locationData.zoneName = locationObj.zone_name;
-                
+            if (type === 'SELECT_LOCATION' && isPopupMessage && locationObj && typeof locationObj === 'object') {
+                locationData.locationId = locationObj.location_id ?? null;
+                locationData.locationName = String(locationObj.location_name || '');
+                locationData.zoneId = locationObj.zone_id ?? null;
+                locationData.zoneName = String(locationObj.zone_name || '');
                 const btnText = document.getElementById('locationBtnText-locationSelectorWrapper');
-                if (btnText) {
-                    btnText.textContent = locationObj.location_name;
-                }
+                if (btnText) btnText.textContent = locationData.locationName;
                 closeDynamicPopup();
                 renderOrderSummary();
+                return;
             }
 
-
-
-
-
-if (type === 'SELECT_CATEGORY') {
-    lastSelectedCategory = { catId, catName };
-    // ถ้าเป็นหมวดหมู่ 98 หรือ 99 ให้เรียกใช้ไฟล์ food_consignment.html
-    if (Number(catId) === 98 || Number(catId) === 99) {
-        openDynamicPopup(`food_consignment.html?group_id=${catId}&name=${encodeURIComponent(catName)}`);
-    } else {
-        openDynamicPopup(`foodmenu.html?group_id=${catId}&name=${encodeURIComponent(catName)}`);
-    }
-}
-
-            if (type === 'OPEN_CONSIGNMENT_LIST') {
-                lastSelectedCategory = { catId, catName };
-                previousPopupUrl = `food_consignment.html?group_id=${catId}&name=${encodeURIComponent(catName)}`;
-                openDynamicPopup(previousPopupUrl);
+            if (type === 'SELECT_CATEGORY' && isFoodGroupMessage) {
+                const safeCatId = Number(catId);
+                if (!Number.isFinite(safeCatId)) return;
+                const url = (safeCatId === 98 || safeCatId === 99)
+                    ? `food_consignment.html?group_id=${safeCatId}&name=${encodeURIComponent(String(catName || ''))}`
+                    : `foodmenu.html?group_id=${safeCatId}&name=${encodeURIComponent(String(catName || ''))}`;
+                openDynamicPopup(url, false);
+                return;
             }
 
-            if (type === 'SELECT_CONSIGNMENT_ITEM' && food) {
-                openDynamicPopup(`foodselect.html?food_id=${food.food_id}&group_id=${catId}`, true);
-                setTimeout(() => {
-                    const iframe = document.getElementById('popupIframe');
-                    if (iframe && iframe.contentWindow) {
-                        iframe.contentWindow.postMessage({
-                            type: 'INIT_FOOD_SELECT',
-                            food: food,
-                            catId: catId
-                        }, '*');
-                    }
-                }, 150);
-            }
-            
-            if (type === 'OPEN_FOOD_SELECT') {
-                openDynamicPopup(`foodselect.html?food_id=${food.food_id}&group_id=${catId}`);
-                setTimeout(() => {
-                    const iframe = document.getElementById('popupIframe');
-                    if (iframe && iframe.contentWindow) {
-                        iframe.contentWindow.postMessage({
-                            type: 'INIT_FOOD_SELECT',
-                            food: food,
-                            catId: catId
-                        }, '*');
-                    }
-                }, 150);
-            }
-        if (type === 'OPEN_ADD_MENU') {
-            const addUrl = `foodaddnew.html?group_id=${group_id || ''}&group_name=${encodeURIComponent(group_name || '')}`;
-            openDynamicPopup(addUrl);
-        }
-
-            if (type === 'BACK_TO_CATEGORY') {
-                if (lastSelectedCategory && (Number(lastSelectedCategory.catId) === 99 || Number(lastSelectedCategory.catId) === 98)) {
-                    openDynamicPopup(`food_consignment.html?group_id=${lastSelectedCategory.catId}&name=${encodeURIComponent(lastSelectedCategory.catName)}`, true);
-                } else if (lastSelectedCategory) {
-                    openDynamicPopup(`foodmenu.html?group_id=${lastSelectedCategory.catId}&name=${encodeURIComponent(lastSelectedCategory.catName)}`);
-                } else {
-                    closeDynamicPopup();
-                }
+            if (type === 'OPEN_CONSIGNMENT_LIST' && isFoodGroupMessage) {
+                const safeCatId = Number(catId);
+                if (!Number.isFinite(safeCatId)) return;
+                openDynamicPopup(`food_consignment.html?group_id=${safeCatId}&name=${encodeURIComponent(String(catName || ''))}`, false);
+                return;
             }
 
-            if (type === 'CLOSE_ADD_MENU' || type === 'CLOSE_POPUP' || type === 'UPDATE_CART') {
-                if (type === 'CLOSE_ADD_MENU' && previousPopupUrl) {
-                    const backUrl = previousPopupUrl;
-                    previousPopupUrl = null;
-                    openDynamicPopup(backUrl, true);
-                } else {
-                    if (type === 'CLOSE_POPUP' || type === 'CLOSE_ADD_MENU') {
-                        closeDynamicPopup();
-                    }
-                    updateCartUI();
-                }
+            if ((type === 'OPEN_FOOD_SELECT' || type === 'SELECT_CONSIGNMENT_ITEM') && isPopupMessage) {
+                if (!food || food.food_id == null || !Number.isFinite(Number(catId))) return;
+                pendingFoodSelectInit = { type: 'INIT_FOOD_SELECT', food, catId: Number(catId) };
+                openDynamicPopup(`foodselect.html?food_id=${encodeURIComponent(food.food_id)}&group_id=${encodeURIComponent(catId)}`, true);
+                return;
+            }
+
+            if (type === 'OPEN_ADD_MENU' && isPopupMessage) {
+                const addUrl = `foodaddnew.html?group_id=${encodeURIComponent(group_id || '')}&group_name=${encodeURIComponent(group_name || '')}`;
+                openDynamicPopup(addUrl, true);
+                return;
+            }
+
+            if (type === 'BACK_TO_CATEGORY' && isPopupMessage) {
+                navigatePopupBack();
+                return;
+            }
+
+            if (type === 'ADD_TO_CART' && isPopupMessage && cartItem && typeof cartItem === 'object') {
+                addItemToCart(cartItem);
+                return;
+            }
+
+            if (type === 'DELETE_CART_ITEM_BY_ID' && isPopupMessage && data.itemId != null) {
+                removeCartItemById(data.itemId);
+                return;
+            }
+
+            if (type === 'CLOSE_ADD_MENU' && isPopupMessage) {
+                navigatePopupBack();
+                return;
+            }
+
+            if (type === 'CLOSE_POPUP' && isPopupMessage) {
+                closeDynamicPopup();
             }
         });
-        /* END BLOCK 2.2 */
 
+        window.addEventListener('DOMContentLoaded', () => {
+            const foodGroupFrame = document.getElementById('foodGroupFrame');
+            if (foodGroupFrame) foodGroupFrame.addEventListener('load', sendDataToFoodGroupFrame);
 
+            const popupIframe = document.getElementById('popupIframe');
+            if (popupIframe) {
+                popupIframe.addEventListener('load', () => {
+                    if (pendingFoodSelectInit && popupIframe.contentWindow) {
+                        popupIframe.contentWindow.postMessage(pendingFoodSelectInit, getAppOrigin());
+                        pendingFoodSelectInit = null;
+                    }
+                    if (popupIframe.contentWindow) {
+                        popupIframe.contentWindow.postMessage({ type: 'UPDATE_CART_STATE', cart: cart }, getAppOrigin());
+                    }
+                });
+            }
+        });
 
-        /* ----------------------------------------------------------
-           BLOCK 2.3: SCREEN, TAB, CART, AND POPUP CONTROLS
-           ---------------------------------------------------------- */
         function sendDataToFoodGroupFrame() {
             const frame = document.getElementById('foodGroupFrame');
             if (frame && frame.contentWindow) {
@@ -431,34 +354,26 @@ if (type === 'SELECT_CATEGORY') {
                     categories: cachedCategories,
                     foods: cachedFoods,
                     cart: cart
-                }, '*');
+                }, getAppOrigin());
             }
         }
 
         function switchTab(tabIndex) {
             closeDynamicPopup();
-
             for (let i = 1; i <= 3; i++) {
                 const contentEl = document.getElementById(`tabContent${i}`);
                 if (contentEl) contentEl.classList.add('hidden');
             }
-            
             const activeContent = document.getElementById(`tabContent${tabIndex}`);
             if (activeContent) activeContent.classList.remove('hidden');
 
-            if (tabIndex === 1) {
-                sendDataToFoodGroupFrame();
-            }
-            if (tabIndex === 2 || tabIndex === 3) {
-                renderOrderSummary();
-            }
-            if (tabIndex === 3) {
-                renderPrintPreviewTab3();
-            }
+            if (tabIndex === 1) sendDataToFoodGroupFrame();
+            if (tabIndex === 2 || tabIndex === 3) renderOrderSummary();
+            if (tabIndex === 3) renderPrintPreviewTab3();
         }
 
         function updateCartUI() {
-            cart = JSON.parse(localStorage.getItem('cart')) || [];
+            cart = readCartFromStorage();
             const totalItems = cart.length;
             const totalQty = cart.reduce((sum, item) => sum + (Number(item.qty) || 1), 0);
             
@@ -466,6 +381,44 @@ if (type === 'SELECT_CATEGORY') {
             if(document.getElementById('cartCountTextTab2')) document.getElementById('cartCountTextTab2').textContent = `${totalItems} รายการ | ${totalQty} ชิ้น`;
             
             sendDataToFoodGroupFrame();
+            
+            // ส่งอัปเดตไปให้ popup ถ้าเปิดอยู่
+            const popupIframe = document.getElementById('popupIframe');
+            if (popupIframe && popupIframe.contentWindow) {
+                if (popupIframe.getAttribute('src')) {
+                    popupIframe.contentWindow.postMessage({ type: 'UPDATE_CART_STATE', cart: cart }, getAppOrigin());
+                }
+            }
+        }
+
+        function addItemToCart(newItem) {
+            const safeQty = Math.max(1, Number(newItem.qty) || 1);
+            const normalizedItem = { ...newItem, qty: safeQty };
+            if (normalizedItem.item_id == null) normalizedItem.item_id = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+            let existingItemIndex = cart.findIndex(item => {
+                const sameFoodId = String(item.food_id ?? item.item_id) === String(normalizedItem.food_id ?? normalizedItem.item_id);
+                const samePrice = Number(item.price || 0) === Number(normalizedItem.price || 0);
+                const sameCost = Number(item.cost_price || 0) === Number(normalizedItem.cost_price || 0);
+                const sameFriedEgg = Number(item.friedEggQty || 0) === Number(normalizedItem.friedEggQty || 0);
+                const sameOmelet = Number(item.omeletQty || 0) === Number(normalizedItem.omeletQty || 0);
+                const sameNote = String(item.note || '').trim() === String(normalizedItem.note || '').trim();
+                return sameFoodId && samePrice && sameCost && sameFriedEgg && sameOmelet && sameNote;
+            });
+
+            if (existingItemIndex > -1) {
+                cart[existingItemIndex].qty = Math.max(1, Number(cart[existingItemIndex].qty) || 1) + safeQty;
+            } else {
+                cart.push(normalizedItem);
+            }
+            persistCart();
+            updateCartUI();
+        }
+
+        function removeCartItemById(itemId) {
+            cart = cart.filter(item => String(item.item_id) !== String(itemId));
+            persistCart();
+            updateCartUI();
+            renderOrderSummary();
         }
 
         function confirmClearCart() { document.getElementById('confirmClearModalOverlay').classList.add('active'); }
@@ -477,50 +430,49 @@ if (type === 'SELECT_CATEGORY') {
             updateCartUI();
         }
 
-        function openDynamicPopup(modeOrUrl, keepPrevious = false, maybeUrl = '') {
+        function openDynamicPopup(url, keepPrevious = false, restoring = false) {
             const overlay = document.getElementById('dynamicPopupOverlay');
             const iframe = document.getElementById('popupIframe');
-            let targetUrl = '';
+            if (!url || !iframe) return;
 
-            if (maybeUrl) {
-                targetUrl = maybeUrl;
-            } else if (modeOrUrl === 'location_zone') {
-                targetUrl = 'location_zone.html';
-            } else {
-                targetUrl = modeOrUrl;
+            if (!restoring) {
+                if (keepPrevious && overlay.classList.contains('active') && iframe.getAttribute('src')) {
+                    popupHistory.push(iframe.getAttribute('src'));
+                } else if (!keepPrevious) {
+                    popupHistory = [];
+                }
             }
 
-            if (!keepPrevious) {
-                previousPopupUrl = null;
-            }
-
+            if (!keepPrevious) pendingFoodSelectInit = null;
+            lastPopupHeight = 0;
             iframe.style.height = '200px';
-            iframe.src = targetUrl;
             overlay.classList.add('active');
+            iframe.src = url;
         }
 
-        function handleOverlayClick() {
-            if (previousPopupUrl) {
-                const backUrl = previousPopupUrl;
-                previousPopupUrl = null;
-                openDynamicPopup(backUrl, true);
+        function navigatePopupBack() {
+            if (popupHistory.length > 0) {
+                const previousUrl = popupHistory.pop();
+                openDynamicPopup(previousUrl, false, true);
             } else {
                 closeDynamicPopup();
             }
         }
 
+        function handleOverlayClick() {
+            navigatePopupBack();
+        }
+
         function closeDynamicPopup() {
-            previousPopupUrl = null;
+            popupHistory = [];
+            pendingFoodSelectInit = null;
+            lastPopupHeight = 0;
             document.getElementById('dynamicPopupOverlay').classList.remove('active');
             document.getElementById('popupIframe').src = '';
             updateCartUI();
         }
-        /* END BLOCK 2.3 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.4: CUSTOMER AND LOCATION MANAGEMENT
-           ---------------------------------------------------------- */
-        function removeDuplicateWords(text) {
+        function removevenDuplicateWords(text) {
             if (!text) return '';
             const parts = text.trim().split(/\s+/);
             return (parts.length === 2 && parts[0] === parts[1]) ? parts[0] : text.trim();
@@ -529,7 +481,6 @@ if (type === 'SELECT_CATEGORY') {
         function initLocationComponent(targetContainerId) {
             const container = document.getElementById(targetContainerId);
             if (!container) return;
-
             container.innerHTML = `
                 <div class="bg-amber-50/50 border border-amber-200 rounded-2xl p-3 shadow-sm space-y-2">
                     <div class="grid grid-cols-3 gap-2">
@@ -553,21 +504,20 @@ if (type === 'SELECT_CATEGORY') {
         function handleCustomerInput(val) {
             document.querySelectorAll('.customer-input-field').forEach(inp => { if (inp.value !== val) inp.value = val; });
             selectedCustomerObj = null;
-
             const dropdown = document.getElementById('customerDropdown-locationSelectorWrapper');
             if (!dropdown) return;
-            const cleanVal = removeDuplicateWords(val);
+            const cleanVal = removevenDuplicateWords(val);
             if (!cleanVal) { dropdown.classList.remove('active'); return; }
-            const matches = customersList.filter(c => removeDuplicateWords(c.customer_name || '').toLowerCase().includes(cleanVal.toLowerCase()));
+            const matches = customersList.filter(c => removevenDuplicateWords(c.customer_name || '').toLowerCase().includes(cleanVal.toLowerCase()));
             if (matches.length === 0) { dropdown.classList.remove('active'); return; }
             dropdown.innerHTML = '';
             matches.forEach(cust => {
                 const item = document.createElement('div');
                 item.className = 'customer-dropdown-item';
-                item.innerHTML = `<span class="font-semibold">${removeDuplicateWords(cust.customer_name)}</span>`;
+                item.innerHTML = `<span class="font-semibold">${removevenDuplicateWords(cust.customer_name)}</span>`;
                 item.onclick = () => {
                     selectedCustomerObj = cust;
-                    document.querySelectorAll('.customer-input-field').forEach(inp => inp.value = removeDuplicateWords(cust.customer_name));
+                    document.querySelectorAll('.customer-input-field').forEach(inp => inp.value = removevenDuplicateWords(cust.customer_name));
                     dropdown.classList.remove('active');
                 };
                 dropdown.appendChild(item);
@@ -603,14 +553,8 @@ if (type === 'SELECT_CATEGORY') {
             renderOrderSummary();
         }
 
-        function openLocationZoneModal() {
-            openDynamicPopup('location_zone');
-        }
-        /* END BLOCK 2.4 */
+        function openLocationZoneModal() { openDynamicPopup('location_zone.html'); }
 
-        /* ----------------------------------------------------------
-           BLOCK 2.5: DATABASE FETCH FUNCTIONS
-           ---------------------------------------------------------- */
         async function fetchLocationsAndZones() {
             if (typeof supabaseClient !== 'undefined') {
                 const [locRes, zoneRes] = await Promise.all([
@@ -657,35 +601,26 @@ if (type === 'SELECT_CATEGORY') {
                 sendDataToFoodGroupFrame();
             }
         }
-        /* END BLOCK 2.5 */
 
-
-        /* ----------------------------------------------------------
-           BLOCK 2.6: PRICE CALCULATION AND ORDER SUMMARY
-           ---------------------------------------------------------- */
         function getGroupBasePrice(item, groupId) {
             if (item.price !== undefined && item.price !== null && item.price !== "" && !isNaN(Number(item.price)) && Number(item.price) > 0) {
                 return Number(item.price);
             }
-
             const foodId = String(item.food_id || item.id || '');
             const currentLocId = locationData.locationId;
             if (currentLocId && foodId && locationFoodPricesMap[`${currentLocId}_${foodId}`] > 0) {
                 return Number(locationFoodPricesMap[`${currentLocId}_${foodId}`]);
             }
-
             const gId = Number(groupId) || 1;
             const foodObj = dbFoodsMap[foodId];
             if (foodObj) {
                 const pLocal = Number(foodObj.price_1 || 0);
                 const pTourist = Number(foodObj.price_2 || 0);
                 const pSabaidee = Number(foodObj.price_3 || 0);
-                
                 if (gId === 1) return pLocal > 0 ? pLocal : (pTourist > 0 ? pTourist : Number(item.price || 0));
                 if (gId === 2) return pTourist > 0 ? pTourist : (pLocal > 0 ? pLocal : Number(item.price || 0));
                 if (gId === 3) return pSabaidee > 0 ? pSabaidee : (pLocal > 0 ? pLocal : Number(item.price || 0));
             }
-
             return Number(item.price || item.unit_price || 0);
         }
 
@@ -695,7 +630,7 @@ if (type === 'SELECT_CATEGORY') {
         }
 
         function renderOrderSummary() {
-            cart = JSON.parse(localStorage.getItem('cart')) || [];
+            cart = readCartFromStorage();
             const listContainer = document.getElementById('cartPreviewList');
             if (!listContainer) return;
 
@@ -716,7 +651,6 @@ if (type === 'SELECT_CATEGORY') {
                 const unitPrice = basePrice + (daoQty * 10) + (jiaoQty * 10);
                 const itemQty = Number(item.qty) || 1;
                 const itemTotalPrice = unitPrice * itemQty;
-                
                 const costPrice = Number(item.cost_price || 0);
 
                 return { ...item, originalIndex: index, qty: itemQty, price: basePrice, unit_price: unitPrice, total_price: itemTotalPrice, cost_price: costPrice };
@@ -727,7 +661,6 @@ if (type === 'SELECT_CATEGORY') {
 
             processedItemsForDb.forEach((item) => {
                 totalCartPrice += item.total_price;
-
                 let details = [];
                 let standardPrice = 0;
                 const foodObj = dbFoodsMap[String(item.food_id || item.id || '')];
@@ -743,17 +676,11 @@ if (type === 'SELECT_CATEGORY') {
                 const isGroup99 = groupIdStr === '99';
                 const isConsignmentItem = isGroup98 || isGroup99 || item.is_buying_resell || item.isSpecialMenu || (item.name && item.name.includes('สินค้าฝากซื้อ'));
 
-                if (isGroup98) {
-                    details.push(`เมนูพิเศษ`);
-                } else if (isGroup99) {
-                    details.push(`รายการฝากซื้อ`);
-                } else if (isConsignmentItem) {
-                    details.push(`รายการฝากซื้อ`);
-                } else {
+                if (isGroup98) details.push(`เมนูพิเศษ`);
+                else if (isGroup99 || isConsignmentItem) details.push(`รายการฝากซื้อ`);
+                else {
                     const hasCustomPriceTag = (item.price !== undefined && item.price !== null && item.price > 0 && standardPrice > 0 && Number(item.price) !== standardPrice);
-                    if (hasCustomPriceTag) {
-                        details.push(`⭐ ราคาพิเศษ ${item.price}.-`);
-                    }
+                    if (hasCustomPriceTag) details.push(`⭐ ราคาพิเศษ ${item.price}.-`);
                 }
 
                 const daoQty = Number(item.friedEggQty || 0);
@@ -771,7 +698,7 @@ if (type === 'SELECT_CATEGORY') {
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="font-extrabold">${item.total_price}.-</span>
-                        <button type="button" onclick="removeCartItem(${item.originalIndex})" class="delete-btn">&times;</button>
+                        <button type="button" onclick="removeCartItem('${item.item_id}')" class="delete-btn">&times;</button>
                     </div>
                 `;
                 listContainer.appendChild(row);
@@ -816,10 +743,8 @@ if (type === 'SELECT_CATEGORY') {
             };
         }
 
-        function removeCartItem(index) {
-            cart.splice(index, 1);
-            localStorage.setItem('cart', JSON.stringify(cart));
-            updateCartUI();
+        function removeCartItem(itemId) {
+            removeCartItemById(itemId);
             renderOrderSummary();
         }
 
@@ -858,13 +783,9 @@ if (type === 'SELECT_CATEGORY') {
                 const isGroup99 = groupIdStr === '99';
                 const isConsignmentItem = isGroup98 || isGroup99 || item.is_buying_resell || item.isSpecialMenu || (item.name && item.name.includes('สินค้าฝากซื้อ'));
 
-                if (isGroup98) {
-                    details.push(`เมนูพิเศษ`);
-                } else if (isGroup99) {
-                    details.push(`รายการฝากซื้อ`);
-                } else if (isConsignmentItem) {
-                    details.push(`รายการฝากซื้อ`);
-                } else {
+                if (isGroup98) details.push(`เมนูพิเศษ`);
+                else if (isGroup99 || isConsignmentItem) details.push(`รายการฝากซื้อ`);
+                else {
                     const hasCustomPriceTag = (item.price !== undefined && item.price !== null && item.price > 0 && standardPrice > 0 && Number(item.price) !== standardPrice);
                     if (hasCustomPriceTag) details.push(`⭐ ราคาพิเศษ ${item.price}.-`);
                 }
@@ -900,21 +821,13 @@ if (type === 'SELECT_CATEGORY') {
             document.getElementById('summaryQty').textContent = `${currentOrderSummary.itemsCount} รายการ - ${currentOrderSummary.totalQty} ชิ้น`;
             document.getElementById('summaryTotal').textContent = currentOrderSummary.grandTotal.toLocaleString();
         }
-        /* END BLOCK 2.6 */
 
-
-
-        /* ----------------------------------------------------------
-           BLOCK 2.7: CHECKOUT AND PRINT NAVIGATION
-           ---------------------------------------------------------- */
         async function ensureCustomerSaved(inputValue) {
-            const val = removeDuplicateWords(inputValue);
+            const val = removevenDuplicateWords(inputValue);
             if (!val) return null;
             if (selectedCustomerObj) return selectedCustomerObj;
-
-            const existing = customersList.find(c => removeDuplicateWords(c.customer_name || '').toLowerCase() === val.toLowerCase());
+            const existing = customersList.find(c => removevenDuplicateWords(c.customer_name || '').toLowerCase() === val.toLowerCase());
             if (existing) return existing;
-
             try {
                 if (typeof supabaseClient !== 'undefined') {
                     const { data, error } = await supabaseClient.from('customers').insert([{ customer_name: val }]).select().single();
@@ -932,10 +845,9 @@ if (type === 'SELECT_CATEGORY') {
                 Swal.fire('แจ้งเตือน', 'กรุณาเลือกรายการอาหารก่อน', 'warning');
                 return;
             }
-
             const rawCustomerInput = document.querySelector('.customer-input-field')?.value || '';
             const customerObj = await ensureCustomerSaved(rawCustomerInput);
-            const customerDisplayName = customerObj ? removeDuplicateWords(customerObj.customer_name || '') : removeDuplicateWords(rawCustomerInput);
+            const customerDisplayName = customerObj ? removevenDuplicateWords(customerObj.customer_name || '') : removevenDuplicateWords(rawCustomerInput);
 
             let finalNickname = customerDisplayName;
             if (!finalNickname) {
@@ -955,11 +867,6 @@ if (type === 'SELECT_CATEGORY') {
             sessionStorage.setItem('printOrderData', JSON.stringify(orderPayload));
             window.location.href = 'printorder.html';
         }
-        /* END BLOCK 2.7 */
-
-        /* ==========================================================
-           END BLOCK 2: LOGIC & DATABASE OPERATIONS
-           ========================================================== */
     </script>
 </body>
 </html>

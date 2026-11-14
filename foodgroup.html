@@ -1,23 +1,3 @@
-<!--
-  ========================================================================
-  FILE NAME: foodgroup.html
-  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 8 หัวข้อย่อย ดังนี้
-
-   - [บล็อก 1] UI COMPONENTS & LAYOUT (ส่วนประกอบหน้าจอ)
-     (ประกอบด้วย 2 หัวข้อ)
-       - [บล็อก 1.1] CATEGORY BUTTON CONTAINER (กล่องแสดงปุ่มหมวดหมู่)
-       - [บล็อก 1.2] CUSTOM ALERT POPUP MODAL (หน้าต่างแจ้งเตือน)
-
-   - [บล็อก 2] LOGIC & DATABASE OPERATIONS (ระบบการทำงานและฐานข้อมูล)
-     (ประกอบด้วย 6 หัวข้อ)
-       - [บล็อก 2.1] OPEN CUSTOM ALERT MODAL (เปิดหน้าต่างแจ้งเตือน)
-       - [บล็อก 2.2] CLOSE CUSTOM ALERT MODAL (ปิดหน้าต่างแจ้งเตือน)
-       - [บล็อก 2.3] CHECK AND LOAD DATA IN STANDALONE MODE (ตรวจสอบและโหลดข้อมูลเมื่อเปิดไฟล์เดี่ยว)
-       - [บล็อก 2.4] FETCH CATEGORY AND FOOD DATA DIRECTLY FROM SUPABASE (ดึงข้อมูลหมวดหมู่และอาหารจาก Supabase)
-       - [บล็อก 2.5] RECEIVE POSTMESSAGE FROM PARENT WINDOW (รับข้อความจากหน้าต่างหลัก)
-       - [บล็อก 2.6] RENDER CATEGORY BUTTONS AND CALCULATE CART QUANTITIES (แสดงผลปุ่มหมวดหมู่และคำนวณจำนวนสินค้า)
-  ========================================================================
--->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -26,103 +6,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Food Group - ลาบหนองบัวลำภู</title>
     
-    <!-- Google Fonts, Tailwind CSS, and Supabase JS -->
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
 
     <style>
-        html, body { 
-            width: 100%; 
-            min-height: 100%; 
-            background-color: transparent; 
-            color: #1e293b;
-            font-family: 'Sarabun', sans-serif; 
-            margin: 0; 
-            padding: 0; 
-            user-select: none; 
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Two-column category navigation grid */
-        .category-nav-wrap { 
-            display: grid; 
-            grid-template-columns: repeat(2, minmax(0, 1fr)); 
-            gap: 0.5rem; 
-            width: 100%; 
-            box-sizing: border-box; 
-            padding: 0.25rem;
-        }
-
+        html, body { width: 100%; min-height: 100%; background-color: transparent; color: #1e293b; font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none; display: flex; flex-direction: column; }
+        .category-nav-wrap { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; width: 100%; box-sizing: border-box; padding: 0.25rem; }
         .cat-nav-btn {
-            position: relative; 
-            background-color: #ffffff; 
-            border: 1.5px solid #10349542; /* Set the border color for all category buttons */
-            color: #1e293b;
-            font-size: 1rem; 
-            font-weight: 700; 
-            padding: 0.6rem 0.4rem; 
-            border-radius: 0.85rem; 
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04); 
-            transition: all 0.15s ease; 
-            display: flex; 
-            align-items: center;
-            justify-content: center; 
-            gap: 0.35rem; 
-            min-height: 54px; 
-            cursor: pointer;
+            position: relative; background-color: #ffffff; border: 1.5px solid #10349542; color: #1e293b;
+            font-size: 1rem; font-weight: 700; padding: 0.6rem 0.4rem; border-radius: 0.85rem; text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.15s ease; display: flex; align-items: center;
+            justify-content: center; gap: 0.35rem; min-height: 54px; cursor: pointer;
         }
-
-        .cat-nav-btn:active { 
-            background-color: #10b981; 
-            color: #ffffff; 
-            border-color: #10b981; 
-            transform: scale(0.96); 
-        }
-
-        .cat-nav-icon { 
-            font-size: 1.3rem; 
-            flex-shrink: 0; 
-        }
-
-        .cat-text-long { 
-            font-size: 0.9rem !important; 
-            line-height: 1.2; 
-            word-break: break-word; 
-        }
-
-        /* Red badge displaying the cart item quantity */
+        .cat-nav-btn:active { background-color: #10b981; color: #ffffff; border-color: #10b981; transform: scale(0.96); }
+        .cat-nav-icon { font-size: 1.3rem; flex-shrink: 0; }
+        .cat-text-long { font-size: 0.9rem !important; line-height: 1.2; word-break: break-word; }
         .badge-main { 
-            position: absolute; 
-            top: -0.35rem; 
-            right: -0.35rem; 
-            background-color: #ef4444; 
-            color: white; 
-            font-size: 13px !important; 
-            font-weight: 800; 
-            width: 1.5rem; 
-            height: 1.5rem; 
-            border-radius: 9999px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            border: 2px solid #ffffff; 
-            z-index: 10;
+            position: absolute; top: -0.35rem; right: -0.35rem; background-color: #ef4444; color: white; 
+            font-size: 13px !important; font-weight: 800; width: 1.5rem; height: 1.5rem; border-radius: 9999px; 
+            display: flex; align-items: center; justify-content: center; border: 2px solid #ffffff; z-index: 10;
         }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 flex flex-col items-center justify-start p-2">
 
-    <!-- ==========================================================
-         BLOCK 1: UI COMPONENTS & LAYOUT
-         ========================================================== -->
-
-    <!-- ----------------------------------------------------------
-         BLOCK 1.1: CATEGORY BUTTON CONTAINER
-         ---------------------------------------------------------- -->
     <div class="w-full max-w-xl mx-auto flex flex-col">
         <div id="categoryView" class="w-full">
             <div id="quickNavContainer" class="category-nav-wrap">
@@ -130,84 +39,46 @@
             </div>
         </div>
     </div>
-    <!-- END BLOCK 1.1 -->
 
-    <!-- ----------------------------------------------------------
-         BLOCK 1.2: CUSTOM ALERT POPUP MODAL
-         ---------------------------------------------------------- -->
     <div id="customModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-opacity duration-200 opacity-0">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-xs p-5 text-center transform scale-95 transition-transform duration-200 border border-slate-100 flex flex-col items-center" id="modalBox">
-            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-2xl mb-3 shadow-inner">
-                📌
-            </div>
+            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-2xl mb-3 shadow-inner">📌</div>
             <h3 class="text-base font-bold text-slate-800 mb-1">แจ้งเตือน</h3>
             <p id="modalMessage" class="text-slate-600 text-sm mb-5 font-medium leading-relaxed"></p>
-            <button onclick="closeCustomModal()" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold rounded-xl shadow-md shadow-emerald-500/20 transition duration-150">
-                ตกลง
-            </button>
+            <button onclick="closeCustomModal()" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold rounded-xl shadow-md transition duration-150">ตกลง</button>
         </div>
     </div>
-    <!-- END BLOCK 1.2 -->
-
-    <!-- END BLOCK 1 -->
 
     <script>
-        /* ==========================================================
-           BLOCK 2: LOGIC & DATABASE OPERATIONS
-           ========================================================== */
         const categoryIcons = ['🍱', '🍲', '🍳', '🍚', '🥩', '⭐', '🥗', '🛍️', '🍽️', '🥢', '🍹'];
         let cachedCategories = [];
         let cachedFoods = [];
         let currentCart = [];
 
-        /* ----------------------------------------------------------
-           BLOCK 2.1: OPEN CUSTOM ALERT MODAL
-           ---------------------------------------------------------- */
         function showCustomModal(message) {
             const modal = document.getElementById('customModal');
             const modalBox = document.getElementById('modalBox');
             document.getElementById('modalMessage').innerText = message;
-            
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                modalBox.classList.remove('scale-95');
-                modalBox.classList.add('scale-100');
-            }, 10);
+            setTimeout(() => { modal.classList.remove('opacity-0'); modalBox.classList.remove('scale-95'); modalBox.classList.add('scale-100'); }, 10);
         }
-        /* END BLOCK 2.1 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.2: CLOSE CUSTOM ALERT MODAL
-           ---------------------------------------------------------- */
         function closeCustomModal() {
             const modal = document.getElementById('customModal');
             const modalBox = document.getElementById('modalBox');
-            
             modal.classList.add('opacity-0');
             modalBox.classList.remove('scale-100');
             modalBox.classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.remove('flex');
-                modal.classList.add('hidden');
-            }, 200);
+            setTimeout(() => { modal.classList.remove('flex'); modal.classList.add('hidden'); }, 200);
         }
-        /* END BLOCK 2.2 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.3: CHECK AND LOAD DATA IN STANDALONE MODE
-           ---------------------------------------------------------- */
         window.addEventListener('DOMContentLoaded', async () => {
             if (window.self === window.top) {
                 await fetchStandaloneData();
             }
         });
-        /* END BLOCK 2.3 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.4: FETCH CATEGORY AND FOOD DATA DIRECTLY FROM SUPABASE
-           ---------------------------------------------------------- */
         async function fetchStandaloneData() {
             const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
             if (!client) {
@@ -219,62 +90,38 @@
                     client.from('food_groups').select('*').order('food_group_id', { ascending: true }),
                     client.from('foods').select('*').order('food_id', { ascending: true })
                 ]);
-                if (catRes.data) {
-                    cachedCategories = catRes.data.filter(c => c.food_group_name !== 'importmain');
-                }
-                if (foodRes.data) {
-                    cachedFoods = foodRes.data;
-                }
-                currentCart = JSON.parse(localStorage.getItem('cart')) || [];
+                if (catRes.data) cachedCategories = catRes.data.filter(c => c.food_group_name !== 'importmain');
+                if (foodRes.data) cachedFoods = foodRes.data;
+                try { const storedCart = JSON.parse(localStorage.getItem('cart') || '[]'); currentCart = Array.isArray(storedCart) ? storedCart : []; } catch (error) { currentCart = []; console.error('Invalid cart data:', error); }
                 renderCategories(cachedCategories, cachedFoods, currentCart);
-            } catch (err) {
-                console.error("Load error:", err);
-            }
+            } catch (err) { console.error("Load error:", err); }
         }
-        /* END BLOCK 2.4 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.5: RECEIVE POSTMESSAGE FROM PARENT WINDOW
-           ---------------------------------------------------------- */
         window.addEventListener('message', (event) => {
+            if (event.source !== window.parent || event.origin !== window.location.origin) return;
             const { type, categories, foods, cart } = event.data || {};
             if (type === 'RENDER_CATEGORIES') {
-                cachedCategories = categories || [];
-                cachedFoods = foods || [];
+                cachedCategories = categories || cachedCategories;
+                cachedFoods = foods || cachedFoods;
                 currentCart = cart || [];
                 renderCategories(cachedCategories, cachedFoods, currentCart);
             }
         });
-        /* END BLOCK 2.5 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.6: RENDER CATEGORY BUTTONS AND CALCULATE CART QUANTITIES
-           ---------------------------------------------------------- */
         function renderCategories(categories, foods, cart) {
             const navContainer = document.getElementById('quickNavContainer');
             if (!navContainer) return;
-
             if (!categories || categories.length === 0) {
                 navContainer.innerHTML = '<div class="col-span-2 text-center py-6 text-slate-400 font-bold text-base">ไม่พบข้อมูลหมวดหมู่</div>';
                 return;
             }
 
             const sortedCategories = [...categories].sort((a, b) => Number(a.food_group_id) - Number(b.food_group_id));
-
             navContainer.innerHTML = '';
-            const specialCategoryNames = ['เมนูพิเศษ'];
-            const regularCategories = sortedCategories.filter(c => !specialCategoryNames.includes(c.food_group_name) && c.food_group_name !== 'ลูกค้าฝากซื้อ');
-            const regularFoodIds = new Set();
             
-            regularCategories.forEach(rc => {
-                const rFoods = (foods || []).filter(f => Number(f.food_group_id) === Number(rc.food_group_id));
-                rFoods.forEach(f => regularFoodIds.add(Number(f.food_id)));
-            });
-
             sortedCategories.forEach((cat, index) => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
-                
                 const isLastAndOdd = (index === sortedCategories.length - 1) && (sortedCategories.length % 2 !== 0);
                 btn.className = `cat-nav-btn ${isLastAndOdd ? 'col-span-2' : ''}`;
 
@@ -283,23 +130,19 @@
                 let catTotalQty = 0;
                 const catId = Number(cat.food_group_id);
 
-                // การคำนวณจำนวนในตะกร้าแยกตาม ID
                 if (catId === 98) {
-                    // ID 98: เมนูพิเศษ
                     catTotalQty = (cart || []).reduce((sum, item) => {
                         const itemGroupId = Number(item.food_group_id || item.group_id || 0);
                         const is98 = itemGroupId === 98 || item.is_special === true || item.isSpecialMenu === true || (item.name && item.name.includes('เมนูพิเศษ'));
                         return is98 ? sum + (Number(item.qty) || 1) : sum;
                     }, 0);
                 } else if (catId === 99 || catName.includes('ลูกค้าฝากซื้อ')) {
-                    // ID 99: สินค้าฝากซื้อ
                     catTotalQty = (cart || []).reduce((sum, item) => {
                         const itemGroupId = Number(item.food_group_id || item.group_id || 0);
                         const is99 = itemGroupId === 99 || item.is_buying_resell === true || (item.name && item.name.includes('สินค้าฝากซื้อ'));
                         return is99 ? sum + (Number(item.qty) || 1) : sum;
                     }, 0);
                 } else {
-                    // หมวดหมู่ปกติทั่วไป
                     const catFoodIds = (foods || []).filter(f => Number(f.food_group_id) === catId).map(f => Number(f.food_id));
                     catTotalQty = (cart || []).reduce((sum, item) => {
                         const matchById = item.food_id && catFoodIds.includes(Number(item.food_id));
@@ -311,36 +154,22 @@
                 const badgeHTML = catTotalQty > 0 ? `<span class="badge-main">${catTotalQty}</span>` : '';
                 const textClass = catName.length > 8 ? 'cat-text-long' : '';
                 
-                // กำหนดเนื้อหาไอคอน ชื่อหมวดหมู่ และป้ายแจ้งเตือนให้ปุ่มแสดงผลปกติ
                 btn.innerHTML = `<span class="cat-nav-icon">${icon}</span> <span class="${textClass}">${catName}</span>${badgeHTML}`;
 
                 btn.onclick = () => {
                     if (window.self !== window.top) {
-                        // ปรับให้ทั้ง ID 99 และ ID 98 เรียกใช้งานหน้า consignment รายการพิเศษ/ฝากซื้อ
                         if (catId === 99 || catId === 98 || catName.includes('ลูกค้าฝากซื้อ') || catName.includes('เมนูพิเศษ')) {
-                            window.parent.postMessage({
-                                type: 'OPEN_CONSIGNMENT_LIST',
-                                catId: cat.food_group_id,
-                                catName: catName
-                            }, '*');
+                            window.parent.postMessage({ type: 'OPEN_CONSIGNMENT_LIST', catId: cat.food_group_id, catName: catName }, window.location.origin);
                         } else {
-                            window.parent.postMessage({
-                                type: 'SELECT_CATEGORY',
-                                catId: cat.food_group_id,
-                                catName: `${icon} ${catName}`,
-                                isSpecial: false
-                            }, '*');
+                            window.parent.postMessage({ type: 'SELECT_CATEGORY', catId: cat.food_group_id, catName: `${icon} ${catName}`, isSpecial: false }, window.location.origin);
                         }
                     } else {
                         showCustomModal(`เลือกหมวดหมู่: ${catName} (ID: ${cat.food_group_id})`);
                     }
                 };
-
                 navContainer.appendChild(btn);
             });
         }
-
-
     </script>
 </body>
 </html>

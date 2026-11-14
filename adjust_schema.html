@@ -1,8 +1,7 @@
-
 <!--
   ========================================================================
   FILE NAME: adjus_schema.html
-  SUMMARY: แบ่งโครงสร้างออกเป็น 5 บล็อกหลัก และ 12 หัวข้อย่อย ดังนี้
+  SUMMARY: แบ่งโครงสร้างออกเป็น 5 บล็อกหลัก และ 13 หัวข้อย่อย ดังนี้
 
    - [บล็อก 1] UI LAYOUT & COMPONENTS
      (ส่วนประกอบหน้าจอ ประกอบด้วย 2 หัวข้อ)
@@ -25,11 +24,13 @@
        - [บล็อก 4.1] RENDER TABLE CARDS (สร้างการ์ดแสดงข้อมูลตาราง)
 
    - [บล็อก 5] SQL EXPORTER FUNCTIONS
-     (ระบบสร้างและส่งออก SQL ประกอบด้วย 4 หัวข้อ)
+     (ระบบสร้างและส่งออก SQL ประกอบด้วย 6 หัวข้อ)
        - [บล็อก 5.1] SQL DATA TYPE CONVERSION (แปลงชนิดข้อมูล SQL)
        - [บล็อก 5.2] BUILD TABLE SQL STATEMENTS (สร้างคำสั่ง SQL ของตาราง)
        - [บล็อก 5.3] EXPORT SINGLE TABLE SQL (ส่งออก SQL รายตาราง)
        - [บล็อก 5.4] EXPORT COMPLETE SCHEMA SQL (ส่งออกโครงสร้าง Schema ทั้งหมด)
+       - [บล็อก 5.5] EXPORT ALL TABLES SQL WITH DATA (ส่งออก SQL และข้อมูลทุกตาราง ยกเว้น Orders ส่งออกเฉพาะโครงสร้าง)
+       - [บล็อก 5.6] TRUNCATE ORDERS TABLE AND RESET IDENTITY (ล้างข้อมูลตาราง orders และรีเซ็ตไอดี)
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -91,7 +92,9 @@
        ---------------------------------------------------------- -->
   <div class="fixed top-0 left-0 right-0 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800 p-3 z-40 shadow-xl">
     <div class="max-w-7xl mx-auto space-y-2">
-      <div class="grid grid-cols-3 gap-2">
+
+      <!-- Header Navigation Buttons -->
+      <div class="grid grid-cols-4 gap-2">
 
         <a href="index.html" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 px-1.5 rounded-xl text-xs transition active:scale-95 shadow flex flex-col items-center justify-center text-center leading-tight no-underline">
           <span>🔑</span>
@@ -106,6 +109,12 @@
         <button onclick="exportSchemaOnly()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 px-1.5 rounded-xl text-xs transition active:scale-95 shadow flex flex-col items-center justify-center text-center leading-tight cursor-pointer">
           <span>⚡</span>
           <span>คัดลอก schema.sql</span>
+        </button>
+
+        <!-- Truncate Orders Table Button (Replaced SQL + DATA ALL) -->
+        <button onclick="truncateOrdersTable()" class="bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 px-1.5 rounded-xl text-xs transition active:scale-95 shadow flex flex-col items-center justify-center text-center leading-tight cursor-pointer">
+          <span>🗑️</span>
+          <span>ล้างตาราง Orders</span>
         </button>
 
       </div>
@@ -757,7 +766,6 @@
         let errorTables = [];
 
         // Fetches one sample row from each table directly
-        // Does not render table cards or modify the table display
         for (const tableName of tableList) {
           try {
             const {
@@ -772,10 +780,8 @@
               throw error;
             }
 
-            // Uses sample data only to identify column names and types
             const sampleData = data || [];
 
-            // Generates CREATE TABLE statements only
             const tableSQL = buildTableSQL(
               tableName,
               sampleData,
@@ -796,17 +802,14 @@
           }
         }
 
-        // Checks whether any table was successfully exported
         if (successCount === 0) {
           status.innerHTML =
             `<span class="text-rose-400">❌ ไม่สามารถสร้าง Schema ได้</span>`;
           return;
         }
 
-        // Combines all table structures into one SQL document
         const schemaSQL = sqlStatements.join("\n");
 
-        // Copies the complete schema to Clipboard
         await navigator.clipboard.writeText(schemaSQL);
 
         if (errorTables.length === 0) {
@@ -816,11 +819,6 @@
         } else {
           status.innerHTML =
             `<span class="text-amber-300">⚠️ คัดลอก Schema สำเร็จ ${successCount} จาก ${tableList.length} ตาราง แต่มี ${errorTables.length} ตารางที่ไม่สามารถดึงได้</span>`;
-
-          console.warn(
-            "Tables not exported:",
-            errorTables
-          );
         }
 
       } catch (err) {
@@ -835,6 +833,57 @@
     }
 
     /* END BLOCK 5.4 */
+
+
+    /* ----------------------------------------------------------
+       BLOCK 5.5: EXPORT ALL TABLES SQL WITH DATA (Placeholder kept for compatibility)
+       ---------------------------------------------------------- */
+    async function exportAllTablesSQLWithData() {
+      exportSchemaOnly();
+    }
+
+    /* END BLOCK 5.5 */
+
+
+    /* ----------------------------------------------------------
+       BLOCK 5.6: TRUNCATE ORDERS TABLE AND RESET IDENTITY
+       ---------------------------------------------------------- */
+
+    // ลบข้อมูลทั้งหมดในตาราง orders และรีเซ็ต ID ให้เริ่มต้นใหม่จาก 1
+    async function truncateOrdersTable() {
+      const isConfirmed = confirm("⚠️ คำเตือน: คุณต้องการลบข้อมูลทั้งหมดในตาราง 'orders' และรีเซ็ต ID ให้เริ่มต้นใหม่ใช่หรือไม่?");
+      
+      if (!isConfirmed) return;
+
+      const status = document.getElementById('statusText');
+      status.innerHTML = "⏳ กำลังลบข้อมูลและรีเซ็ต ID ของตาราง orders...";
+
+      try {
+        // เรียกใช้ฟังก์ชัน RPC บน Supabase (ต้องมั่นใจว่าได้สร้างฟังก์ชัน truncate_table ไว้ใน Supabase แล้ว)
+        const { error } = await supabaseClient.rpc('truncate_table', { 
+          target_table: 'orders' 
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        status.innerHTML = `<span class="text-emerald-300">✅ ลบข้อมูลและรีเซ็ต ID ของตาราง orders สำเร็จแล้ว (ID เริ่มต้นที่ 1)</span>`;
+
+        // รีเฟรชข้อมูลหน้าจอหากมีการแสดงผลอยู่
+        setTimeout(() => {
+          if (typeof fetchAllTablesData === 'function' && document.getElementById('tablesContainer').innerHTML.trim() !== '') {
+            fetchAllTablesData();
+          }
+        }, 1000);
+
+      } catch (err) {
+        console.error("Truncate orders error:", err);
+        status.innerHTML = `<span class="text-rose-400">❌ เกิดข้อผิดพลาดในการลบตาราง orders: ${err.message}</span>`;
+      }
+    }
+
+    /* END BLOCK 5.6 */
 
     /* END BLOCK 5 */
 

@@ -1,27 +1,3 @@
-<!--
-  ========================================================================
-  FILE NAME: foodmenu.html
-  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 12 หัวข้อย่อย ดังนี้
-
-   - [บล็อก 1] UI COMPONENTS & LAYOUT (ส่วนประกอบหน้าจอ)
-     (ประกอบด้วย 4 หัวข้อ)
-       - [บล็อก 1.1] HEADER (ส่วนหัว)
-       - [บล็อก 1.2] FOOD MENU CONTENT BODY (เนื้อหาแสดงรายการอาหาร)
-       - [บล็อก 1.3] DYNAMIC POPUP MODAL FOR ADDING NEW FOOD (หน้าต่างเพิ่มเมนูใหม่)
-       - [บล็อก 1.4] CSS STYLES (สไตล์การแสดงผล)
-
-   - [บล็อก 2] LOGIC & DATABASE OPERATIONS (ระบบการทำงานและฐานข้อมูล)
-     (ประกอบด้วย 8 หัวข้อ)
-       - [บล็อก 2.1] PAGE INITIALIZATION AND SUPABASE DATA FETCHING (เริ่มต้นหน้าเว็บและดึงข้อมูลจาก Supabase)
-       - [บล็อก 2.2] RECEIVE POSTMESSAGE FROM OTHER WINDOWS OR IFRAMES (รับข้อความ PostMessage)
-       - [บล็อก 2.3] AUTOMATIC PARENT POPUP HEIGHT ADJUSTMENT (ปรับความสูง Popup อัตโนมัติ)
-       - [บล็อก 2.4] RENDER FOOD BUTTONS AND ADD MENU BUTTON (เรนเดอร์ปุ่มอาหารและปุ่มเพิ่มเมนู)
-       - [บล็อก 2.5] SELECT FOOD AND SEND DATA TO PARENT WINDOW (เลือกอาหารและส่งข้อมูลไปยังหน้าต่างหลัก)
-       - [บล็อก 2.6] OPEN NEW FOOD MENU MODAL THROUGH IFRAME (เปิด Modal เพิ่มเมนูผ่าน Iframe)
-       - [บล็อก 2.7] CLOSE NEW FOOD MENU MODAL AND REFRESH DATA (ปิด Modal เพิ่มเมนูและโหลดข้อมูลใหม่)
-       - [บล็อก 2.8] CLOSE MAIN POPUP AND NOTIFY PARENT WINDOW (ปิด Popup หลักและแจ้งเตือนหน้าต่างหลัก)
-  ========================================================================
--->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -36,134 +12,60 @@
     <script src="supabaseClient.js"></script>
 
     <style>
-        /* ----------------------------------------------------------
-           BLOCK 1.4: CSS STYLES
-           ---------------------------------------------------------- */
         html, body {
-            width: 100%; height: auto;
-            background-color: #ffffff; color: #1e293b;
+            width: 100%; height: auto; background-color: #ffffff; color: #1e293b;
             font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none;
-            display: flex; flex-direction: column; overflow: hidden;
-            border-radius: 1.5rem;
+            display: flex; flex-direction: column; overflow: hidden; border-radius: 1.5rem;
         }
-        .food-btn {
-            position: relative;
-            border: 1.5px solid #ef4444;
-            color: #166534;
-            background-color: #ffffff;
-            transition: all 0.2s ease;
-        }
+        .food-btn { position: relative; border: 1.5px solid #ef4444; color: #166534; background-color: #ffffff; transition: all 0.2s ease; }
         .food-btn:active { transform: scale(0.96); background-color: #fef2f2; }
-        
         .item-badge {
-            position: absolute;
-            top: -6px;
-            right: -6px;
-            background-color: #ef4444;
-            color: #ffffff;
-            font-weight: 800;
-            font-size: 11px;
-            min-width: 20px;
-            height: 20px;
-            padding: 0 5px;
-            border-radius: 9999px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            border: 2px solid #ffffff;
-            z-index: 10;
+            position: absolute; top: -6px; right: -6px; background-color: #ef4444; color: #ffffff; font-weight: 800; font-size: 11px;
+            min-width: 20px; height: 20px; padding: 0 5px; border-radius: 9999px; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid #ffffff; z-index: 10;
         }
-
         .add-item-bottom-btn {
-            background: #2563eb; color: white; border: none; padding: 10px;
-            border-radius: 1rem; font-weight: bold; cursor: pointer; font-size: 14px;
-            display: flex; align-items: center; justify-content: center; gap: 6px;
-            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
-            width: 100%; transition: all 0.15s ease;
+            background: #2563eb; color: white; border: none; padding: 10px; border-radius: 1rem; font-weight: bold; cursor: pointer; font-size: 14px;
+            display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3); width: 100%; transition: all 0.15s ease;
         }
         .add-item-bottom-btn:hover { background: #1d4ed8; }
         .add-item-bottom-btn:active { transform: scale(0.98); }
-
-      .custom-modal-overlay { 
-          position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-          background: #ffffff; 
-          display: none; 
-          align-items: center; 
-          justify-content: center; 
-          z-index: 2000; 
-          padding: 0.5rem; 
-      }
-
-
+        .custom-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #ffffff; display: none; align-items: center; justify-content: center; z-index: 2000; padding: 0.5rem; }
         .custom-modal-overlay.active { display: flex !important; }
-        
-      .popup-container {
-          background: transparent !important; 
-          width: 100% !important; 
-          max-width: 24rem !important;
-          box-shadow: none !important;
-          border: none !important;
-          padding: 0 !important;
-          overflow: visible !important; 
-          position: relative;
-      }
-
-
-        #popupIframe {
-            width: 100%;
-            height: auto;
-            min-height: 200px;
-            max-height: 85vh;
-            border: 0;
-            display: block;
-        }
-        /* END BLOCK 1.4 */
-
-
+        .popup-container { background: transparent !important; width: 100% !important; max-width: 24rem !important; box-shadow: none !important; border: none !important; padding: 0 !important; overflow: visible !important; position: relative; }
+        #popupIframe { width: 100%; height: auto; min-height: 200px; max-height: 85vh; border: 0; display: block; }
     </style>
 </head>
 <body>
 
-    <!-- ==========================================================
-         BLOCK 1: UI COMPONENTS & LAYOUT
-         ========================================================== -->
-
-    <!-- ----------------------------------------------------------
-         BLOCK 1.1: HEADER
-         ---------------------------------------------------------- -->
     <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
         <span id="groupTitleName" class="font-extrabold text-sm text-slate-700 truncate px-2">📌 หมวดหมู่เมนู</span>
         <button type="button" onclick="closePopup()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
     </div>
-    <!-- END BLOCK 1.1 -->
 
-    <!-- ----------------------------------------------------------
-         BLOCK 1.2: FOOD MENU CONTENT BODY
-         ---------------------------------------------------------- -->
     <div class="p-3.5 space-y-3 bg-white w-full">
         <div id="foodListGrid" class="grid grid-cols-3 gap-2.5">
             <div class="col-span-3 text-center text-slate-400 py-8 text-xs font-bold">กำลังโหลดข้อมูล...</div>
         </div>
     </div>
-    <!-- END BLOCK 1.2 -->
 
-    <!-- ----------------------------------------------------------
-         BLOCK 1.3: DYNAMIC POPUP MODAL FOR ADDING NEW FOOD
-         ---------------------------------------------------------- -->
-    <div id="dynamicPopupOverlay" class="custom-modal-overlay" onclick="closeAddMenuModal()">
-        <div class="popup-container" onclick="event.stopPropagation()">
+    <div id="dynamicPopupOverlay" class="custom-modal-overlay">
+        <div class="popup-container">
             <iframe id="popupIframe" src="" onload="autoResizeIframe(this)"></iframe>
         </div>
     </div>
-    <!-- END BLOCK 1.3 -->
-
-    <!-- END BLOCK 1 -->
 
     <script>
-        /* ==========================================================
-           BLOCK 2: LOGIC & DATABASE OPERATIONS
-           ========================================================== */
+        function autoResizeIframe(frame) {
+            if (!frame) return;
+            try {
+                const frameBody = frame.contentDocument && frame.contentDocument.body;
+                if (frameBody) frame.style.height = `${Math.max(frameBody.scrollHeight, 150)}px`;
+            } catch (error) {
+                console.warn('Nested iframe resize skipped:', error);
+            }
+        }
+
         let currentGroupId = null;
         let groupName = 'เมนูอาหาร';
         let allFoods = [];
@@ -173,89 +75,40 @@
         currentGroupId = urlParams.get('group_id');
         groupName = urlParams.get('name') ? decodeURIComponent(urlParams.get('name')) : 'เมนูอาหาร';
 
-        /* ----------------------------------------------------------
-           BLOCK 2.1: PAGE INITIALIZATION AND SUPABASE DATA FETCHING
-           ---------------------------------------------------------- */
         window.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('groupTitleName').textContent = `📌 ${groupName}`;
-            currentCart = JSON.parse(localStorage.getItem('cart')) || [];
+            try { const storedCart = JSON.parse(localStorage.getItem('cart') || '[]'); currentCart = Array.isArray(storedCart) ? storedCart : []; } catch (error) { currentCart = []; console.error('Invalid cart data:', error); }
             
             if (currentGroupId && typeof supabaseClient !== 'undefined') {
-                const { data } = await supabaseClient
-                    .from('foods')
-                    .select('*')
-                    .eq('food_group_id', currentGroupId)
-                    .order('food_id', { ascending: true });
-                
-                if (data) {
-                    allFoods = data;
-                    renderFoodButtons();
-                }
+                const { data } = await supabaseClient.from('foods').select('*').eq('food_group_id', currentGroupId).order('food_id', { ascending: true });
+                if (data) { allFoods = data; renderFoodButtons(); }
             }
         });
-        /* END BLOCK 2.1 --> */
 
-        /* ----------------------------------------------------------
-           AUTO RESIZE IFRAME FUNCTION (PERFECT FIT)
-           ---------------------------------------------------------- */
-        function autoResizeIframe(iframe) {
-            try {
-                const innerDoc = iframe.contentDocument || iframe.contentWindow.document;
-                if (innerDoc) {
-                    const formEl = innerDoc.querySelector('form') || innerDoc.body.firstElementChild;
-                    // ใช้ offsetHeight ของฟอร์ม แล้วบวกเพิ่ม 80px เพื่อให้เหลือขอบล่างสวยงามพอดี
-                    const contentHeight = formEl ? formEl.offsetHeight + 60 : innerDoc.body.scrollHeight;
-                    iframe.style.height = contentHeight + 'px';
-                }
-            } catch (e) {
-                iframe.style.height = '450px';
-            }
-        }
-        /* ----------------------------------------------------------
-           BLOCK 2.2: RECEIVE POSTMESSAGE FROM OTHER WINDOWS OR IFRAMES
-           ---------------------------------------------------------- */
         window.addEventListener('message', (event) => {
-            const { type, cart, foods, height } = event.data || {};
-            if (type === 'RENDER_FOOD_MENU' || cart) {
-                if (cart) currentCart = cart;
-                if (foods) allFoods = foods;
+            if (event.source !== window.parent || event.origin !== window.location.origin) return;
+            const { type, cart } = event.data || {};
+            if (type === 'UPDATE_CART_STATE' && Array.isArray(cart)) {
+                currentCart = cart;
                 renderFoodButtons();
-            } else if (type === 'RESIZE_POPUP' && height) {
-                const popupIframe = document.getElementById('popupIframe');
-                if (popupIframe && document.getElementById('dynamicPopupOverlay').classList.contains('active')) {
-                    popupIframe.style.height = height + 'px';
-                }
-            } else if (type === 'CLOSE_ADD_MENU') {
-                closeAddMenuModal();
             }
         });
-        /* END BLOCK 2.2 */
 
-
-        /* ----------------------------------------------------------
-           BLOCK 2.3: AUTOMATIC PARENT POPUP HEIGHT ADJUSTMENT
-           ---------------------------------------------------------- */
+        let lastReportedHeight = 0;
+        let resizeTimer = null;
         function updateParentHeight() {
-            setTimeout(() => {
-                if (window.self !== window.top) {
-                    const totalHeight = Math.max(
-                        document.body.scrollHeight, 
-                        document.documentElement.scrollHeight,
-                        document.body.offsetHeight, 
-                        document.documentElement.offsetHeight
-                    );
-                    window.top.postMessage({
-                        type: 'RESIZE_POPUP',
-                        height: totalHeight
-                    }, '*');
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if (window.parent !== window) {
+                    const totalHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+                    if (Math.abs(totalHeight - lastReportedHeight) >= 2) {
+                        lastReportedHeight = totalHeight;
+                        window.parent.postMessage({ type: 'RESIZE_POPUP', height: totalHeight }, window.location.origin);
+                    }
                 }
-            }, 50);
+            }, 60);
         }
-        /* END BLOCK 2.3 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.4: RENDER FOOD BUTTONS AND ADD MENU BUTTON
-           ---------------------------------------------------------- */
         function renderFoodButtons() {
             const grid = document.getElementById('foodListGrid');
             if (!grid) return;
@@ -271,7 +124,6 @@
                         String(item.food_id) === String(food.food_id) || 
                         String(item.name).trim() === String(food.food_name).trim()
                     );
-                    
                     const totalQty = matchedItems.reduce((sum, item) => sum + (Number(item.qty) || 1), 0);
 
                     const btn = document.createElement('button');
@@ -280,95 +132,40 @@
                     btn.onclick = () => selectFood(food);
 
                     let badgeHtml = totalQty > 0 ? `<span class="item-badge">${totalQty}</span>` : '';
-
-                    btn.innerHTML = `
-                        ${badgeHtml}
-                        <span class="line-clamp-2 leading-tight">${food.food_name}</span>
-                    `;
+                    btn.innerHTML = `${badgeHtml}<span class="line-clamp-2 leading-tight">${food.food_name}</span>`;
                     grid.appendChild(btn);
                 });
             }
 
-            // Add the "+ เพิ่ม" button at the end for group 99 (customer-purchased items)
             if (String(currentGroupId) === '99') {
                 const addWrapper = document.createElement('div');
                 addWrapper.className = 'col-span-3 mt-1';
-                
                 const addBtn = document.createElement('button');
                 addBtn.type = 'button';
                 addBtn.className = 'add-item-bottom-btn';
                 addBtn.innerHTML = '+ เพิ่ม';
                 addBtn.onclick = openAddMenuModal;
-                
                 addWrapper.appendChild(addBtn);
                 grid.appendChild(addWrapper);
             }
-
             updateParentHeight();
         }
-        /* END BLOCK 2.4 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.5: SELECT FOOD AND SEND DATA TO PARENT WINDOW
-           ---------------------------------------------------------- */
         function selectFood(food) {
             if (window.self !== window.top) {
-                window.top.postMessage({
-                    type: 'OPEN_FOOD_SELECT',
-                    food: food,
-                    catId: currentGroupId
-                }, '*');
+                window.parent.postMessage({ type: 'OPEN_FOOD_SELECT', food: food, catId: currentGroupId }, window.location.origin);
             }
         }
-        /* END BLOCK 2.5 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.6: OPEN NEW FOOD MENU MODAL THROUGH IFRAME
-           ---------------------------------------------------------- */
         function openAddMenuModal() {
-            // ซ่อนเฉพาะเนื้อหาหลักด้านหลัง (เช่น ปุ่มรายการอาหาร) โดยไม่ให้กระทบตัว Popup Overlay
-            const mainContent = document.getElementById('mainContentContainer'); // หรือใส่ ID ส่วนเนื้อหาหลักของคุณ
-            if (mainContent) mainContent.style.visibility = 'hidden';
-            
-            const iframe = document.getElementById('popupIframe');
-            iframe.src = `foodaddnew.html?group_id=99&group_name=${encodeURIComponent(groupName)}`;
-            document.getElementById('dynamicPopupOverlay').classList.add('active');
+            window.parent.postMessage({ type: 'OPEN_ADD_MENU', group_id: currentGroupId, group_name: groupName }, window.location.origin);
         }
-        /* END BLOCK 2.6 */
-        
-        /* ----------------------------------------------------------
-           BLOCK 2.7: CLOSE NEW FOOD MENU MODAL AND REFRESH DATA
-           ---------------------------------------------------------- */
-        function closeAddMenuModal() {
-            document.getElementById('dynamicPopupOverlay').classList.remove('active');
-            document.getElementById('popupIframe').src = '';
-            
-            // แสดงเนื้อหาหลักด้านหลังกลับมาเหมือนเดิม
-            const mainContent = document.getElementById('mainContentContainer');
-            if (mainContent) mainContent.style.visibility = 'visible';
-            
-            if (currentGroupId && typeof supabaseClient !== 'undefined') {
-                supabaseClient.from('foods').select('*').eq('food_group_id', currentGroupId).order('food_id', { ascending: true }).then(({ data }) => {
-                    if (data) { allFoods = data;
-                        renderFoodButtons(); }
-                });
-            }
-        }
-        /* END BLOCK 2.7 */
-        
-        /* ----------------------------------------------------------
-           BLOCK 2.8: CLOSE MAIN POPUP AND NOTIFY PARENT WINDOW
-           ---------------------------------------------------------- */
+
         function closePopup() {
             if (window.self !== window.top) {
-                window.top.postMessage({ type: 'CLOSE_POPUP' }, '*');
+                window.parent.postMessage({ type: 'CLOSE_POPUP' }, window.location.origin);
             }
         }
-        /* END BLOCK 2.8 */
-
-        /* ==========================================================
-           END BLOCK 2: LOGIC & DATABASE OPERATIONS
-           ========================================================== */
     </script>
 </body>
 </html>

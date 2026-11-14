@@ -901,6 +901,7 @@
             container.innerHTML = `<div class="text-center text-slate-400 py-6 text-xs">📭 ยังไม่มีรายการอาหารในบิลนี้</div>`;
             document.getElementById('editCartCountText').textContent = `0 รายการ | 0 ชิ้น`;
             document.getElementById('editTotalPrice').textContent = `0 บาท`;
+            sendDataToFoodGroupFrame(); // ซิงค์สถานะตะกร้าว่างไปยัง Iframe
             return;
         }
 
@@ -956,6 +957,9 @@
 
         document.getElementById('editCartCountText').textContent = `${currentEditingOrderItems.length} รายการ | ${totalQty} ชิ้น`;
         document.getElementById('editTotalPrice').textContent = `${(totalCartPrice + deliveryFee).toLocaleString()} บาท`;
+        
+        // ซิงค์สถานะตะกร้าไปยัง Iframe แบบเรียลไทม์เสมอ
+        sendDataToFoodGroupFrame();
     }
     /* END BLOCK 6.2 */
 
@@ -992,19 +996,36 @@
                 type: 'RENDER_CATEGORIES',
                 categories: categoriesCache,
                 foods: foodsCache,
-                cart: []
-            }, '*');
+                cart: currentEditingOrderItems
+            }, window.location.origin);
         }
     }
     /* END BLOCK 7.2 */
 
     /* ----------------------------------------------------------
-       BLOCK 7.3: RECEIVE CATEGORY SELECTION EVENT
+       BLOCK 7.3: CENTRALIZED MESSAGE EVENT LISTENER (Enhanced & Secure)
        ---------------------------------------------------------- */
     window.addEventListener('message', (event) => {
-        const { type, catId, catName } = event.data || {};
+        // ตรวจสอบความปลอดภัยด้วย Origin
+        if (event.origin !== window.location.origin) return;
+        if (!event.data) return;
+
+        const { type, catId, catName, action, selectedDate } = event.data;
+
+        // 1. รับอีเวนต์จากหน้า Iframe หมวดหมู่อาหาร
         if (type === 'SELECT_CATEGORY') {
             openFoodListPopup(catId, catName);
+        }
+
+        // 2. รับอีเวนต์จากหน้าปฏิทินย่อย
+        if (action === 'SELECT_DATE' && selectedDate) {
+            selectedOrderDate = selectedDate;
+            document.getElementById('editOrderDateBtnText').textContent = formatThaiDateDisplay(selectedOrderDate);
+            toggleModal('calendarModalOverlay', 'calendarModalBox', false);
+        }
+        
+        if (action === 'CLOSE_MODAL' && event.source === document.getElementById('calendarFrame')?.contentWindow) {
+            toggleModal('calendarModalOverlay', 'calendarModalBox', false);
         }
     });
     /* END BLOCK 7.3 */
@@ -1114,12 +1135,15 @@
     /* END BLOCK 7.9 */
 
     /* ----------------------------------------------------------
-       BLOCK 7.10: SAVE FOOD TO TEMPORARY CART
+       BLOCK 7.10: SAVE FOOD TO TEMPORARY CART (Data Integrity Improved)
        ---------------------------------------------------------- */
     function saveToEditCartFromPopup() {
         const priceInput = document.getElementById('foodPrice').value;
         const price = priceInput !== "" ? parseFloat(priceInput) : null;
         const note = document.getElementById('foodNote').value.trim();
+
+        // ค้นหาข้อมูลสินค้าต้นฉบับจาก foodsCache เพื่อเก็บค่า cost_price / cost ไว้รักษาความสมบูรณ์ของข้อมูล
+        const foodObj = foodsCache.find(f => String(f.food_id) === String(selectedFoodId)) || {};
 
         currentEditingOrderItems.push({
             item_id: Date.now() + '_' + Math.random().toString(36).substring(2, 6),
@@ -1128,6 +1152,7 @@
             food_name: selectedFoodName,
             price: price,
             base_price: price,
+            cost_price: foodObj.cost_price || foodObj.cost || 0,
             isCustomPrice: price !== null && price > 0,
             is_custom: price !== null && price > 0,
             friedEggQty: friedEgg,
@@ -1175,23 +1200,8 @@
     /* END BLOCK 8.1 */
 
     /* ----------------------------------------------------------
-       BLOCK 8.2: RECEIVE CALENDAR EVENTS
+       BLOCK 8.2: (REMOVED: Handled inside Centralized Message Listener - BLOCK 7.3)
        ---------------------------------------------------------- */
-    window.addEventListener('message', function(e) {
-        if (!e.data) return;
-        const d = e.data;
-        if (d.action === 'SELECT_DATE' && d.selectedDate) {
-            selectedOrderDate = d.selectedDate;
-            document.getElementById('editOrderDateBtnText').textContent = formatThaiDateDisplay(selectedOrderDate);
-            toggleModal('calendarModalOverlay', 'calendarModalBox', false);
-            return;
-        }
-        if (d.action === 'CLOSE_MODAL' && e.source === document.getElementById('calendarFrame')?.contentWindow) {
-            toggleModal('calendarModalOverlay', 'calendarModalBox', false);
-            return;
-        }
-    });
-    /* END BLOCK 8.2 */
 
     /* ----------------------------------------------------------
        BLOCK 8.3: SAVE ORDER CHANGES
