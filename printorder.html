@@ -121,8 +121,19 @@
                 });
                 return;
             }
-            orderData = JSON.parse(rawData);
-            renderPrintPreview();
+            try {
+                orderData = JSON.parse(rawData);
+                if (!orderData || !orderData.locationData || !orderData.orderSummary || !Array.isArray(orderData.orderSummary.processedCart)) {
+                    throw new Error('โครงสร้างข้อมูลออร์เดอร์ไม่ถูกต้อง');
+                }
+                renderPrintPreview();
+            } catch (error) {
+                console.error('Invalid printOrderData:', error);
+                sessionStorage.removeItem('printOrderData');
+                Swal.fire('แจ้งเตือน', 'ข้อมูลออร์เดอร์ไม่สมบูรณ์ กรุณาเลือกรายการใหม่', 'warning').then(() => {
+                    window.location.href = 'ordersystem.html';
+                });
+            }
         });
         /* END BLOCK 2.1 */
 
@@ -221,11 +232,11 @@
                     }
                 }
 
-                const now = new Date();
-                const thaiTime = new Date(now.getTime() + (7 * 60 * 60 * 1000)).toISOString().replace('Z', '+07:00');
+                // orders.created_at is TIMESTAMPTZ; send an absolute UTC ISO timestamp.
+                const createdAt = new Date().toISOString();
 
                 const { error } = await supabaseClient.from('orders').insert([{
-                    created_at: thaiTime,
+                    created_at: createdAt,
                     customer_type_id: Number(locationData.groupId),
                     customer_name: finalNickname,
                     customer_id: customerId ? String(customerId) : null,

@@ -119,7 +119,7 @@
            BLOCK 2: LOGIC & DATABASE OPERATIONS
            ========================================================== */
         let consignmentItems = [];
-        let currentCart = JSON.parse(localStorage.getItem('cart')) || [];
+        let currentCart = (() => { try { const value = JSON.parse(localStorage.getItem('cart') || '[]'); return Array.isArray(value) ? value : []; } catch (error) { console.error('Invalid cart data:', error); return []; } })();
         
         const urlParams = new URLSearchParams(window.location.search);
         const targetGroupId = parseInt(urlParams.get('group_id'), 10) || 99;
@@ -146,10 +146,10 @@
         }
 
         window.addEventListener('message', (event) => {
-            const { type, cart, foods } = event.data || {};
-            if (type === 'RENDER_CONSIGNMENT' || cart) {
-                if (cart) currentCart = cart;
-                if (foods) consignmentItems = foods;
+            if (event.source !== window.parent || event.origin !== window.location.origin) return;
+            const { type, cart } = event.data || {};
+            if (type === 'UPDATE_CART_STATE' && Array.isArray(cart)) {
+                currentCart = cart;
                 renderConsignmentView();
             }
         });
@@ -157,13 +157,19 @@
         /* ----------------------------------------------------------
            BLOCK 2.2: AUTOMATIC POPUP HEIGHT ADJUSTMENT
            ---------------------------------------------------------- */
+        let lastReportedHeight = 0;
+        let resizeTimer = null;
         function updateParentHeight() {
-            setTimeout(() => {
-                if (window.self !== window.top) {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if (window.parent !== window) {
                     const totalHeight = document.body.scrollHeight + 25;
-                    window.top.postMessage({ type: 'RESIZE_POPUP', height: totalHeight }, '*');
+                    if (Math.abs(totalHeight - lastReportedHeight) >= 2) {
+                        lastReportedHeight = totalHeight;
+                        window.parent.postMessage({ type: 'RESIZE_POPUP', height: totalHeight }, window.location.origin);
+                    }
                 }
-            }, 50);
+            }, 60);
         }
         /* END BLOCK 2.2 */
 
@@ -251,7 +257,7 @@
                 type: 'OPEN_ADD_MENU',
                 group_id: targetGroupId,
                 group_name: groupNameText
-            }, '*');
+            }, window.location.origin);
         }
 
         function selectConsignmentItem(foodObj) {
@@ -259,12 +265,12 @@
                 type: 'SELECT_CONSIGNMENT_ITEM',
                 food: foodObj,
                 catId: targetGroupId
-            }, '*');
+            }, window.location.origin);
         }
 
         function closePopup() {
             if (window.self !== window.top) {
-                window.parent.postMessage({ type: 'CLOSE_POPUP' }, '*');
+                window.parent.postMessage({ type: 'CLOSE_POPUP' }, window.location.origin);
             }
         }
         /* END BLOCK 2.5 */

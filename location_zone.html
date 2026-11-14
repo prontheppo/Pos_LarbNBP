@@ -104,10 +104,10 @@
             setTimeout(() => {
                 if (window.self !== window.top) {
                     const totalHeight = document.body.scrollHeight + 20; // Add a small margin
-                    window.top.postMessage({
+                    window.parent.postMessage({
                         type: 'RESIZE_POPUP',
                         height: totalHeight
-                    }, '*');
+                    }, window.location.origin);
                 }
             }, 50);
         }
@@ -151,8 +151,6 @@
             grid.className = "grid grid-cols-2 gap-2.5 pt-1";
             grid.innerHTML = '';
 
-            window.parent.postMessage({ type: 'UPDATE_POPUP_TITLE', title: '📍 เลือกสถานที่ / ที่พัก' }, '*');
-
             if (!locationsData || locationsData.length === 0) {
                 grid.innerHTML = '<span class="text-slate-400 text-xs py-8 text-center col-span-2 block">ไม่พบข้อมูลสถานที่</span>';
                 updateParentHeight();
@@ -189,11 +187,6 @@
            BLOCK 2.5: RENDER ZONE SELECTION VIEW
            ---------------------------------------------------------- */
         function renderZonesView(loc) {
-            window.parent.postMessage({ 
-                type: 'UPDATE_POPUP_TITLE', 
-                title: `🛋️ เลือกโซน <span class="text-amber-600 font-semibold text-xs block mt-0.5">สถานที่: ${loc.location_name}</span>` 
-            }, '*');
-
             document.getElementById('addLocationSection').classList.add('hidden');
             document.getElementById('addZoneSection').classList.remove('hidden');
             const grid = document.getElementById('selectionGrid');
@@ -299,7 +292,7 @@
                     zone_id: zoneId,
                     zone_name: zoneName
                 }
-            }, '*');
+            }, window.location.origin);
         }
         /* END BLOCK 2.8 */
 

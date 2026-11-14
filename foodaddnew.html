@@ -141,18 +141,25 @@
         /* ----------------------------------------------------------
            BLOCK 2.2: AUTOMATIC POPUP HEIGHT ADJUSTMENT
            ---------------------------------------------------------- */
+        let lastReportedHeight = 0;
+        let resizeTimer = null;
         function updateParentHeight() {
-            if (window.self !== window.top) {
-                // ใช้ scrollHeight จริงของเนื้อหาบวกเผื่อขอบเล็กน้อย
-                const totalHeight = document.body.scrollHeight;
-                window.top.postMessage({
-                    type: 'RESIZE_POPUP',
-                    height: totalHeight
-                }, '*');
+            if (window.parent !== window) {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    const totalHeight = document.body.scrollHeight;
+                    if (Math.abs(totalHeight - lastReportedHeight) >= 2) {
+                        lastReportedHeight = totalHeight;
+                        window.parent.postMessage({
+                            type: 'RESIZE_POPUP',
+                            height: totalHeight
+                        }, window.location.origin);
+                    }
+                }, 60);
             }
         }
 
-        // ตรวจจับการเปลี่ยนแปลงของเนื้อหาแบบอัตโนมัติ (Auto-resize)
+        // Observe content changes but report only when the measured height changes.
         const resizeObserver = new ResizeObserver(() => {
             updateParentHeight();
         });
@@ -170,7 +177,7 @@
            ---------------------------------------------------------- */
         function closeModal() {
             if (window.parent && window.parent !== window) {
-                window.parent.postMessage({ type: 'CLOSE_ADD_MENU' }, '*');
+                window.parent.postMessage({ type: 'CLOSE_ADD_MENU' }, window.location.origin);
             }
         }
         /* END BLOCK 2.3 */
