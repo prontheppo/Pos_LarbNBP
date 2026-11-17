@@ -1,0 +1,129 @@
+<!--
+  ========================================================================
+  FILE NAME: zone.html
+  SUMMARY: หน้ากาก UI แสดงรายชื่อโซนหรือห้องพัก พร้อมช่องเพิ่มโซนใหม่และ postMessage
+  ========================================================================
+-->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <script src="appInit.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เลือกโซน/ห้องพัก - ระบบจัดการออเดอร์</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
+
+    <style>
+        html, body { width: 100%; min-height: 100%; background-color: transparent; color: #1e293b; font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none; display: flex; flex-direction: column; }
+        .zone-wrap { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; width: 100%; box-sizing: border-box; }
+        .zone-btn {
+            position: relative; background-color: #ffffff; border: 1.5px solid #3b82f642; color: #1e293b;
+            font-size: 1rem; font-weight: 700; padding: 0.75rem 0.5rem; border-radius: 0.85rem; text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.15s ease; display: flex; align-items: center;
+            justify-content: center; gap: 0.35rem; min-height: 60px; cursor: pointer;
+        }
+        .zone-btn:active { background-color: #3b82f6; color: #ffffff; border-color: #2563eb; transform: scale(0.96); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 flex flex-col items-center justify-start p-2">
+
+    <div class="w-full max-w-xl mx-auto flex flex-col space-y-3">
+        <!-- ช่องสำหรับเพิ่มโซน/ห้องพักใหม่ (ตามรูปที่ 2) -->
+        <div id="addZoneSection" class="bg-blue-50 p-2.5 rounded-2xl border border-blue-200 flex gap-2 shadow-2xs">
+            <input type="text" id="newZoneInput" placeholder="➕ เพิ่มโซน/ห้องพักใหม่..." class="flex-1 h-10 px-3 text-xs rounded-xl border border-blue-300 bg-white outline-none font-semibold text-slate-800">
+            <button type="button" onclick="addNewZone()" class="h-10 px-4 bg-blue-500 hover:bg-blue-600 active:scale-95 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-sm shrink-0">+ เพิ่ม</button>
+        </div>
+
+        <div id="zoneGridContainer" class="zone-wrap">
+            <div class="col-span-2 text-center py-6 text-slate-400 font-bold text-base">⏳ กำลังโหลดโซน/ห้องพัก...</div>
+        </div>
+    </div>
+
+    <script>
+        let cachedZones = [];
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await fetchStandaloneZones();
+        });
+
+        async function fetchStandaloneZones() {
+            const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+            if (!client) {
+                document.getElementById('zoneGridContainer').innerHTML = '<div class="col-span-2 text-center text-rose-500 text-xs py-4">ไม่พบการเชื่อมต่อ Supabase</div>';
+                return;
+            }
+            try {
+                const { data } = await client.from('location_zone').select('*').order('zone_name', { ascending: true });
+                if (data) cachedZones = data;
+                renderZones(cachedZones);
+            } catch (err) { console.error("Load error:", err); }
+        }
+
+        window.addEventListener('message', (event) => {
+            if (event.source !== window.parent || event.origin !== window.location.origin) return;
+            const { type, zones } = event.data || {};
+            if (type === 'RENDER_ZONES') {
+                cachedZones = zones || cachedZones;
+                renderZones(cachedZones);
+            }
+        });
+
+        async function addNewZone() {
+            const input = document.getElementById('newZoneInput');
+            const name = input.value.trim();
+            if (!name) return;
+            const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+            if (!client) return;
+            try {
+                const { data, error } = await client.from('location_zone').insert([{ zone_name: name }]).select().single();
+                if (error) throw error;
+                if (data) cachedZones.push(data);
+                input.value = '';
+                renderZones(cachedZones);
+            } catch (err) {
+                console.error("Add zone error:", err);
+                alert("ไม่สามารถเพิ่มโซนได้");
+            }
+        }
+
+        function renderZones(zones) {
+            const container = document.getElementById('zoneGridContainer');
+            if (!container) return;
+            if (!zones || zones.length === 0) {
+                container.innerHTML = '<div class="col-span-2 text-center py-6 text-slate-400 font-bold text-base">ไม่พบข้อมูลโซน/ห้องพัก</div>';
+                updateParentHeight();
+                return;
+            }
+
+            container.innerHTML = '';
+            zones.forEach((zone, index) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                const isLastAndOdd = (index === zones.length - 1) && (zones.length % 2 !== 0);
+                btn.className = `zone-btn ${isLastAndOdd ? 'col-span-2' : ''}`;
+                
+                btn.innerHTML = `<span>🚪</span> <span class="truncate">${zone.zone_name}</span>`;
+
+                btn.onclick = () => {
+                    if (window.self !== window.top) {
+                        window.parent.postMessage({ type: 'SELECT_ZONE', zoneObj: zone }, window.location.origin);
+                    }
+                };
+                container.appendChild(btn);
+            });
+            updateParentHeight();
+        }
+
+        function updateParentHeight() {
+            if (window.parent !== window) {
+                const totalHeight = document.body.scrollHeight + 15;
+                window.parent.postMessage({ type: 'RESIZE_POPUP', height: totalHeight }, window.location.origin);
+            }
+        }
+    </script>
+</body>
+</html>

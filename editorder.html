@@ -164,12 +164,12 @@
     </div>
 </div>
 
-<!-- LOCATION AND ZONE SELECTION MODAL -->
+<!-- LOCATION / ZONE SELECTION MODAL (เชื่อมต่อกับ location.html และ zone.html ผ่านระบบ PostMessage) -->
 <div id="subLocZoneModal" class="custom-modal-overlay" onclick="toggleModal('subLocZoneModal','subLocZoneBox',false)">
     <div id="subLocZoneBox" class="popup-container" onclick="event.stopPropagation()">
         <div class="popup-content-wrapper">
             <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
-                <span class="font-extrabold text-sm text-slate-700 truncate px-1">📍 เลือกสถานที่ / ที่พัก</span>
+                <span class="font-extrabold text-sm text-slate-700 truncate px-1" id="locationModalTitle">📍 เลือกสถานที่จัดส่ง</span>
                 <button type="button" onclick="toggleModal('subLocZoneModal','subLocZoneBox',false)" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
             </div>
             <iframe id="locationZoneFrame" src="" class="w-full border-none bg-white min-h-[420px]"></iframe>
@@ -220,8 +220,14 @@ function readCartFromStorage() { return currentEditingOrderItems; }
 function persistCart() {}
 
 window.onload = async function() {
-    targetOrderId = new URLSearchParams(window.location.search).get('order_id');
-    if (!targetOrderId) return showAlert('แจ้งเตือน', 'ไม่พบรหัสออร์เดอร์', '⚠️', goBackToReport);
+    const urlParams = new URLSearchParams(window.location.search);
+    targetOrderId = urlParams.get('order_id');
+    
+    // ตรวจสอบว่าถ้าไม่มี order_id ให้เด้งกลับไปหน้า salereport.html ทันทีโดยไม่ค้างหน้า แจ้งเตือนผิดพลาด
+    if (!targetOrderId) {
+        window.location.href = 'salereport.html';
+        return;
+    }
 
     db = window.supabaseClient || supabaseClient;
     renderEditLocationComponent('editLocationSelectorWrapper');
@@ -229,11 +235,8 @@ window.onload = async function() {
 };
 
 function goBackToReport() {
-    if (document.referrer && document.referrer.includes(window.location.host)) {
-        window.history.back();
-    } else {
-        window.location.href = 'salereport.html';
-    }
+    // บังคับลิงก์กลับไปที่หน้า salereport.html อย่างแม่นยำ
+    window.location.href = 'salereport.html';
 }
 
 function formatThaiDateDisplay(dateStr) {
@@ -467,8 +470,18 @@ function openCalendarModal() {
 }
 
 function openSubLocationModal() {
-    document.getElementById('locationZoneFrame').src = 'location_zone.html';
+    document.getElementById('locationModalTitle').textContent = '📍 เลือกสถานที่จัดส่ง';
+    const iframe = document.getElementById('locationZoneFrame');
+    iframe.src = 'location.html';
     toggleModal('subLocZoneModal', 'subLocZoneBox', true);
+
+    iframe.onload = () => {
+        iframe.contentWindow.postMessage({
+            type: 'RENDER_LOCATIONS',
+            locations: locationsCache,
+            counts: {}
+        }, getAppOrigin());
+    };
 }
 
 function openCategoryModalForEdit() {
@@ -526,22 +539,61 @@ window.addEventListener('message', (event) => {
     if (!event.data || typeof event.data !== 'object' || typeof event.data.type !== 'string') return;
 
     const data = event.data;
-    const { type, catId, catName, height, locationObj, group_id, group_name, cartItem, action, selectedDate } = data;
+    const { type, catId, catName, height, locationObj, zoneObj, group_id, group_name, cartItem, action, selectedDate } = data;
+
+    const popupIframe = document.getElementById('popupIframe');
+    const locationZoneFrame = document.getElementById('locationZoneFrame');
+
+    const isPopupMessage = !!popupIframe && event.source === popupIframe.contentWindow;
+    const isLocationMessage = !!locationZoneFrame && event.source === locationZoneFrame.contentWindow;
 
     if (type === 'RESIZE_POPUP') {
-        const popupIframe = document.getElementById('popupIframe');
-        if (popupIframe) {
-            const requestedHeight = Number(height);
-            if (Number.isFinite(requestedHeight) && requestedHeight > 0) {
-                // ขยาย/หดความสูงตามที่ Iframe แจ้งมาโดยตรงแบบไดนามิก
+        const requestedHeight = Number(height);
+        if (Number.isFinite(requestedHeight) && requestedHeight > 0) {
+            if (isPopupMessage) {
                 popupIframe.style.height = `${requestedHeight}px`;
+            } else if (isLocationMessage) {
+                locationZoneFrame.style.height = `${Math.min(requestedHeight, 450)}px`;
             }
         }
         return;
     }
 
-    if (type === 'SELECT_LOCATION' && locationObj) {
-        selectLocationAndZone(locationObj.location_id, locationObj.location_name, locationObj.zone_id, locationObj.zone_name);
+    // [Step 1] เมื่อผู้ใช้เลือกสถานที่จาก location.html ให้กรองโซนเฉพาะ location_id นั้น แล้วโหลด zone.html ต่อ
+    if (type === 'SELECT_LOCATION' && isLocationMessage && locationObj && typeof locationObj === 'object') {
+        const targetLocId = locationObj.location_id ?? null;
+        const targetLocName = String(locationObj.location_name || '');
+
+        if (targetLocName.includes('หน้าร้าน')) {
+            selectLocationAndZone(targetLocId, targetLocName, null, '');
+            return;
+        }
+
+        const filteredZones = zonesCache.filter(z => Number(z.location_id) === Number(targetLocId));
+        if (filteredZones.length === 0) {
+            selectLocationAndZone(targetLocId, targetLocName, null, '');
+            return;
+        }
+
+        document.getElementById('locationModalTitle').textContent = `เลือกโซน/ห้องพัก (${targetLocName})`;
+        locationZoneFrame.src = 'zone.html';
+        locationZoneFrame.onload = () => {
+            locationZoneFrame.contentWindow.postMessage({
+                type: 'RENDER_ZONES',
+                zones: filteredZones
+            }, getAppOrigin());
+        };
+        return;
+    }
+
+    // [Step 2] เมื่อผู้ใช้เลือกโซนจาก zone.html เสร็จสิ้น บันทึกค่าและปิด Modal
+    if (type === 'SELECT_ZONE' && isLocationMessage && zoneObj && typeof zoneObj === 'object') {
+        const zoneId = zoneObj.zone_id ?? null;
+        const zoneName = String(zoneObj.zone_name || '');
+        const currentLocId = document.getElementById('editSelectedLocationId').value || '';
+        const currentLocName = document.getElementById('editLocationBtnText').textContent.split(' - ')[0] || '';
+
+        selectLocationAndZone(currentLocId, currentLocName, zoneId, zoneName);
         return;
     }
 

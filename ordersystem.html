@@ -1,7 +1,7 @@
 <!--
   ========================================================================
   FILE NAME: ordersystem.html
-  SUMMARY: ระบบรับออเดอร์ร้านลาบหนองบัวลำภู พร้อมโครงสร้างบล็อกสากลและระบบจัดการตะกร้าสินค้า
+  SUMMARY: ระบบรับออเดอร์ร้านลาบหนองบัวลำภู เชื่อมต่อ UI location_zone.html ผ่าน postMessage
   ========================================================================
 -->
 
@@ -48,8 +48,8 @@
             width: 100%; background: #ffffff; overflow: hidden; display: flex; flex-direction: column; flex: 0 1 auto; 
             border-radius: 1.5rem !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
         }
-        #popupIframe {
-            width: 100%; height: auto; min-height: 150px; max-height: calc(90vh - 2rem);
+        #locationFrame {
+            width: 100%; height: auto; min-height: 350px; max-height: calc(90vh - 2rem);
             border: 0; display: block; background: transparent; transition: height 0.15s ease;
         }
         .group-btn-v2 { background-color: #ffffff; border: 1.5px solid #fde68a; color: #334155; transition: all 0.2s ease; }
@@ -185,7 +185,21 @@
     </div>
     <!-- [End Block 3.1] -->
 
-    <!-- [Start Block 3.2] CONFIRM CLEAR CART MODAL -->
+    <!-- [Start Block 3.2] LOCATION / ZONE MODAL (เชื่อมโยงกับ location_zone.html) -->
+    <div id="locationModalOverlay" class="custom-modal-overlay" onclick="toggleLocationModal(false)">
+        <div class="popup-container" onclick="event.stopPropagation()">
+            <div class="popup-content-wrapper">
+                <div class="flex justify-between items-center px-4 py-3 bg-slate-50 border-b border-slate-100 shrink-0">
+                    <div class="flex items-center gap-2"><span>📍</span><h2 class="font-extrabold text-xs text-slate-800" id="locationModalTitle">เลือกสถานที่ / โซน</h2></div>
+                    <button type="button" onclick="toggleLocationModal(false)" class="text-slate-400 hover:text-slate-600 font-bold text-base px-2 cursor-pointer">✕</button>
+                </div>
+                <iframe id="locationFrame" src=""></iframe>
+            </div>
+        </div>
+    </div>
+    <!-- [End Block 3.2] -->
+
+    <!-- [Start Block 3.3] CONFIRM CLEAR CART MODAL -->
     <div id="confirmClearModalOverlay" class="custom-modal-overlay" onclick="closeConfirmClearModal()">
         <div class="bg-white rounded-3xl max-w-xs w-full p-5 text-center border border-slate-200 shadow-2xl m-4" onclick="event.stopPropagation()">
             <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-3 text-xl font-bold">🗑️</div>
@@ -197,7 +211,7 @@
             </div>
         </div>
     </div>
-    <!-- [End Block 3.2] -->
+    <!-- [End Block 3.3] -->
     <!-- [End Block 3] -->
 
     <!-- [Start Block 4] JAVASCRIPT LOGIC & STATE MANAGEMENT -->
@@ -205,8 +219,6 @@
         /* --- [Start Block 4.1] Global State & LocalStorage --- */
         let cart = readCartFromStorage();
         let dbFoodsMap = {};
-        let locationsData = [];
-        let zonesData = [];
         let customersList = [];
         let selectedCustomerObj = null;
         let locationFoodPricesMap = {};
@@ -248,7 +260,6 @@
         window.addEventListener('DOMContentLoaded', async () => {
             await Promise.all([
                 fetchLatestFoods(),
-                fetchLocationsAndZones(),
                 fetchCustomersData(),
                 fetchLocationFoodPrices()
             ]);
@@ -269,16 +280,19 @@
         window.addEventListener('message', (event) => {
             const foodGroupFrame = document.getElementById('foodGroupFrame');
             const popupIframe = document.getElementById('popupIframe');
+            const locationFrame = document.getElementById('locationFrame');
+
             const isFoodGroupMessage = !!foodGroupFrame && event.source === foodGroupFrame.contentWindow;
             const isPopupMessage = !!popupIframe && event.source === popupIframe.contentWindow;
+            const isLocationMessage = !!locationFrame && event.source === locationFrame.contentWindow;
 
             if (event.origin !== getAppOrigin()) return;
-            if (!isFoodGroupMessage && !isPopupMessage) return;
             if (!event.data || typeof event.data !== 'object' || typeof event.data.type !== 'string') return;
 
             const data = event.data;
             const { type, catId, catName, food, height, locationObj, group_id, group_name, cartItem } = data;
 
+            // จัดการความสูง Iframe ของ Modal ทั่วไป
             if (type === 'RESIZE_POPUP' && isPopupMessage) {
                 const requestedHeight = Number(height);
                 if (!Number.isFinite(requestedHeight) || requestedHeight <= 0) return;
@@ -291,14 +305,31 @@
                 return;
             }
 
-            if (type === 'SELECT_LOCATION' && isPopupMessage && locationObj && typeof locationObj === 'object') {
+            // จัดการความสูง Iframe ของ Modal เลือกสถานที่ / โซน (location_zone.html)
+            if (type === 'RESIZE_POPUP' && isLocationMessage) {
+                const requestedHeight = Number(height);
+                if (Number.isFinite(requestedHeight) && requestedHeight > 0) {
+                    locationFrame.style.height = `${Math.min(requestedHeight, 450)}px`;
+                }
+                return;
+            }
+
+            // รับค่าเมื่อเลือกสถานที่และโซนสำเร็จจาก location_zone.html
+            if (type === 'SELECT_LOCATION' && isLocationMessage && locationObj && typeof locationObj === 'object') {
                 locationData.locationId = locationObj.location_id ?? null;
                 locationData.locationName = String(locationObj.location_name || '');
                 locationData.zoneId = locationObj.zone_id ?? null;
                 locationData.zoneName = String(locationObj.zone_name || '');
+
+                let fullDisplayName = locationData.locationName;
+                if (locationData.zoneName) {
+                    fullDisplayName += ` - ${locationData.zoneName}`;
+                }
+
                 const btnText = document.getElementById('locationBtnText-locationSelectorWrapper');
-                if (btnText) btnText.textContent = locationData.locationName;
-                closeDynamicPopup();
+                if (btnText) btnText.textContent = fullDisplayName;
+
+                toggleLocationModal(false);
                 renderOrderSummary();
                 return;
             }
@@ -393,6 +424,7 @@
         /* --- [Start Block 4.4] Navigation & Tab Switching --- */
         function switchTab(tabIndex) {
             closeDynamicPopup();
+            toggleLocationModal(false);
             for (let i = 1; i <= 3; i++) {
                 const contentEl = document.getElementById(`tabContent${i}`);
                 if (contentEl) contentEl.classList.add('hidden');
@@ -535,7 +567,7 @@
                             <div id="customerDropdown-${targetContainerId}" class="customer-dropdown"></div>
                         </div>
                         <div id="locationBtnContainer-${targetContainerId}" class="w-5/12 hidden">
-                            <button type="button" onclick="openLocationZoneModal()" class="w-full h-[38px] bg-amber-500 text-white font-bold px-2 rounded-xl text-xs flex items-center justify-center gap-1 shadow-sm">📍 <span id="locationBtnText-${targetContainerId}" class="truncate">เลือกสถานที่</span></button>
+                            <button type="button" onclick="openLocationModal()" class="w-full h-[38px] bg-amber-500 text-white font-bold px-2 rounded-xl text-xs flex items-center justify-center gap-1 shadow-sm cursor-pointer">📍 <span id="locationBtnText-${targetContainerId}" class="truncate">เลือกสถานที่</span></button>
                         </div>
                     </div>
                 </div>
@@ -594,16 +626,18 @@
             renderOrderSummary();
         }
 
-        function openLocationZoneModal() { openDynamicPopup('location_zone.html'); }
+        // ฟังก์ชันสั่งเปิด Modal และโหลดไฟล์ location_zone.html เข้ามาทำงานร่วมกัน
+        function openLocationModal() {
+            document.getElementById('locationModalTitle').textContent = 'เลือกสถานที่ / โซน';
+            const iframe = document.getElementById('locationFrame');
+            iframe.src = 'location_zone.html'; // โหลดไฟล์ location_zone.html ที่จัดการทั้ง Location และ Zone ในตัว
+            toggleLocationModal(true);
+        }
 
-        async function fetchLocationsAndZones() {
-            if (typeof supabaseClient !== 'undefined') {
-                const [locRes, zoneRes] = await Promise.all([
-                    supabaseClient.from('locations').select('*').order('location_name', { ascending: true }),
-                    supabaseClient.from('location_zone').select('*').order('zone_name', { ascending: true })
-                ]);
-                if (locRes.data) locationsData = locRes.data;
-                if (zoneRes.data) zonesData = zoneRes.data;
+        function toggleLocationModal(show) {
+            document.getElementById('locationModalOverlay').classList.toggle('active', show);
+            if (!show) {
+                document.getElementById('locationFrame').src = '';
             }
         }
 
@@ -753,10 +787,8 @@
             const isTouristWithoutLocation = (locationData.groupId === 2 && !locationData.locationId);
 
             if (!isTouristWithoutLocation && locationData.groupId === 2 && !isStoreFront && !isDeliveryFeeWaived) {
-                const currentLocObj = locationsData.find(l => Number(l.location_id) === Number(locationData.locationId));
-                const minOrder = currentLocObj ? Number(currentLocObj.min_order_for_free_delivery) || 300 : 300;
-                const customFee = currentLocObj ? Number(currentLocObj.delivery_fee) || 20 : 20;
-                if (totalCartPrice < minOrder) deliveryFee = customFee;
+                // ค่าจัดส่งเริ่มต้น หรือดึงจากตาราง locations ตาม locationId
+                deliveryFee = 20; 
             }
 
             if (deliveryFee > 0) {
