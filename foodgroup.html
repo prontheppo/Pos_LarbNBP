@@ -1,7 +1,7 @@
 <!--
   ========================================================================
   FILE NAME: foodgroup.html
-  SUMMARY: หน้าเลือกหมวดหมู่เมนูอาหาร รองรับการแสดงป้ายจำนวนรายการในตะกร้า และโครงสร้าง Block สากล 100%
+  SUMMARY: หน้าเลือกหมวดหมู่เมนูอาหาร ปรับความสูง Auto-Resize ตามเนื้อหาจริง 100%
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -21,7 +21,13 @@
          [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
          ========================================================== -->
     <style>
-        html, body { width: 100%; min-height: 100%; background-color: transparent; color: #1e293b; font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none; display: flex; flex-direction: column; }
+        html, body { 
+            width: 100%; height: auto; min-height: auto; 
+            background-color: transparent; color: #1e293b; 
+            font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; 
+            user-select: none; display: flex; flex-direction: column; 
+            overflow: hidden; border-radius: 1.5rem; 
+        }
         .category-nav-wrap { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; width: 100%; box-sizing: border-box; padding: 0.25rem; }
         .cat-nav-btn {
             position: relative; background-color: #ffffff; border: 1.5px solid #10349542; color: #1e293b;
@@ -46,6 +52,7 @@
          [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
          ========================================================== -->
     <div class="w-full max-w-xl mx-auto flex flex-col">
+        <!-- ปล่อยโล่ง ไม่ล็อก max-height เพื่อให้ขยายตามจำนวนหมวดหมู่จริง -->
         <div id="categoryView" class="w-full">
             <div id="quickNavContainer" class="category-nav-wrap">
                 <div class="col-span-2 text-center py-6 text-slate-400 font-bold text-base">⏳ กำลังโหลดหมวดหมู่...</div>
@@ -76,7 +83,6 @@
         let cachedFoods = [];
         let currentCart = [];
 
-        /* --- [Start Block 4.1] MODAL HELPERS --- */
         function showCustomModal(message) {
             const modal = document.getElementById('customModal');
             const modalBox = document.getElementById('modalBox');
@@ -94,19 +100,19 @@
             modalBox.classList.add('scale-95');
             setTimeout(() => { modal.classList.remove('flex'); modal.classList.add('hidden'); }, 200);
         }
-        /* --- [End Block 4.1] --- */
 
-        /* --- [Start Block 4.2] INITIALIZATION & DATA FETCHING --- */
         window.addEventListener('DOMContentLoaded', async () => {
             if (window.self === window.top) {
                 await fetchStandaloneData();
             }
+            updateParentHeight();
         });
 
         async function fetchStandaloneData() {
             const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
             if (!client) {
                 document.getElementById('quickNavContainer').innerHTML = '<div class="col-span-2 text-center text-rose-500 text-xs py-4">ไม่พบการเชื่อมต่อ Supabase</div>';
+                updateParentHeight();
                 return;
             }
             try {
@@ -131,14 +137,32 @@
                 renderCategories(cachedCategories, cachedFoods, currentCart);
             }
         });
-        /* --- [End Block 4.2] --- */
 
-        /* --- [Start Block 4.3] RENDER CATEGORIES --- */
+        // ฟังก์ชันส่งความสูงจริงแบบไดนามิก (ใช้ ResizeObserver และ scrollHeight)
+        function updateParentHeight() {
+            if (window.parent !== window) {
+                const totalHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
+                window.parent.postMessage({ type: 'RESIZE_POPUP', height: totalHeight + 20 }, window.location.origin);
+            }
+        }
+
+        const resizeObserver = new ResizeObserver(() => {
+            updateParentHeight();
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            resizeObserver.observe(document.body);
+            updateParentHeight();
+        });
+
+        window.addEventListener('load', updateParentHeight);
+
         function renderCategories(categories, foods, cart) {
             const navContainer = document.getElementById('quickNavContainer');
             if (!navContainer) return;
             if (!categories || categories.length === 0) {
                 navContainer.innerHTML = '<div class="col-span-2 text-center py-6 text-slate-400 font-bold text-base">ไม่พบข้อมูลหมวดหมู่</div>';
+                updateParentHeight();
                 return;
             }
 
@@ -195,8 +219,9 @@
                 };
                 navContainer.appendChild(btn);
             });
+
+            updateParentHeight();
         }
-        /* --- [End Block 4.3] --- */
     </script>
     <!-- [End Block 4] -->
 </body>

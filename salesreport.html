@@ -1,7 +1,7 @@
 <!--
   ========================================================================
   FILE NAME: salereport.html
-  SUMMARY: รายงานการขายและการจัดการ จัดระเบียบโครงสร้าง Block สากล 100%
+  SUMMARY: รายงานการขายและการจัดการ พร้อมระบบดึงรายจ่ายจากตาราง expenses มาสรุปยอดรวม 100%
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -62,7 +62,7 @@
         <div class="px-4 pt-3 pb-2 flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <span class="text-xl">📊</span>
-                <h1 class="font-extrabold text-base text-slate-800 tracking-tight">รายงานการขาย</h1>
+                <h1 class="font-extrabold text-base text-slate-800 tracking-tight">รายงานการขายและรายจ่าย</h1>
             </div>
             <a href="index.html" class="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 no-underline">
                 🏠 หน้าหลัก
@@ -95,7 +95,7 @@
             </div>
         </div>
         <div id="overviewDateListContainer" class="p-3 overflow-y-auto space-y-2.5 bg-slate-100 flex-1" style="-webkit-overflow-scrolling: touch;">
-            <div class="text-center text-slate-400 py-10 text-xs font-medium">⏳ กำลังโหลดสรุปยอดขาย...</div>
+            <div class="text-center text-slate-400 py-10 text-xs font-medium">⏳ กำลังโหลดสรุปยอดขายและรายจ่าย...</div>
         </div>
     </div>
     <!-- [End Block 2.2] -->
@@ -115,15 +115,17 @@
                     <div class="text-xs font-black text-slate-800 mt-1" id="dailySummaryCount">0 บิล</div>
                 </div>
                 <div class="bg-emerald-50 p-2 rounded-lg border border-emerald-200 shadow-xs col-span-2">
-                    <div class="text-[10px] text-emerald-700 font-bold mb-1">ยอดรับสุทธิรวม</div>
+                    <div class="text-[10px] text-emerald-700 font-bold mb-1">ยอดสุทธิประจำวัน</div>
                     <div class="grid grid-cols-3 gap-1 text-center" id="dailySummaryTotal">
                         <div class="text-[10px] text-emerald-800">รายรับ<br><strong class="text-emerald-900">฿0</strong></div>
-                        <div class="text-[10px] text-yellow-800">รายจ่าย<br><strong class="text-yellow-900">฿0</strong></div>
-                        <div class="text-[10px] text-emerald-600">สุทธิ<br><strong class="text-emerald-600 font-black">฿0</strong></div>
+                        <div class="text-[10px] text-yellow-800">รายจ่ายร้าน<br><strong class="text-yellow-900">฿0</strong></div>
+                        <div class="text-[10px] text-emerald-600">สุทธิจริง<br><strong class="text-emerald-600 font-black">฿0</strong></div>
                     </div>
                 </div>
             </div>
         </div>
+        
+        <!-- พื้นที่แสดงรายการ (แยก ออร์เดอร์ขาย และ รายจ่ายร้านค้า) -->
         <div class="p-3 overflow-y-auto space-y-3 bg-slate-100 flex-1" id="dailyOrdersContainer" style="-webkit-overflow-scrolling: touch;"></div>
     </div>
     <!-- [End Block 2.3] -->
@@ -185,6 +187,7 @@
 <script>
     let db;
     let allOrdersCache = [];
+    let allExpensesCache = [];
     let locationsCache = [];
     let fetchedDatesSet = new Set();
     let currentActiveTab = 'overview';
@@ -221,7 +224,7 @@
         else if (typeof supabaseClient !== 'undefined') db = supabaseClient;
 
         await fetchMasterData();
-        await fetchInitialOrders();
+        await fetchInitialData();
     };
 
     function normalizeOrder(order) {
@@ -385,51 +388,89 @@
         } catch (err) { console.error("Error fetching locations:", err); }
     }
 
-    async function fetchInitialOrders() {
+    async function fetchInitialData() {
         if (!db) return;
         
         const pastDate = new Date();
         pastDate.setDate(pastDate.getDate() - 15);
         const pastDateStr = pastDate.toISOString().split('T')[0] + 'T00:00:00';
         
-        const { data, error } = await db.from('orders')
+        // 1. ดึงข้อมูลออร์เดอร์
+        const ordRes = await db.from('orders')
             .select('*')
             .gte('created_at', pastDateStr)
             .order('order_id', { ascending: true });
 
-        if (error) { console.error("Error fetching initial orders:", error); return; }
-        
-        const normalized = (data || []).map(o => normalizeOrder(o));
-        normalized.forEach(o => { if (o.dateStr) fetchedDatesSet.add(o.dateStr); });
-        allOrdersCache = normalized;
+        if (!ordRes.error && ordRes.data) {
+            const normalized = ordRes.data.map(o => normalizeOrder(o));
+            normalized.forEach(o => { if (o.dateStr) fetchedDatesSet.add(o.dateStr); });
+            allOrdersCache = normalized;
+        }
+
+        // 2. ดึงข้อมูลรายจ่าย (จากตาราง expenses)
+        const expRes = await db.from('expenses')
+            .select('*')
+            .gte('created_at', pastDateStr)
+            .order('created_at', { ascending: true });
+
+        if (!expRes.error && expRes.data) {
+            allExpensesCache = expRes.data.map(e => ({
+                ...e,
+                dateStr: String(e.created_at).split('T')[0].split(' ')[0],
+                amount: Number(e.amount || 0)
+            }));
+            allExpensesCache.forEach(e => { if (e.dateStr) fetchedDatesSet.add(e.dateStr); });
+        }
         
         switchTab(currentActiveTab, document.querySelector('.tab-btn.active-tab'));
     }
 
-    async function ensureOrdersForDate(targetDateStr) {
-        if (!db || fetchedDatesSet.has(targetDateStr)) return;
+    async function ensureDataForDate(targetDateStr) {
+        if (!db) return;
 
         if (currentActiveTab === 'daily') {
-            document.getElementById('dailyOrdersContainer').innerHTML = `<div class="text-center text-slate-400 py-10 text-xs font-medium">⏳ กำลังค้นหาออร์เดอร์ของวันที่ ${formatDateThai(targetDateStr)}...</div>`;
+            document.getElementById('dailyOrdersContainer').innerHTML = `<div class="text-center text-slate-400 py-10 text-xs font-medium">⏳ กำลังค้นหาข้อมูลของวันที่ ${formatDateThai(targetDateStr)}...</div>`;
         } else if (currentActiveTab === 'groupsales') {
-            document.getElementById('groupSummaryContainer').innerHTML = `<div class="text-center text-slate-400 py-10 text-xs font-medium">⏳ กำลังค้นหาออร์เดอร์ของวันที่ ${formatDateThai(targetDateStr)}...</div>`;
+            document.getElementById('groupSummaryContainer').innerHTML = `<div class="text-center text-slate-400 py-10 text-xs font-medium">⏳ กำลังค้นหาข้อมูลของวันที่ ${formatDateThai(targetDateStr)}...</div>`;
         }
 
         const startStr = `${targetDateStr}T00:00:00`;
         const endStr = `${targetDateStr}T23:59:59.999`;
 
-        const { data, error } = await db.from('orders')
+        // โหลด orders วันนั้นเพิ่ม ถ้ายังไม่มีในแคช
+        const ordRes = await db.from('orders')
             .select('*')
             .gte('created_at', startStr)
             .lte('created_at', endStr)
             .order('order_id', { ascending: true });
 
-        if (!error && data) {
-            const newOrders = data.map(o => normalizeOrder(o));
+        if (!ordRes.error && ordRes.data) {
+            const newOrders = ordRes.data.map(o => normalizeOrder(o));
             newOrders.forEach(no => {
                 const idKey = no.order_id || no.id;
                 if (!allOrdersCache.some(o => (o.order_id || o.id) === idKey)) {
                     allOrdersCache.push(no);
+                }
+            });
+        }
+
+        // โหลด expenses วันนั้นเพิ่ม ถ้ายังไม่มีในแคช
+        const expRes = await db.from('expenses')
+            .select('*')
+            .gte('created_at', startStr)
+            .lte('created_at', endStr)
+            .order('created_at', { ascending: true });
+
+        if (!expRes.error && expRes.data) {
+            const newExps = expRes.data.map(e => ({
+                ...e,
+                dateStr: String(e.created_at).split('T')[0].split(' ')[0],
+                amount: Number(e.amount || 0)
+            }));
+            newExps.forEach(ne => {
+                const idKey = ne.expense_id || ne.id;
+                if (!allExpensesCache.some(e => (e.expense_id || e.id) === idKey)) {
+                    allExpensesCache.push(ne);
                 }
             });
         }
@@ -456,11 +497,11 @@
             renderOverviewData();
         } else if (tabName === 'daily') {
             document.getElementById('tabDaily').classList.add('active');
-            await ensureOrdersForDate(currentSelectedDate);
+            await ensureDataForDate(currentSelectedDate);
             filterDailyOrders();
         } else if (tabName === 'groupsales') {
             document.getElementById('tabGroupSales').classList.add('active');
-            await ensureOrdersForDate(currentSelectedDate);
+            await ensureDataForDate(currentSelectedDate);
             renderGroupSalesData();
         }
     }
@@ -499,7 +540,7 @@
                 currentSelectedDate = selectedDateStr;
                 updateDateDisplays();
                 
-                await ensureOrdersForDate(currentSelectedDate);
+                await ensureDataForDate(currentSelectedDate);
                 
                 if (currentActiveTab === 'daily') filterDailyOrders();
                 else if (currentActiveTab === 'groupsales') renderGroupSalesData();
@@ -514,22 +555,43 @@
     function renderOverviewData() {
         const container = document.getElementById('overviewDateListContainer');
         if (!container) return;
-        if (allOrdersCache.length === 0) {
-            container.innerHTML = `<div class="text-center text-slate-400 py-10 text-xs font-medium">📭 ไม่พบข้อมูลออร์เดอร์ในช่วง 15 วันที่ผ่านมา</div>`;
+        
+        // รวบรวมวันที่ทั้งหมดจากทั้ง orders และ expenses
+        let allDatesSet = new Set();
+        allOrdersCache.forEach(o => { if (o.dateStr) allDatesSet.add(o.dateStr); });
+        allExpensesCache.forEach(e => { if (e.dateStr) allDatesSet.add(e.dateStr); });
+
+        if (allDatesSet.size === 0) {
+            container.innerHTML = `<div class="text-center text-slate-400 py-10 text-xs font-medium">📭 ไม่พบข้อมูลการขายหรือรายจ่ายในช่วง 15 วันที่ผ่านมา</div>`;
             document.getElementById('overviewTotalBillCount').textContent = '0 วัน';
             return;
         }
 
         let dateGroups = {};
+        allDatesSet.forEach(dateStr => {
+            dateGroups[dateStr] = { totalIncome: 0, storeExpense: 0, netTotal: 0, count: 0, expenseCount: 0 };
+        });
+
+        // คำนวณรายรับจากออร์เดอร์
         allOrdersCache.forEach(order => {
             let dateStr = order.dateStr;
-            if (!dateStr) return;
-            if (!dateGroups[dateStr]) dateGroups[dateStr] = { totalIncome: 0, totalExpense: 0, netTotal: 0, count: 0 };
-
+            if (!dateStr || !dateGroups[dateStr]) return;
             dateGroups[dateStr].totalIncome += order.computedTotal;
-            dateGroups[dateStr].totalExpense += order.totalExpense;
-            dateGroups[dateStr].netTotal += order.netProfitTotal;
             dateGroups[dateStr].count += 1;
+        });
+
+        // คำนวณรายจ่ายร้านค้าจากตาราง expenses
+        allExpensesCache.forEach(exp => {
+            let dateStr = exp.dateStr;
+            if (!dateStr || !dateGroups[dateStr]) return;
+            dateGroups[dateStr].storeExpense += exp.amount;
+            dateGroups[dateStr].expenseCount += 1;
+        });
+
+        // สรุปยอดสุทธิ (รายรับ - รายจ่ายร้านค้า)
+        Object.keys(dateGroups).forEach(dateStr => {
+            let g = dateGroups[dateStr];
+            g.netTotal = g.totalIncome - g.storeExpense;
         });
 
         let sortedDates = Object.keys(dateGroups).sort((a, b) => b.localeCompare(a));
@@ -543,15 +605,15 @@
                         <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                             <span>📅 วันที่:</span> <span class="text-purple-700 font-extrabold">${formatDateThai(dateStr)}</span>
                         </div>
-                        <div class="text-[11px] text-slate-500 mt-1">จำนวนบิล: <span class="font-bold text-slate-700">${data.count} บิล</span></div>
+                        <div class="text-[11px] text-slate-500 mt-1">ออร์เดอร์ขาย: <span class="font-bold text-slate-700">${data.count} บิล</span> | รายจ่ายร้าน: <span class="font-bold text-slate-700">${data.expenseCount} รายการ</span></div>
                         <div class="text-[10px] text-slate-500 mt-0.5 space-x-2">
                             <span>รายรับ: <strong class="text-red-600">฿${data.totalIncome.toLocaleString()}</strong></span>
-                            <span>รายจ่าย: <strong class="text-yellow-700">฿${data.totalExpense.toLocaleString()}</strong></span>
+                            <span>รายจ่ายร้าน: <strong class="text-yellow-700">฿${data.storeExpense.toLocaleString()}</strong></span>
                         </div>
                     </div>
                     <div class="text-right">
-                        <div class="text-xs font-black text-emerald-600">สุทธิ ฿${data.netTotal.toLocaleString()}.-</div>
-                        <div class="text-[10px] text-slate-400 mt-0.5">แตะเพื่อดูบิลประจำวัน 🔍</div>
+                        <div class="text-xs font-black text-emerald-600">สุทธิจริง ฿${data.netTotal.toLocaleString()}.-</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">แตะเพื่อดูรายละเอียด 🔍</div>
                     </div>
                 </div>`;
         }).join('');
@@ -568,28 +630,61 @@
         if (!container) return;
         container.innerHTML = '';
 
-        let filtered = allOrdersCache.filter(o => o.dateStr === currentSelectedDate);
-        filtered.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+        let filteredOrders = allOrdersCache.filter(o => o.dateStr === currentSelectedDate);
+        filteredOrders.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
 
-        if (filtered.length === 0) {
-            container.innerHTML = `<div class="text-center text-xs text-slate-400 py-8 font-medium">📭 ไม่พบออร์เดอร์ในวันที่ ${formatDateThai(currentSelectedDate)}</div>`;
+        let filteredExpenses = allExpensesCache.filter(e => e.dateStr === currentSelectedDate);
+        filteredExpenses.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+
+        if (filteredOrders.length === 0 && filteredExpenses.length === 0) {
+            container.innerHTML = `<div class="text-center text-xs text-slate-400 py-8 font-medium">📭 ไม่พบข้อมูลการขายหรือรายจ่ายในวันที่ ${formatDateThai(currentSelectedDate)}</div>`;
             document.getElementById('dailySummaryCount').textContent = '0 บิล';
             document.getElementById('dailySummaryTotal').innerHTML = `
                 <div class="text-[10px] text-emerald-800">รายรับ<br><strong class="text-emerald-900">฿0</strong></div>
-                <div class="text-[10px] text-yellow-800">รายจ่าย<br><strong class="text-yellow-900">฿0</strong></div>
-                <div class="text-[10px] text-emerald-600">สุทธิ<br><strong class="text-emerald-600 font-black">฿0</strong></div>
+                <div class="text-[10px] text-yellow-800">รายจ่ายร้าน<br><strong class="text-yellow-900">฿0</strong></div>
+                <div class="text-[10px] text-emerald-600">สุทธิจริง<br><strong class="text-emerald-600 font-black">฿0</strong></div>
             `;
             return;
         }
 
         let totalIncome = 0;
-        let totalExpense = 0;
-        let totalNet = 0;
+        let totalStoreExpense = 0;
 
-        filtered.forEach(order => {
+        // 1. แสดงส่วนของรายจ่ายร้านค้าก่อน (จากหน้า expenses.html)
+        let expenseSectionHtml = '';
+        if (filteredExpenses.length > 0) {
+            let expenseItemsHtml = filteredExpenses.map(exp => {
+                totalStoreExpense += exp.amount;
+                return `
+                    <div class="flex items-center justify-between bg-amber-50/60 p-2 rounded-lg text-xs border border-amber-200">
+                        <div class="flex flex-col truncate">
+                            <span class="font-bold text-amber-900 truncate">💸 ${exp.item_name}</span>
+                            ${exp.note ? `<span class="text-[10px] text-slate-500 truncate">📌 ${exp.note}</span>` : ''}
+                        </div>
+                        <span class="font-extrabold text-yellow-800 shrink-0">-${exp.amount.toLocaleString()} ฿</span>
+                    </div>`;
+            }).join('');
+
+            expenseSectionHtml = `
+                <div class="bg-amber-100/70 border-2 border-yellow-400 rounded-xl p-3 shadow-sm space-y-2 mb-3">
+                    <div class="flex justify-between items-center border-b border-yellow-200 pb-1.5">
+                        <span class="font-extrabold text-xs text-yellow-900 flex items-center gap-1">
+                            <span>💸</span> รายจ่ายร้านค้าทั่วไป (วันนี้)
+                        </span>
+                        <span class="text-xs font-black text-yellow-900 bg-yellow-200 px-2 py-0.5 rounded-md">
+                            รวมจ่าย: <span id="dailyExpenseTotalAmount">${totalStoreExpense.toLocaleString()}</span> ฿
+                        </span>
+                    </div>
+                    <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                        ${expenseItemsHtml}
+                    </div>
+                </div>`;
+        }
+
+        // 2. แสดงรายการออร์เดอร์ขาย
+        let ordersHtml = '';
+        filteredOrders.forEach(order => {
             totalIncome += order.computedTotal;
-            totalExpense += order.totalExpense;
-            totalNet += order.netProfitTotal;
 
             let redItemsHtml = order.parsedItems.map(item => {
                 let comment = item.note ? ` <span class="text-amber-800 font-semibold bg-amber-50 px-1.5 py-0.5 rounded text-[11px]">(${item.note})</span>` : '';
@@ -609,43 +704,9 @@
                 </tr>`;
             }
 
-            let expenseSection = '';
-            if (order.hasExpense) {
-                let yellowItemsHtml = order.parsedItems.filter(i => i.isConsignment).map(item => {
-                    return `<tr class="border-b border-yellow-100">
-                        <td class="p-1 text-[11px] text-yellow-900 font-medium">${item.name}</td>
-                        <td class="p-1 text-[11px] text-center font-bold">x${item.qty}</td>
-                        <td class="p-1 text-[11px] text-right font-bold text-yellow-700">${item.costPrice.toLocaleString()}.-</td>
-                    </tr>`;
-                }).join('');
-
-                let consignmentBox = order.consignmentTotal > 0 ? `
-                    <div class="bg-yellow-50/80 border border-yellow-300 rounded-lg p-2 space-y-1 mb-1.5">
-                        <div class="text-[11px] font-bold text-yellow-900 flex items-center gap-1">
-                            <span>🟡</span> <span>รายจ่ายซื้อของฝากขาย (ต้นทุน):</span>
-                        </div>
-                        <table class="w-full text-left"><tbody>${yellowItemsHtml}</tbody></table>
-                        <div class="flex justify-between items-center text-[11px] font-extrabold text-yellow-900 pt-1 border-t border-yellow-200">
-                            <span>รวมต้นทุนสินค้า:</span>
-                            <span>฿${order.consignmentTotal.toLocaleString()}.-</span>
-                        </div>
-                    </div>` : '';
-
-                expenseSection = `
-                    <div class="space-y-1">
-                        ${consignmentBox}
-                    </div>
-
-                    <div class="bg-emerald-50 border border-emerald-300 rounded-lg p-2 flex justify-between items-center text-xs mt-1.5">
-                        <span class="font-bold text-emerald-900 flex items-center gap-1"><span>🟢</span> <span>สรุปยอดรับสุทธิ (หักต้นทุนฝากซื้อ):</span></span>
-                        <span class="font-black text-emerald-600 text-sm">฿${order.netProfitTotal.toLocaleString()}.-</span>
-                    </div>
-                `;
-            }
-
             let orderId = order.order_id || order.id;
 
-            container.innerHTML += `
+            ordersHtml += `
                 <div onclick="goToEditOrder(${orderId})" class="bg-white border-2 border-red-500 rounded-xl p-3 shadow-md space-y-3 cursor-pointer transition active:scale-95">
                     <div class="flex justify-between border-b border-slate-200 pb-2">
                         <span class="font-bold text-xs text-amber-900 bg-amber-100 px-2.5 py-0.5 rounded">${order.groupTypeName} ✏️</span>
@@ -660,16 +721,17 @@
                             <span class="text-red-600">฿${order.computedTotal.toLocaleString()}.-</span>
                         </div>
                     </div>
-
-                    ${expenseSection}
                 </div>`;
         });
 
-        document.getElementById('dailySummaryCount').textContent = `${filtered.length} บิล`;
+        container.innerHTML = expenseSectionHtml + ordersHtml;
+
+        let netFinal = totalIncome - totalStoreExpense;
+        document.getElementById('dailySummaryCount').textContent = `${filteredOrders.length} บิล`;
         document.getElementById('dailySummaryTotal').innerHTML = `
             <div class="text-[10px] text-emerald-800">รายรับ<br><strong class="text-emerald-900">฿${totalIncome.toLocaleString()}</strong></div>
-            <div class="text-[10px] text-yellow-800">รายจ่าย<br><strong class="text-yellow-900">฿${totalExpense.toLocaleString()}</strong></div>
-            <div class="text-[10px] text-emerald-600">สุทธิ<br><strong class="text-emerald-600 font-black">฿${totalNet.toLocaleString()}</strong></div>
+            <div class="text-[10px] text-yellow-800">รายจ่ายร้าน<br><strong class="text-yellow-900">฿${totalStoreExpense.toLocaleString()}</strong></div>
+            <div class="text-[10px] text-emerald-600">สุทธิจริง<br><strong class="text-emerald-600 font-black">฿${netFinal.toLocaleString()}</strong></div>
         `;
     }
 
@@ -679,42 +741,44 @@
         if (!container || !headerBox) return;
 
         let filteredOrders = allOrdersCache.filter(o => o.dateStr === currentSelectedDate);
-        if (filteredOrders.length === 0) {
-            headerBox.innerHTML = `<div class="bg-slate-800 text-white p-3.5 rounded-xl shadow-xs"><div class="text-[11px] text-slate-300">ยอดรวมประจำวัน (${formatDateThai(currentSelectedDate)})</div><div class="text-lg font-black text-emerald-400">สุทธิ ฿0.-</div><div class="text-[10px] text-slate-300 mt-1">รายรับ: ฿0 | รายจ่าย: ฿0 (0 บิล)</div></div>`;
-            container.innerHTML = `<div class="text-center text-slate-400 py-12 text-xs font-medium">📭 ไม่พบข้อมูลการขาย</div>`;
+        let filteredExpenses = allExpensesCache.filter(e => e.dateStr === currentSelectedDate);
+        let totalStoreExpense = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
+
+        if (filteredOrders.length === 0 && filteredExpenses.length === 0) {
+            headerBox.innerHTML = `<div class="bg-slate-800 text-white p-3.5 rounded-xl shadow-xs"><div class="text-[11px] text-slate-300">ยอดรวมประจำวัน (${formatDateThai(currentSelectedDate)})</div><div class="text-lg font-black text-emerald-400">สุทธิจริง ฿0.-</div><div class="text-[10px] text-slate-300 mt-1">รายรับ: ฿0 | รายจ่ายร้าน: ฿0 (0 บิล)</div></div>`;
+            container.innerHTML = `<div class="text-center text-slate-400 py-12 text-xs font-medium">📭 ไม่พบข้อมูลการขายหรือรายจ่าย</div>`;
             return;
         }
 
         globalGroupData = {};
-        let grandTotalOrders = 0, grandTotalIncome = 0, grandTotalExpense = 0, grandTotalNet = 0;
+        let grandTotalOrders = 0, grandTotalIncome = 0, grandTotalNet = 0;
 
         filteredOrders.forEach(order => {
             let groupKey = order.groupTypeName;
 
             if (!globalGroupData[groupKey]) {
-                globalGroupData[groupKey] = { orderCount: 0, totalIncome: 0, totalExpense: 0, netTotal: 0, totalCommission: 0, orders: [] };
+                globalGroupData[groupKey] = { orderCount: 0, totalIncome: 0, netTotal: 0, totalCommission: 0, orders: [] };
             }
 
             globalGroupData[groupKey].orderCount += 1;
             globalGroupData[groupKey].totalIncome += order.computedTotal;
-            globalGroupData[groupKey].totalExpense += order.totalExpense;
-            globalGroupData[groupKey].netTotal += order.netProfitTotal;
+            globalGroupData[groupKey].netTotal += order.computedTotal;
             globalGroupData[groupKey].totalCommission += order.commissionBaht;
             globalGroupData[groupKey].orders.push(order);
 
             grandTotalOrders += 1;
             grandTotalIncome += order.computedTotal;
-            grandTotalExpense += order.totalExpense;
-            grandTotalNet += order.netProfitTotal;
         });
 
+        let grandNetProfit = grandTotalIncome - totalStoreExpense;
+
         headerBox.innerHTML = `
-            <div class="bg-slate-800 text-white p-3.5 rounded-xl shadow-xs">
+            <div class="bg-slate-800 text-white p-3.5 rounded-xl shadow-xs space-y-1">
                 <div class="text-[11px] text-slate-300">สรุปยอดรวมประจำวัน (${formatDateThai(currentSelectedDate)})</div>
-                <div class="text-xl font-black text-emerald-400">สุทธิ ฿${grandTotalNet.toLocaleString()}.-</div>
-                <div class="text-[11px] text-slate-300 mt-1 flex justify-between">
+                <div class="text-xl font-black text-emerald-400">สุทธิจริง (หักรายจ่ายร้าน): ฿${grandNetProfit.toLocaleString()}.-</div>
+                <div class="text-[11px] text-slate-300 flex justify-between pt-1 border-t border-slate-700">
                     <span>รายรับ: <strong class="text-red-400">฿${grandTotalIncome.toLocaleString()}</strong></span>
-                    <span>รายจ่าย: <strong class="text-yellow-400">฿${grandTotalExpense.toLocaleString()}</strong></span>
+                    <span>รายจ่ายร้าน: <strong class="text-yellow-400">฿${totalStoreExpense.toLocaleString()}</strong></span>
                     <span>บิล: <strong class="text-white">${grandTotalOrders} บิล</strong></span>
                 </div>
             </div>`;
@@ -730,13 +794,10 @@
                             ${commTag}
                         </div>
                         <div class="text-[11px] text-slate-500 mt-1">จำนวนบิล: <span class="font-bold text-slate-700">${data.orderCount} บิล</span> <span class="text-blue-500 ml-1 font-semibold">(ดูรายละเอียด 🔍)</span></div>
-                        <div class="text-[10px] text-slate-500 mt-0.5 space-x-2">
-                            <span>รายรับ: <strong class="text-red-600">฿${data.totalIncome.toLocaleString()}</strong></span>
-                            <span>รายจ่าย: <strong class="text-yellow-700">฿${data.totalExpense.toLocaleString()}</strong></span>
-                        </div>
+                        <div class="text-[10px] text-slate-500 mt-0.5">รายรับรวมกลุ่ม: <strong class="text-red-600">฿${data.totalIncome.toLocaleString()}</strong></div>
                     </div>
                     <div class="text-right">
-                        <div class="text-xs font-black text-emerald-600">สุทธิ ฿${data.netTotal.toLocaleString()}.-</div>
+                        <div class="text-xs font-black text-emerald-600">฿${data.totalIncome.toLocaleString()}.-</div>
                         <div class="text-[10px] text-slate-400 mt-0.5">กดเพื่อเปิดบิล</div>
                     </div>
                 </div>`;
@@ -750,8 +811,8 @@
 
         let totalCommHeader = group.totalCommission > 0 ? ` | ยอดคอมรวม: ฿${group.totalCommission.toLocaleString()}` : '';
         document.getElementById('modalGroupName').textContent = `👥 กลุ่ม: ${groupName}`;
-        document.getElementById('modalGroupMeta').textContent = `จำนวนบิลทั้งหมด: ${group.orderCount} บิล (รายรับ ฿${group.totalIncome.toLocaleString()} | รายจ่าย ฿${group.totalExpense.toLocaleString()}${totalCommHeader})`;
-        document.getElementById('modalGroupTotal').textContent = `฿${group.netTotal.toLocaleString()}.-`;
+        document.getElementById('modalGroupMeta').textContent = `จำนวนบิลทั้งหมด: ${group.orderCount} บิล (รายรับรวม ฿${group.totalIncome.toLocaleString()}${totalCommHeader})`;
+        document.getElementById('modalGroupTotal').textContent = `฿${group.totalIncome.toLocaleString()}.-`;
 
         let listHtml = '';
         group.orders.forEach(o => {

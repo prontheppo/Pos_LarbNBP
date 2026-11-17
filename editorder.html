@@ -52,19 +52,33 @@
       .custom-modal-overlay.active { display: flex !important; }
 
       .popup-container {
-          background: transparent !important; width: 100% !important; max-width: 28rem !important;
-          height: auto !important; max-height: 95vh !important; border-radius: 0 !important; box-shadow: none !important;
-          display: flex; flex-direction: column; overflow: hidden !important; position: relative;
+          background: #ffffff !important; 
+          width: 100% !important; 
+          max-width: 28rem !important;
+          height: auto !important; 
+          max-height: 92vh !important; 
+          border-radius: 1.5rem !important; 
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+          display: flex; flex-direction: column; 
+          overflow: hidden !important; 
+          position: relative;
           animation: popupFadeIn 0.2s ease-out;
       }
       @keyframes popupFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+      
       .popup-content-wrapper { 
-          width: 100%; background: #ffffff; overflow: hidden; display: flex; flex-direction: column; flex: 0 1 auto; 
-          border-radius: 1.5rem !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+          width: 100%; 
+          background: #ffffff; 
+          display: flex; flex-direction: column; 
+          overflow-y: auto; 
+          border-radius: 1.5rem !important; 
       }
+      
       #popupIframe {
-          width: 100%; height: auto; min-height: 250px; max-height: calc(95vh - 2rem);
-          border: 0; display: block; background: transparent; transition: height 0.15s ease;
+          width: 100%; 
+          height: auto; 
+          border: 0; display: block; 
+          background: transparent;
       }
 
       .wheel::-webkit-scrollbar { display: none; }
@@ -215,8 +229,11 @@ window.onload = async function() {
 };
 
 function goBackToReport() {
-    if (document.referrer && document.referrer.includes(window.location.host)) window.history.back();
-    else window.location.href = 'salesreport.html';
+    if (document.referrer && document.referrer.includes(window.location.host)) {
+        window.history.back();
+    } else {
+        window.location.href = 'salereport.html';
+    }
 }
 
 function formatThaiDateDisplay(dateStr) {
@@ -516,13 +533,8 @@ window.addEventListener('message', (event) => {
         if (popupIframe) {
             const requestedHeight = Number(height);
             if (Number.isFinite(requestedHeight) && requestedHeight > 0) {
-                const paddingAndHeader = 85; 
-                const totalCalculatedHeight = requestedHeight + paddingAndHeader;
-                
-                const maxAllowedHeight = Math.floor(window.innerHeight * 0.90);
-                const safeHeight = Math.min(Math.max(Math.round(totalCalculatedHeight), 220), maxAllowedHeight);
-                
-                popupIframe.style.height = `${safeHeight}px`;
+                // ขยาย/หดความสูงตามที่ Iframe แจ้งมาโดยตรงแบบไดนามิก
+                popupIframe.style.height = `${requestedHeight}px`;
             }
         }
         return;
