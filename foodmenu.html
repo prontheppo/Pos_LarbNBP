@@ -1,3 +1,9 @@
+<!--
+  ========================================================================
+  FILE NAME: foodmenu.html
+  SUMMARY: หน้าแสดงรายการอาหารในแต่ละหมวดหมู่ พร้อมระบบกรองสินค้า, ป้ายนับจำนวนในตะกร้า และโครงสร้าง Block สากล 100%
+  ========================================================================
+-->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -11,6 +17,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
 
+    <!-- ==========================================================
+         [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
+         ========================================================== -->
     <style>
         html, body {
             width: 100%; height: auto; background-color: #ffffff; color: #1e293b;
@@ -35,26 +44,38 @@
         .popup-container { background: transparent !important; width: 100% !important; max-width: 24rem !important; box-shadow: none !important; border: none !important; padding: 0 !important; overflow: visible !important; position: relative; }
         #popupIframe { width: 100%; height: auto; min-height: 200px; max-height: 85vh; border: 0; display: block; }
     </style>
+    <!-- [End Block 1] -->
 </head>
 <body>
 
+    <!-- ==========================================================
+         [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
+         ========================================================== -->
     <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
         <span id="groupTitleName" class="font-extrabold text-sm text-slate-700 truncate px-2">📌 หมวดหมู่เมนู</span>
         <button type="button" onclick="closePopup()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
     </div>
 
     <div class="p-3.5 space-y-3 bg-white w-full">
-        <div id="foodListGrid" class="grid grid-cols-3 gap-2.5">
-            <div class="col-span-3 text-center text-slate-400 py-8 text-xs font-bold">กำลังโหลดข้อมูล...</div>
+        <div id="foodListGrid" class="grid grid-cols-2 gap-2.5">
+            <div class="col-span-2 text-center text-slate-400 py-8 text-xs font-bold">⏳ กำลังโหลดข้อมูล...</div>
         </div>
     </div>
+    <!-- [End Block 2] -->
 
+    <!-- ==========================================================
+         [Start Block 3] POPUP MODALS & OVERLAYS
+         ========================================================== -->
     <div id="dynamicPopupOverlay" class="custom-modal-overlay">
         <div class="popup-container">
             <iframe id="popupIframe" src="" onload="autoResizeIframe(this)"></iframe>
         </div>
     </div>
+    <!-- [End Block 3] -->
 
+    <!-- ==========================================================
+         [Start Block 4] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
+         ========================================================== -->
     <script>
         function autoResizeIframe(frame) {
             if (!frame) return;
@@ -75,6 +96,7 @@
         currentGroupId = urlParams.get('group_id');
         groupName = urlParams.get('name') ? decodeURIComponent(urlParams.get('name')) : 'เมนูอาหาร';
 
+        /* --- [Start Block 4.1] INITIALIZATION & DATA FETCHING --- */
         window.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('groupTitleName').textContent = `📌 ${groupName}`;
             try { const storedCart = JSON.parse(localStorage.getItem('cart') || '[]'); currentCart = Array.isArray(storedCart) ? storedCart : []; } catch (error) { currentCart = []; console.error('Invalid cart data:', error); }
@@ -93,7 +115,9 @@
                 renderFoodButtons();
             }
         });
+        /* --- [End Block 4.1] --- */
 
+        /* --- [Start Block 4.2] RESIZE & RENDERING --- */
         let lastReportedHeight = 0;
         let resizeTimer = null;
         function updateParentHeight() {
@@ -117,7 +141,7 @@
             const filteredFoods = allFoods.filter(f => String(f.food_group_id) === String(currentGroupId));
 
             if (filteredFoods.length === 0) {
-                grid.innerHTML = '<div class="col-span-3 text-center text-slate-400 py-8 text-xs font-bold">ไม่พบรายการอาหารในหมวดหมู่นี้</div>';
+                grid.innerHTML = '<div class="col-span-2 text-center text-slate-400 py-8 text-xs font-bold">ไม่พบรายการอาหารในหมวดหมู่นี้</div>';
             } else {
                 filteredFoods.forEach(food => {
                     const matchedItems = currentCart.filter(item => 
@@ -139,7 +163,7 @@
 
             if (String(currentGroupId) === '99') {
                 const addWrapper = document.createElement('div');
-                addWrapper.className = 'col-span-3 mt-1';
+                addWrapper.className = 'col-span-2 mt-1';
                 const addBtn = document.createElement('button');
                 addBtn.type = 'button';
                 addBtn.className = 'add-item-bottom-btn';
@@ -150,7 +174,9 @@
             }
             updateParentHeight();
         }
+        /* --- [End Block 4.2] --- */
 
+        /* --- [Start Block 4.3] ACTIONS & POPUPS --- */
         function selectFood(food) {
             if (window.self !== window.top) {
                 window.parent.postMessage({ type: 'OPEN_FOOD_SELECT', food: food, catId: currentGroupId }, window.location.origin);
@@ -166,6 +192,8 @@
                 window.parent.postMessage({ type: 'CLOSE_POPUP' }, window.location.origin);
             }
         }
+        /* --- [End Block 4.3] --- */
     </script>
+    <!-- [End Block 4] -->
 </body>
 </html>

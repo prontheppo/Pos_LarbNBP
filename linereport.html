@@ -1,22 +1,7 @@
 <!--
   ========================================================================
   FILE NAME: linereport.html
-  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 9 บล็อกย่อย ดังนี้
-
-   - [บล็อก 1] UI COMPONENTS & LAYOUT (ส่วนแสดงผลหน้าจอผู้ใช้)
-     (ประกอบด้วย 4 หัวข้อ)
-       - [บล็อก 1.1] HEADER (ส่วนหัว)
-       - [บล็อก 1.2] REPORT CONTENT AREA (พื้นที่แสดงรายงาน Textarea)
-       - [บล็อก 1.3] FOOTER ACTION BUTTONS (ส่วนท้าย Footer พร้อมปุ่มดำเนินการ)
-       - [บล็อก 1.4] CSS STYLES (รูปแบบ CSS พื้นฐาน)
-
-   - [บล็อก 2] LOGIC & DATABASE OPERATIONS (ระบบการทำงานและการจัดการข้อมูล)
-     (ประกอบด้วย 5 หัวข้อ)
-       - [บล็อก 2.1] PAGE INITIALIZATION (เริ่มต้นการทำงานเมื่อโหลดหน้าเว็บ)
-       - [บล็อก 2.2] ORDER ITEM PARSING AND PRICE CALCULATION (แปลงรายการอาหารและคำนวณราคา)
-       - [บล็อก 2.3] LINE FLEX BUBBLE GENERATION BY GROUP (สร้าง LINE Flex Bubble แยกตามกลุ่ม)
-       - [บล็อก 2.4] DAILY SALES DATA FETCHING FROM SUPABASE (ดึงข้อมูลยอดขายจาก Supabase)
-       - [บล็อก 2.5] LINE REPORT SUBMISSION THROUGH SUPABASE EDGE FUNCTION (ส่งรายงานเข้า LINE)
+  SUMMARY: รายงานยอดขายประจำวัน พร้อมระบบจัดกลุ่มบิล, คำนวณค่าคอมมิชชัน, แสดงสีตามวันในสัปดาห์ และโครงสร้าง Block สากล 100%
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -30,91 +15,182 @@
     <title>รายงานยอดขายประจำวัน</title>
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- ----------------------------------------------------------
-         BLOCK 1.4: CSS STYLES
-         ---------------------------------------------------------- -->
+    <!-- ==========================================================
+         [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
+         ========================================================== -->
     <style>
         html, body { height: 100%; margin: 0; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; user-select: none; touch-action: manipulation; }
     </style>
-    <!-- END BLOCK 1.4 -->
+    <!-- [End Block 1] -->
 </head>
 <body class="bg-gray-100 text-gray-800">
 
 <div class="flex flex-col h-screen max-w-2xl mx-auto bg-white shadow-md">
     <!-- ==========================================================
-         BLOCK 1: UI COMPONENTS & LAYOUT
+         [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
          ========================================================== -->
 
-    <!-- ----------------------------------------------------------
-         BLOCK 1.1: HEADER
-         ---------------------------------------------------------- -->
-    <div class="p-4 border-b text-center shrink-0">
-        <h2 class="text-lg font-bold text-gray-800 m-0">รายงานยอดขายประจำวัน</h2>
+    <!-- [Start Block 2.1] HEADER -->
+    <div class="p-4 border-b flex justify-between items-center shrink-0 bg-white">
+        <div>
+            <h2 class="text-base font-bold text-gray-800 m-0">รายงานยอดขายประจำวัน</h2>
+            <span id="headerDateDisplay" class="text-xs text-gray-500">⏳ กำลังโหลดวันที่...</span>
+        </div>
+        <button onclick="fetchTodaySalesData()" class="bg-gray-100 hover:bg-gray-200 active:scale-95 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer">
+            🔄 โหลดข้อมูลใหม่
+        </button>
         <span id="currentDateDisplay" class="hidden"></span>
         <span id="systemStatus" class="hidden"></span>
         <span id="previewLabel" class="hidden"></span>
     </div>
-    <!-- END BLOCK 1.1 -->
+    <!-- [End Block 2.1] -->
 
-    <!-- ----------------------------------------------------------
-         BLOCK 1.2: REPORT CONTENT AREA
-         ---------------------------------------------------------- -->
+    <!-- [Start Block 2.2] REPORT CONTENT AREA -->
     <div class="flex-1 p-3 overflow-hidden">
-        <textarea id="reportSummary" readonly class="w-full h-full p-3 border rounded-lg bg-gray-50 text-gray-800 font-mono text-xs leading-relaxed resize-none outline-none overflow-y-auto">กำลังโหลดข้อมูลวันปัจจุบัน...</textarea>
+        <textarea id="reportSummary" readonly class="w-full h-full p-3 border rounded-lg bg-gray-50 text-gray-800 font-mono text-xs leading-relaxed resize-none outline-none overflow-y-auto">⏳ กำลังโหลดข้อมูลวันปัจจุบัน...</textarea>
     </div>
-    <!-- END BLOCK 1.2 -->
+    <!-- [End Block 2.2] -->
 
-    <!-- ----------------------------------------------------------
-         BLOCK 1.3: FOOTER ACTION BUTTONS
-         ---------------------------------------------------------- -->
+    <!-- [Start Block 2.3] FOOTER ACTION BUTTONS -->
     <div class="p-3 border-t flex gap-2.5 shrink-0">
-        <button onclick="location.href='index.html'" title="กลับหน้าหลัก" class="bg-gray-600 hover:bg-gray-700 text-white font-bold px-4 py-3 rounded-lg text-lg">🏠</button>
-        <button id="sendBtn" onclick="sendReportToLine()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-bold py-3 rounded-lg text-base transition-all">📲 ส่งรายงานเข้า LINE</button>
+        <button onclick="location.href='index.html'" title="กลับหน้าหลัก" class="bg-gray-600 hover:bg-gray-700 text-white font-bold px-4 py-3 rounded-lg text-lg cursor-pointer">🏠</button>
+        <button id="sendBtn" onclick="sendReportToLine()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-bold py-3 rounded-lg text-base transition-all cursor-pointer">📲 ส่งรายงานเข้า LINE</button>
     </div>
-    <!-- END BLOCK 1.3 -->
+    <!-- [End Block 2.3] -->
 
-    <!-- END BLOCK 1 -->
+    <!-- [End Block 2] -->
 </div>
 
+<!-- ==========================================================
+     [Start Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
+     ========================================================== -->
 <script>
-    /* ==========================================================
-       BLOCK 2: LOGIC & DATABASE OPERATIONS
-       ========================================================== */
-    const SUPABASE_URL = 'https://wmhweeeyulhmoilypklz.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_yXKK7aSunM_KCqRiUhGupQ__Qs1nyCd';
-    const HEADERS = { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" };
-
-    const todayObj = new Date();
-    const TODAY_ISO = todayObj.toISOString().split('T')[0];
-    const TODAY_SLASH = `${String(todayObj.getDate()).padStart(2,'0')}/${String(todayObj.getMonth()+1).padStart(2,'0')}/${todayObj.getFullYear()}`;
+    const REPORT_TIME_ZONE = 'Asia/Bangkok';
+    const REQUEST_TIMEOUT_MS = 20000;
     const thaiMonths = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
-    const DISPLAY_THAI_DATE = `${todayObj.getDate()} ${thaiMonths[todayObj.getMonth()]} ${todayObj.getFullYear() + 543}`;
 
-    let currentFlexPayloads = [], currentTextSummaries = [], locationsCache = [];
+    let currentFlexPayloads = [];
+    let currentTextSummaries = [];
+    let locationsCache = [];
+    let reportIsReady = false;
+    let isLoadingReport = false;
+    let isSendingReport = false;
 
-    /* ----------------------------------------------------------
-       BLOCK 2.1: PAGE INITIALIZATION
-       ---------------------------------------------------------- */
+    /* --- [Start Block 3.1] DAY THEME & DATE HELPERS --- */
+    function getDayTheme() {
+        const d = new Date();
+        const dayOfWeek = d.getDay();
+        
+        switch (dayOfWeek) {
+            case 1: return { name: "วันจันทร์", color: "#eab308", emoji: "🟡" };
+            case 2: return { name: "วันอังคาร", color: "#ec4899", emoji: "🩷" };
+            case 3: return { name: "วันพุธ", color: "#22c55e", emoji: "🟢" };
+            case 4: return { name: "วันพฤหัสบดี", color: "#f97316", emoji: "🟠" };
+            case 5: return { name: "วันศุกร์", color: "#3b82f6", emoji: "🔵" };
+            case 6: return { name: "วันเสาร์", color: "#a855f7", emoji: "🟣" };
+            case 0: default: return { name: "วันอาทิตย์", color: "#ef4444", emoji: "🔴" };
+        }
+    }
+
+    function getSupabaseClient() {
+        if (!window.supabaseClient || typeof window.supabaseClient.from !== 'function') {
+            throw new Error('ไม่พบ Supabase Client กรุณาตรวจสอบลำดับการโหลด supabaseClient.js และ Supabase SDK');
+        }
+        return window.supabaseClient;
+    }
+
+    function withTimeout(promise, timeoutMs, taskName) {
+        let timer;
+        const timeoutPromise = new Promise((_, reject) => {
+            timer = setTimeout(() => reject(new Error(`${taskName} ใช้เวลานานเกิน ${timeoutMs / 1000} วินาที กรุณาลองโหลดใหม่`)), timeoutMs);
+        });
+        return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timer));
+    }
+
+    function getBangkokDateParts(date = new Date()) {
+        const parts = new Intl.DateTimeFormat('en-CA', {
+            timeZone: REPORT_TIME_ZONE,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        }).formatToParts(date);
+        const values = {};
+        parts.forEach(part => {
+            if (part.type !== 'literal') values[part.type] = part.value;
+        });
+        return { year: Number(values.year), month: Number(values.month), day: Number(values.day) };
+    }
+
+    function getBangkokDayRange(date = new Date()) {
+        const { year, month, day } = getBangkokDateParts(date);
+        const startUtc = new Date(Date.UTC(year, month - 1, day) - (7 * 60 * 60 * 1000));
+        const endUtc = new Date(startUtc.getTime() + (24 * 60 * 60 * 1000));
+        return { startUtc: startUtc.toISOString(), endUtc: endUtc.toISOString() };
+    }
+
+    function getDisplayThaiDate(date = new Date()) {
+        const { year, month, day } = getBangkokDateParts(date);
+        return `${day} ${thaiMonths[month - 1]} ${year + 543}`;
+    }
+
+    const DISPLAY_THAI_DATE = getDisplayThaiDate();
+
+    function setReportMessage(message) {
+        const summaryBox = document.getElementById('reportSummary');
+        if (summaryBox) summaryBox.value = message;
+    }
+
+    function setSendButtonState(text, disabled) {
+        const btn = document.getElementById('sendBtn');
+        if (!btn) return;
+        btn.innerText = text;
+        btn.disabled = Boolean(disabled);
+    }
+
+    function extractErrorMessage(error) {
+        if (!error) return 'ไม่ทราบสาเหตุ';
+        let message = error.message || String(error);
+        if (error.details) message += ` | ${error.details}`;
+        if (error.hint) message += ` | ${error.hint}`;
+        if (error.code) message += ` | Code: ${error.code}`;
+        return message;
+    }
+    /* --- [End Block 3.1] --- */
+
+    /* --- [Start Block 3.2] PAGE INITIALIZATION --- */
     window.addEventListener('DOMContentLoaded', () => {
         const dateDisp = document.getElementById('currentDateDisplay');
         if (dateDisp) dateDisp.innerText = DISPLAY_THAI_DATE;
+        const headerDateDisp = document.getElementById('headerDateDisplay');
+        if (headerDateDisp) headerDateDisp.innerText = DISPLAY_THAI_DATE;
+
         fetchTodaySalesData();
     });
-    /* END BLOCK 2.1 */
+    /* --- [End Block 3.2] --- */
 
-    /* ----------------------------------------------------------
-       BLOCK 2.2: ORDER ITEM PARSING AND PRICE CALCULATION
-       ---------------------------------------------------------- */
+    /* --- [Start Block 3.3] ORDER ITEM PARSING & CALCULATION --- */
     function parseOrderItems(order) {
-        let rawItems = Array.isArray(order.items) ? order.items : (typeof order.items === 'string' ? (JSON.parse(order.items || '[]')) : []);
-        
-        let computedItems = rawItems.map(item => {
-            let q = Number(item.qty || item.quantity || 1);
-            let unitPrice = Number(item.price || item.unit_price || 0);
-            let totalPrice = Number(item.total_price || item.sum || (unitPrice * q));
+        let rawItems = [];
+
+        if (Array.isArray(order.items)) {
+            rawItems = order.items;
+        } else if (typeof order.items === 'string' && order.items.trim()) {
+            try {
+                const parsed = JSON.parse(order.items);
+                rawItems = Array.isArray(parsed) ? parsed : [];
+            } catch (parseError) {
+                console.error('Unable to parse order.items for order:', order.order_id, parseError);
+                rawItems = [];
+            }
+        }
+
+        const computedItems = rawItems.map(item => {
+            const q = Number(item.qty || item.quantity || 1);
+            const unitPrice = Number(item.price || item.unit_price || 0);
+            const totalPrice = Number(item.total_price || item.sum || (unitPrice * q));
             let name = item.name || item.food_name || 'รายการ';
-            
-            let notes = [
+
+            const notes = [
                 item.note || item.comment || item.remark || item.details || item.option || item.topping || '',
                 Number(item.friedEggQty || item.khaiDaoQty || item.fried_egg) > 0 ? `ไข่ดาว ${item.friedEggQty || item.khaiDaoQty || item.fried_egg}` : '',
                 Number(item.omeletQty || item.khaiJiaoQty || item.omelet) > 0 ? `ไข่เจียว ${item.omeletQty || item.khaiJiaoQty || item.omelet}` : ''
@@ -122,173 +198,329 @@
 
             if (name.includes('(') && name.includes(')')) {
                 const match = name.match(/^(.*?)\s*\((.*?)\)$/);
-                if (match) { name = match[1].trim(); notes.push(match[2].trim()); }
+                if (match) {
+                    name = match[1].trim();
+                    notes.push(match[2].trim());
+                }
             }
 
-            return { name, qty: q, unitPrice, totalPrice, note: notes.join(', ') };
+            const cleanName = name.replace(/\s*\(สินค้าฝากซื้อ.*?\)/g, '').trim();
+            const isConsignment = item.isSpecialMenu || String(item.food_group_id || item.group_id) === '98' || String(item.food_group_id || item.group_id) === '99' || name.includes('สินค้าฝากซื้อ');
+            const costPrice = Number(item.cost_price || 0) * q;
+
+            return { name: cleanName, qty: q, unitPrice, totalPrice, note: notes.join(', '), isConsignment, costPrice };
         });
 
-        let subtotal = Number(order.subtotal || computedItems.reduce((s, i) => s + i.totalPrice, 0));
-        let deliveryFee = Number(order.delivery_fee || 0);
-        let billTotal = Number(order.total_price || (subtotal + deliveryFee));
+        const subtotal = Number(order.subtotal ?? computedItems.reduce((sum, item) => sum + item.totalPrice, 0));
+        const deliveryFee = Number(order.delivery_fee || 0);
+        const billTotal = Number(order.total_price ?? (subtotal + deliveryFee));
 
-        let typeId = Number(order.customer_type_id);
-        let groupCategory = typeId === 2 ? "นักท่องเที่ยว" : ((typeId === 3 || String(order.customer_type || '').includes("สบายดี")) ? "สบายดี" : "ชาวบ้าน");
-        let subLocationName = (typeId === 2 && order.location_id) ? (locationsCache.find(l => String(l.location_id) === String(order.location_id))?.location_name || "") : "";
+        let consignmentTotal = 0;
+        computedItems.forEach(item => {
+            if (item.isConsignment) {
+                consignmentTotal += item.costPrice;
+            }
+        });
 
-        return { ...order, parsedItems: computedItems, computedSubtotal: subtotal, deliveryFee: deliveryFee, computedTotal: billTotal, groupCategory, subLocationName };
+        let commissionPercent = 0;
+        let resortName = "";
+        let locationId = order.location_id || "";
+        if (locationId) {
+            const foundLoc = locationsCache.find(l => String(l.location_id) === String(locationId));
+            if (foundLoc) {
+                resortName = foundLoc.location_name || "";
+                commissionPercent = Number(foundLoc.commission_percent || 0);
+            }
+        }
+
+        let commissionBase = subtotal - consignmentTotal - deliveryFee;
+        if (commissionBase < 0) commissionBase = 0;
+
+        let roundedBase = Math.floor(commissionBase / 100) * 100;
+        let commissionBaht = commissionPercent > 0 ? Math.round(roundedBase * (commissionPercent / 100)) : 0;
+
+        const typeId = Number(order.customer_type_id);
+        let groupCategory = "ชาวบ้าน";
+        if (typeId === 2) {
+            groupCategory = resortName ? resortName : "นักท่องเที่ยว";
+        } else if (typeId === 3 || String(order.customer_type || '').includes("สบายดี")) {
+            groupCategory = "สบายดี";
+        }
+
+        const subLocationName = resortName;
+
+        return {
+            ...order,
+            parsedItems: computedItems,
+            computedSubtotal: subtotal,
+            deliveryFee,
+            computedTotal: billTotal,
+            consignmentTotal,
+            commissionPercent,
+            commissionBaht,
+            groupCategory,
+            subLocationName
+        };
     }
-    /* END BLOCK 2.2 */
+    /* --- [End Block 3.3] --- */
 
-    /* ----------------------------------------------------------
-       BLOCK 2.3: LINE FLEX BUBBLE GENERATION BY GROUP
-       ---------------------------------------------------------- */
-    function createGroupFlexBubble(groupName, groupOrders, subTotal) {
-        let contents = [
-            { "type": "text", "text": `📌 กลุ่ม: ${groupName}`, "weight": "bold", "size": "lg", "color": "#1DB446" },
-            { "type": "text", "text": ` วันที่: ${DISPLAY_THAI_DATE}`, "size": "xs", "color": "#aaaaaa", "margin": "xs" },
-            { "type": "text", "text": `🛍️ สรุป: ${groupOrders.length} บิล (${subTotal.toLocaleString()} บาท)`, "size": "sm", "weight": "bold", "margin": "sm" },
-            { "type": "separator", "margin": "md" }
+    /* --- [Start Block 3.4] LINE FLEX BUBBLE GENERATION --- */
+    function createGroupFlexBubble(groupName, groupOrders, subTotal, groupCommission) {
+        const theme = getDayTheme();
+        let commText = groupCommission > 0 ? ` (คอมรวม ฿${groupCommission.toLocaleString()})` : '';
+        const contents = [
+            { type: 'text', text: `${theme.emoji} กลุ่ม: ${groupName}`, weight: 'bold', size: 'lg', color: theme.color },
+            { type: 'text', text: ` วันที่: ${DISPLAY_THAI_DATE} (${theme.name})`, size: 'xs', color: '#aaaaaa', margin: 'xs' },
+            { type: 'text', text: `🛍️ สรุป: ${groupOrders.length} บิล (${subTotal.toLocaleString()} บาท)${commText}`, size: 'sm', weight: 'bold', margin: 'sm' },
+            { type: 'separator', margin: 'md' }
         ];
 
         groupOrders.forEach((ord, idx) => {
-            contents.push({ "type": "text", "text": `🧾 บิลที่ ${idx + 1}:${ord.subLocationName ? ` [${ord.subLocationName}]` : ''}`, "weight": "bold", "size": "sm", "margin": "md", "color": "#555555" });
+            contents.push({
+                type: 'text',
+                text: `🧾 บิลที่ ${idx + 1}:${ord.subLocationName ? ` [${ord.subLocationName}]` : ''}`,
+                weight: 'bold', size: 'sm', margin: 'md', color: '#555555'
+            });
+
             ord.parsedItems.forEach(item => {
                 contents.push({
-                    "type": "box", "layout": "horizontal", "margin": "sm",
-                    "contents": [
-                        { "type": "text", "text": `x${item.qty}`, "size": "xs", "color": "#888888", "flex": 2 },
-                        { "type": "text", "text": item.name, "size": "xs", "color": "#333333", "flex": 7, "wrap": true },
-                        { "type": "text", "text": `${item.totalPrice.toLocaleString()} บ.`, "size": "xs", "color": "#111111", "align": "end", "weight": "bold", "flex": 4 }
+                    type: 'box', layout: 'horizontal', margin: 'sm',
+                    contents: [
+                        { type: 'text', text: `x${item.qty}`, size: 'xs', color: '#888888', flex: 2 },
+                        { type: 'text', text: item.name, size: 'xs', color: '#333333', flex: 7, wrap: true },
+                        { type: 'text', text: `${item.totalPrice.toLocaleString()} บ.`, size: 'xs', color: '#111111', align: 'end', weight: 'bold', flex: 4 }
                     ]
                 });
-                if (item.note) contents.push({ "type": "text", "text": `└ [${item.note}]`, "size": "xxs", "color": "#aaaaaa", "margin": "xs" });
+                if (item.note) {
+                    contents.push({ type: 'text', text: `└ [${item.note}]`, size: 'xxs', color: '#aaaaaa', margin: 'xs', wrap: true });
+                }
             });
 
             if (ord.deliveryFee > 0) {
                 contents.push({
-                    "type": "box", "layout": "horizontal", "margin": "xs",
-                    "contents": [
-                        { "type": "text", "text": `🛵`, "size": "xs", "flex": 2 },
-                        { "type": "text", "text": `ค่าบริการจัดส่ง`, "size": "xs", "color": "#d97706", "flex": 7 },
-                        { "type": "text", "text": `+${ord.deliveryFee.toLocaleString()} บ.`, "size": "xs", "color": "#d97706", "align": "end", "weight": "bold", "flex": 4 }
+                    type: 'box', layout: 'horizontal', margin: 'xs',
+                    contents: [
+                        { type: 'text', text: '🛵', size: 'xs', flex: 2 },
+                        { type: 'text', text: 'ค่าบริการจัดส่ง', size: 'xs', color: '#d97706', flex: 7 },
+                        { type: 'text', text: `+${ord.deliveryFee.toLocaleString()} บ.`, size: 'xs', color: '#d97706', align: 'end', weight: 'bold', flex: 4 }
+                    ]
+                });
+            }
+
+            if (ord.commissionBaht > 0) {
+                contents.push({
+                    type: 'box', layout: 'horizontal', margin: 'xs',
+                    contents: [
+                        { type: 'text', text: '💰', size: 'xs', flex: 2 },
+                        { type: 'text', text: `ค่าคอมมิชชัน (${ord.commissionPercent}%)`, size: 'xs', color: '#b45309', flex: 7 },
+                        { type: 'text', text: `฿${ord.commissionBaht.toLocaleString()}.-`, size: 'xs', color: '#b45309', align: 'end', weight: 'bold', flex: 4 }
                     ]
                 });
             }
         });
 
-        return { "type": "bubble", "body": { "type": "box", "layout": "vertical", contents } };
+        return { type: 'bubble', body: { type: 'box', layout: 'vertical', contents } };
     }
-    /* END BLOCK 2.3 */
+    /* --- [End Block 3.4] --- */
 
-    /* ----------------------------------------------------------
-       BLOCK 2.4: DAILY SALES DATA FETCHING FROM SUPABASE
-       ---------------------------------------------------------- */
+    /* --- [Start Block 3.5] SUPABASE DATA FETCHING --- */
     async function fetchTodaySalesData() {
-        const summaryBox = document.getElementById('reportSummary');
+        if (isLoadingReport) return;
+        isLoadingReport = true;
+        reportIsReady = false;
+        currentFlexPayloads = [];
+        currentTextSummaries = [];
+        setReportMessage('⏳ กำลังดึงข้อมูลยอดขายและคำนวณค่าคอมมิชชัน...');
+        setSendButtonState('⏳ กำลังโหลดข้อมูล...', true);
+
         try {
-            const [locRes, orderRes] = await Promise.all([
-                fetch(`${SUPABASE_URL}/rest/v1/locations?select=*`, { headers: HEADERS }).catch(() => null),
-                fetch(`${SUPABASE_URL}/rest/v1/orders?select=*`, { headers: HEADERS })
-            ]);
+            const supabase = getSupabaseClient();
+            const { startUtc, endUtc } = getBangkokDayRange();
+            const theme = getDayTheme();
 
-            if (locRes && locRes.ok) locationsCache = await locRes.json();
-            if (!orderRes.ok) throw new Error(`HTTP Status ${orderRes.status}`);
+            const locationsPromise = withTimeout(
+                supabase.from('locations').select('*'),
+                REQUEST_TIMEOUT_MS,
+                'โหลดข้อมูลสถานที่'
+            );
+            const ordersPromise = withTimeout(
+                supabase.from('orders')
+                    .select('*')
+                    .gte('created_at', startUtc)
+                    .lt('created_at', endUtc)
+                    .order('created_at', { ascending: true }),
+                REQUEST_TIMEOUT_MS,
+                'โหลดข้อมูลออเดอร์'
+            );
 
-            const rawOrders = await orderRes.json();
-            const orders = rawOrders
-                .filter(o => String(o.created_at || o.order_date || o.date || "").match(new RegExp(`${TODAY_ISO}|${TODAY_SLASH}`)))
-                .map(o => parseOrderItems(o));
+            const [locResult, orderResult] = await Promise.all([locationsPromise, ordersPromise]);
+
+            if (locResult.error) {
+                locationsCache = [];
+            } else {
+                locationsCache = Array.isArray(locResult.data) ? locResult.data : [];
+            }
+
+            if (orderResult.error) throw orderResult.error;
+            const rawOrders = Array.isArray(orderResult.data) ? orderResult.data : [];
+            const orders = rawOrders.map(order => parseOrderItems(order));
+
+            const grouped = {};
+            let totalSales = 0;
+            let grandTotalCommission = 0;
+
+            orders.forEach(order => {
+                totalSales += order.computedTotal;
+                grandTotalCommission += order.commissionBaht;
+                const cat = order.groupCategory;
+                if (!grouped[cat]) grouped[cat] = [];
+                grouped[cat].push(order);
+            });
 
             currentFlexPayloads = [null];
             currentTextSummaries = [];
 
-            let grouped = { "ชาวบ้าน": [], "นักท่องเที่ยว": [], "สบายดี": [] };
-            let totalSales = 0;
+            let commSummaryText = grandTotalCommission > 0 ? ` | ค่าคอมรวม: ${grandTotalCommission.toLocaleString()} บาท` : '';
+            let groupSummaryLines = Object.keys(grouped).length > 0
+                ? Object.keys(grouped).map(g => `${theme.emoji} ${g}: ${grouped[g].length} ออเดอร์`).join('\n')
+                : "👥 ไม่มีออเดอร์ในวันนี้";
 
-            orders.forEach(o => {
-                totalSales += o.computedTotal;
-                (grouped[o.groupCategory] || grouped["ชาวบ้าน"]).push(o);
-            });
+            currentTextSummaries.push(
+                `${theme.emoji} รายงานยอดขายประจำวัน (${theme.name})\nวันที่: ${DISPLAY_THAI_DATE}\n-----------------------------------\n` +
+                `${groupSummaryLines}\n` +
+                `-----------------------------------\n🛒 ยอดขายรวมสุทธิ: ${totalSales.toLocaleString()} บาท${commSummaryText} (${orders.length} ออเดอร์)`
+            );
 
-            currentTextSummaries.push(`📊 รายงานยอดขายประจำวัน \n วันที่: ${DISPLAY_THAI_DATE}\n-----------------------------------\n👥 ชาวบ้าน: ${grouped["ชาวบ้าน"].length} ออเดอร์\n👥 นักท่องเที่ยว: ${grouped["นักท่องเที่ยว"].length} ออเดอร์\n👥 สบายดี: ${grouped["สบายดี"].length} ออเดอร์\n-----------------------------------\n🛒 ยอดขายรวมสุทธิ: ${totalSales.toLocaleString()} บาท (${orders.length} ออเดอร์)`);
-
-            ["ชาวบ้าน", "นักท่องเที่ยว", "สบายดี"].forEach(g => {
-                const groupOrders = grouped[g];
+            Object.keys(grouped).forEach(groupName => {
+                const groupOrders = grouped[groupName];
                 if (!groupOrders.length) return;
 
-                let subTotal = groupOrders.reduce((sum, o) => sum + o.computedTotal, 0);
-                currentFlexPayloads.push(createGroupFlexBubble(g, groupOrders, subTotal));
+                const subTotal = groupOrders.reduce((sum, order) => sum + order.computedTotal, 0);
+                const groupCommission = groupOrders.reduce((sum, order) => sum + order.commissionBaht, 0);
 
-                let txt = `📌 [ข้อความส่งเข้า LINE] กลุ่ม: ${g}\nสรุป: ${groupOrders.length} บิล (${subTotal.toLocaleString()} บาท)\n-----------------------------------\n`;
-                groupOrders.forEach((ord, idx) => {
-                    txt += `🧾 บิลที่ ${idx + 1}${ord.subLocationName ? ` [${ord.subLocationName}]` : ''}:\n`;
-                    ord.parsedItems.forEach(i => {
-                        txt += `  • x${i.qty} ${i.name} = ${i.totalPrice.toLocaleString()} บ.\n`;
-                        if (i.note) txt += `    └ [${i.note}]\n`;
+                currentFlexPayloads.push(createGroupFlexBubble(groupName, groupOrders, subTotal, groupCommission));
+
+                let commLineTxt = groupCommission > 0 ? ` | ค่าคอมรวม: ฿${groupCommission.toLocaleString()}` : '';
+                let text = `${theme.emoji} [ข้อความส่งเข้า LINE] กลุ่ม: ${groupName}\nสรุป: ${groupOrders.length} บิล (${subTotal.toLocaleString()} บาท)${commLineTxt}\n-----------------------------------\n`;
+                
+                groupOrders.forEach((order, index) => {
+                    text += `🧾 บิลที่ ${index + 1}${order.subLocationName ? ` [${order.subLocationName}]` : ''}:\n`;
+                    order.parsedItems.forEach(item => {
+                        text += `  • x${item.qty} ${item.name} = ${item.totalPrice.toLocaleString()} บ.\n`;
+                        if (item.note) text += `    └ [${item.note}]\n`;
                     });
-                    if (ord.deliveryFee > 0) {
-                        txt += `  • 🛵 ค่าบริการจัดส่ง = +${ord.deliveryFee.toLocaleString()} บ.\n`;
+                    if (order.deliveryFee > 0) {
+                        text += `  • 🛵 ค่าบริการจัดส่ง = +${order.deliveryFee.toLocaleString()} บ.\n`;
+                    }
+                    if (order.commissionBaht > 0) {
+                        text += `  • 💰 ค่าคอมมิชชัน (${order.commissionPercent}%) = ฿${order.commissionBaht.toLocaleString()}.-;\n`;
                     }
                 });
-                currentTextSummaries.push(txt);
+                currentTextSummaries.push(text);
             });
 
-            summaryBox.value = currentTextSummaries.join("\n=========================================\n\n");
+            setReportMessage(currentTextSummaries.join('\n=========================================\n\n'));
+            reportIsReady = true;
+            setSendButtonState('📲 ส่งรายงานเข้า LINE', false);
+
+            if (orders.length === 0) {
+                setReportMessage(currentTextSummaries[0] + '\n\nℹ️ ไม่พบออเดอร์ในช่วงวันที่ประเทศไทยวันนี้');
+            }
         } catch (error) {
-            summaryBox.value = `❌ ไม่สามารถโหลดข้อมูลได้\nสาเหตุ: ${error.message}`;
+            console.error('fetchTodaySalesData error:', error);
+            const message = extractErrorMessage(error);
+            setReportMessage(`❌ ไม่สามารถโหลดข้อมูลได้\nสาเหตุ: ${message}\n\nกรุณาตรวจสอบการเชื่อมต่อ Supabase และลองโหลดหน้าใหม่`);
+            currentFlexPayloads = [];
+            currentTextSummaries = [];
+            reportIsReady = false;
+            setSendButtonState('📲 ส่งรายงานเข้า LINE', true);
+        } finally {
+            isLoadingReport = false;
         }
     }
-    /* END BLOCK 2.4 */
+    /* --- [End Block 3.5] --- */
 
-    /* ----------------------------------------------------------
-       BLOCK 2.5: LINE REPORT SUBMISSION THROUGH SUPABASE EDGE FUNCTION
-       ---------------------------------------------------------- */
+    /* --- [Start Block 3.6] SUBMIT REPORT TO LINE --- */
     async function sendReportToLine() {
-        if (!currentTextSummaries.length) return;
+        if (isSendingReport) return;
+        if (!reportIsReady || !currentTextSummaries.length) {
+            setReportMessage('⚠️ ยังไม่มีข้อมูลรายงานที่พร้อมส่ง กรุณาโหลดข้อมูลให้สำเร็จก่อน');
+            return;
+        }
+
+        isSendingReport = true;
         const btn = document.getElementById('sendBtn');
-        btn.disabled = true;
+        if (btn) btn.disabled = true;
 
         try {
-            for (let i = 0; i < currentTextSummaries.length; i++) {
-                btn.innerText = `⏳ กำลังส่ง (${i + 1}/${currentTextSummaries.length})...`;
-                const payload = currentFlexPayloads[i] ? { flexPayload: currentFlexPayloads[i] } : { messageBody: currentTextSummaries[i] };
-                
-                const res = await fetch(`${SUPABASE_URL}/functions/v1/send-line-report`, {
-                    method: "POST", headers: HEADERS, body: JSON.stringify(payload)
-                });
-                if (!res.ok) throw new Error((await res.json()).error || `HTTP ${res.status}`);
+            const supabase = getSupabaseClient();
+
+            for (let index = 0; index < currentTextSummaries.length; index++) {
+                setSendButtonState(`⏳ กำลังส่ง (${index + 1}/${currentTextSummaries.length})...`, true);
+
+                const payload = currentFlexPayloads[index]
+                    ? { flexPayload: currentFlexPayloads[index] }
+                    : { messageBody: currentTextSummaries[index] };
+
+                const result = await withTimeout(
+                    supabase.functions.invoke('send-line-report', { body: payload }),
+                    REQUEST_TIMEOUT_MS,
+                    'ส่งรายงานเข้า LINE'
+                );
+
+                if (result.error) {
+                    let detail = extractErrorMessage(result.error);
+                    const context = result.error.context;
+                    if (context && typeof context.json === 'function') {
+                        try {
+                            const body = await context.json();
+                            if (body && (body.error || body.message)) detail = body.error || body.message;
+                        } catch (_) {}
+                    }
+                    throw new Error(detail);
+                }
+
+                if (result.data && result.data.error) {
+                    throw new Error(result.data.error);
+                }
             }
 
-            btn.innerText = "✅ ส่งเข้า LINE เรียบร้อยแล้ว";
-            btn.classList.remove('bg-emerald-500', 'hover:bg-emerald-600');
-            btn.classList.add('bg-blue-600');
-
+            setSendButtonState('✅ ส่งเข้า LINE เรียบร้อยแล้ว', true);
+            if (btn) {
+                btn.classList.remove('bg-emerald-500', 'hover:bg-emerald-600', 'bg-red-600');
+                btn.classList.add('bg-blue-600');
+            }
             setTimeout(() => {
-                btn.innerText = "📲 ส่งรายงานเข้า LINE";
-                btn.classList.remove('bg-blue-600');
-                btn.classList.add('bg-emerald-500', 'hover:bg-emerald-600');
-                btn.disabled = false;
+                if (btn) {
+                    btn.classList.remove('bg-blue-600');
+                    btn.classList.add('bg-emerald-500', 'hover:bg-emerald-600');
+                }
+                setSendButtonState('📲 ส่งรายงานเข้า LINE', false);
             }, 3000);
 
         } catch (error) {
-            btn.innerText = "❌ ส่งไม่สำเร็จ";
-            btn.classList.remove('bg-emerald-500');
-            btn.classList.add('bg-red-600');
-
+            console.error('sendReportToLine, error:', error);
+            const message = extractErrorMessage(error);
+            setReportMessage(`${document.getElementById('reportSummary').value}\n\n❌ ส่งรายงานเข้า LINE ไม่สำเร็จ\nสาเหตุ: ${message}`);
+            setSendButtonState('❌ ส่งไม่สำเร็จ', true);
+            const btn = document.getElementById('sendBtn');
+            if (btn) {
+                btn.classList.remove('bg-emerald-500', 'hover:bg-emerald-600', 'bg-blue-600');
+                btn.classList.add('bg-red-600');
+            }
             setTimeout(() => {
-                btn.innerText = "📲 ส่งรายงานเข้า LINE";
-                btn.classList.remove('bg-red-600');
-                btn.classList.add('bg-emerald-500');
-                btn.disabled = false;
-            }, 3000);
+                if (btn) {
+                    btn.classList.remove('bg-red-600');
+                    btn.classList.add('bg-emerald-500', 'hover:bg-emerald-600');
+                }
+                setSendButtonState('📲 ส่งรายงานเข้า LINE', false);
+            }, 4000);
+        } finally {
+            isSendingReport = false;
         }
     }
-    /* END BLOCK 2.5 */
-
-    /* ==========================================================
-       END BLOCK 2: LOGIC & DATABASE OPERATIONS
-       ========================================================== */
+    /* --- [End Block 3.6] --- */
 </script>
+<!-- [End Block 3] -->
 </body>
 </html>

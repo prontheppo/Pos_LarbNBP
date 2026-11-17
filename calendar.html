@@ -1,24 +1,7 @@
 <!--
   ========================================================================
   FILE NAME: calendar.html
-  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 11 หัวข้อย่อย ดังนี้
-
-   - [บล็อก 1] UI COMPONENTS & LAYOUT
-     (ส่วนประกอบและการจัดวางหน้าจอ ประกอบด้วย 4 หัวข้อ)
-       - [บล็อก 1.1] MONTH & YEAR HEADER (ส่วนหัวเดือนและปี)
-       - [บล็อก 1.2] WEEKDAY HEADER (หัวตารางวันในสัปดาห์)
-       - [บล็อก 1.3] CALENDAR DAYS GRID (ตารางแสดงวันที่)
-       - [บล็อก 1.4] BOTTOM CONTROL BUTTONS (ปุ่มควบคุมด้านล่าง)
-
-   - [บล็อก 2] CALENDAR LOGIC & STATE
-     (ระบบการทำงานและสถานะปฏิทิน ประกอบด้วย 7 หัวข้อ)
-       - [บล็อก 2.1] INITIALIZATION (การเริ่มต้นระบบ)
-       - [บล็อก 2.2] FETCH ORDER COUNTS (การดึงข้อมูลจำนวนออเดอร์)
-       - [บล็อก 2.3] CHANGE MONTH (การเปลี่ยนเดือน)
-       - [บล็อก 2.4] SELECT TODAY (การเลือกวันที่ปัจจุบัน)
-       - [บล็อก 2.5] SEND DATE TO PARENT (การส่งวันที่กลับหน้าต่างหลัก)
-       - [บล็อก 2.6] CLOSE CALENDAR (การปิดหน้าต่างปฏิทิน)
-       - [บล็อก 2.7] RENDER CALENDAR (การแสดงผลปฏิทิน)
+  SUMMARY: ปฏิทินเลือกวันที่ออเดอร์ รองรับ Timezone กรุงเทพฯ, โหลดจำนวนออเดอร์จาก Supabase และระบบบล็อกสากล 100%
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -47,61 +30,47 @@
 <body class="flex items-center justify-center p-1">
 
     <!-- ==========================================================
-         BLOCK 1: UI COMPONENTS & LAYOUT
+         [Start Block 1] USER INTERFACE & LAYOUT COMPONENTS
          ========================================================== -->
-
-    <!-- ----------------------------------------------------------
-         BLOCK 1.1: MONTH & YEAR HEADER
-         ---------------------------------------------------------- -->
     <div class="bg-white rounded-2xl max-w-sm w-full p-4 shadow-sm flex flex-col space-y-4">
 
+        <!-- [Start Block 1.1] MONTH & YEAR HEADER -->
         <div class="flex justify-between items-center px-2">
             <button type="button" onclick="CalendarSystem.changeMonth(-1)" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 font-bold flex items-center justify-center text-sm cursor-pointer">❮</button>
             <h2 id="calMonthYearTitle" class="font-bold text-sm text-slate-800">เดือน ปี</h2>
             <button type="button" onclick="CalendarSystem.changeMonth(1)" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 font-bold flex items-center justify-center text-sm cursor-pointer">❯</button>
         </div>
-    <!-- END BLOCK 1.1 -->
+        <!-- [End Block 1.1] -->
 
-    <!-- ----------------------------------------------------------
-         BLOCK 1.2: WEEKDAY HEADER
-         ---------------------------------------------------------- -->
+        <!-- [Start Block 1.2] WEEKDAY HEADER -->
         <div class="grid grid-cols-7 text-center text-[11px] font-bold text-slate-400">
             <div>อา</div><div>จ</div><div>อ</div><div>พ</div><div>พฤ</div><div>ศ</div><div>ส</div>
         </div>
-    <!-- END BLOCK 1.2 -->
+        <!-- [End Block 1.2] -->
 
-    <!-- ----------------------------------------------------------
-         BLOCK 1.3: CALENDAR DAYS GRID
-         ---------------------------------------------------------- -->
+        <!-- [Start Block 1.3] CALENDAR DAYS GRID -->
         <div id="calDaysGrid" class="grid grid-cols-7 gap-1 text-center text-xs">
-            <div class="col-span-7 text-slate-400 py-6 text-xs font-medium">กำลังโหลดปฏิทิน...</div>
+            <div class="col-span-7 text-slate-400 py-6 text-xs font-medium">⏳ กำลังโหลดปฏิทิน...</div>
         </div>
-    <!-- END BLOCK 1.3 -->
+        <!-- [End Block 1.3] -->
 
-    <!-- ----------------------------------------------------------
-         BLOCK 1.4: BOTTOM CONTROL BUTTONS
-         ---------------------------------------------------------- -->
+        <!-- [Start Block 1.4] BOTTOM CONTROL BUTTONS -->
         <div class="flex gap-2 pt-2 border-t">
             <button type="button" onclick="CalendarSystem.selectToday()" class="flex-1 bg-emerald-50 text-emerald-700 font-bold py-2 rounded-xl text-xs hover:bg-emerald-100 border border-emerald-200 cursor-pointer">📅 วันนี้</button>
             <button type="button" onclick="CalendarSystem.close()" class="flex-1 bg-slate-100 text-slate-700 font-bold py-2 rounded-xl text-xs hover:bg-slate-200 cursor-pointer">ปิด</button>
         </div>
-    <!-- END BLOCK 1.4 -->
+        <!-- [End Block 1.4] -->
 
     </div>
-    <!-- END BLOCK 1 -->
+    <!-- [End Block 1] -->
 
+    <!-- ==========================================================
+         [Start Block 2] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
+         ========================================================== -->
     <script>
-        /* ==========================================================
-           BLOCK 2: CALENDAR LOGIC & STATE
-           ========================================================== */
-
         let db = null;
 
-        /* ----------------------------------------------------------
-           BLOCK 2.1: INITIALIZATION
-           ---------------------------------------------------------- */
-
-        // Gets calendar date components using the Bangkok timezone
+        /* --- [Start Block 2.1] INITIALIZATION & DATE HELPERS --- */
         function getBangkokDateParts(value = new Date()) {
             const date = value instanceof Date ? value : new Date(value);
 
@@ -127,7 +96,6 @@
             return result;
         }
 
-        // Converts a date value into YYYY-MM-DD using Bangkok time
         function getBangkokDateString(value) {
             if (value === null || value === undefined || value === '') {
                 return null;
@@ -135,12 +103,10 @@
 
             const rawValue = String(value).trim();
 
-            // Preserves DATE-only values without timezone conversion
             if (/^\d{4}-\d{2}-\d{2}$/.test(rawValue)) {
                 return rawValue;
             }
 
-            // Converts TIMESTAMPTZ values into the Bangkok calendar date
             const parts = getBangkokDateParts(rawValue);
 
             if (!parts) {
@@ -150,17 +116,14 @@
             return `${parts.year}-${parts.month}-${parts.day}`;
         }
 
-        // Initializes the calendar state using Bangkok local date
         const initialBangkokDate = getBangkokDateParts();
 
         const CalendarSystem = {
             activeYear: Number(initialBangkokDate.year),
             activeMonth: Number(initialBangkokDate.month) - 1,
-            eventsData: {}, // Stores order counts by Bangkok calendar date
+            eventsData: {},
 
-            // Initializes the calendar and connects to Supabase
             async init() {
-                // Retrieves the Supabase client from supabaseClient.js
                 if (typeof window.supabaseClient !== 'undefined') {
                     db = window.supabaseClient;
                 } else if (typeof supabaseClient !== 'undefined') {
@@ -170,13 +133,10 @@
                 await this.fetchOrderCounts();
                 this.render();
             },
-        /* END BLOCK 2.1 */
+        /* --- [End Block 2.1] --- */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.2: FETCH ORDER COUNTS
-           ---------------------------------------------------------- */
 
-            // Fetches order data from Supabase and counts records by Bangkok date
+        /* --- [Start Block 2.2] FETCH ORDER COUNTS --- */
             async fetchOrderCounts() {
                 if (!db) {
                     console.error("Supabase client not found in calendar!");
@@ -184,7 +144,6 @@
                 }
 
                 try {
-                    // Fetches all records from the orders table
                     const { data, error } = await db.from('orders').select('*');
 
                     if (error) {
@@ -195,14 +154,10 @@
                     this.eventsData = {};
 
                     if (data && data.length > 0) {
-                        console.log("Sample order row from DB:", data[0]);
-
                         data.forEach(order => {
-                            // Detects the available order date column
                             const rawDate = order.created_at || order.order_date || order.date || order.sale_date;
 
                             if (rawDate) {
-                                // Groups TIMESTAMPTZ records by Asia/Bangkok calendar date
                                 const dateStr = getBangkokDateString(rawDate);
 
                                 if (dateStr) {
@@ -214,22 +169,15 @@
                                 }
                             }
                         });
-
-                        console.log("Processed Calendar Events Data:", this.eventsData);
-                    } else {
-                        console.log("No orders found in table 'orders'.");
                     }
                 } catch (err) {
                     console.error("Exception fetching order counts:", err);
                 }
             },
-        /* END BLOCK 2.2 */
+        /* --- [End Block 2.2] --- */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.3: CHANGE MONTH
-           ---------------------------------------------------------- */
 
-            // Changes the active month to the previous or next month
+        /* --- [Start Block 2.3] CHANGE MONTH --- */
             async changeMonth(dir) {
                 this.activeMonth += dir;
 
@@ -243,13 +191,10 @@
 
                 this.render();
             },
-        /* END BLOCK 2.3 */
+        /* --- [End Block 2.3] --- */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.4: SELECT TODAY
-           ---------------------------------------------------------- */
 
-            // Selects today's date according to Asia/Bangkok
+        /* --- [Start Block 2.4] SELECT TODAY --- */
             selectToday() {
                 const dStr = getBangkokDateString(new Date());
 
@@ -257,13 +202,10 @@
                     this.sendDateToParent(dStr);
                 }
             },
-        /* END BLOCK 2.4 */
+        /* --- [End Block 2.4] --- */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.5: SEND DATE TO PARENT
-           ---------------------------------------------------------- */
 
-            // Sends the selected date to the parent window
+        /* --- [Start Block 2.5] SEND DATE TO PARENT --- */
             sendDateToParent(dStr) {
                 if (window.parent !== window) {
                     window.parent.postMessage({
@@ -272,25 +214,19 @@
                     }, '*');
                 }
             },
-        /* END BLOCK 2.5 */
+        /* --- [End Block 2.5] --- */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.6: CLOSE CALENDAR
-           ---------------------------------------------------------- */
 
-            // Closes the calendar modal in the parent window
+        /* --- [Start Block 2.6] CLOSE CALENDAR --- */
             close() {
                 if (window.parent !== window) {
                     window.parent.postMessage({ action: 'CLOSE_MODAL' }, '*');
                 }
             },
-        /* END BLOCK 2.6 */
+        /* --- [End Block 2.6] --- */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.7: RENDER CALENDAR
-           ---------------------------------------------------------- */
 
-            // Renders the calendar grid and displays daily order counts
+        /* --- [Start Block 2.7] RENDER CALENDAR --- */
             render() {
                 const thaiMonths = [
                     "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน",
@@ -304,7 +240,6 @@
                 const grid = document.getElementById('calDaysGrid');
                 grid.innerHTML = '';
 
-                // Uses calendar arithmetic only; no device timezone conversion
                 const firstDay = new Date(
                     Date.UTC(this.activeYear, this.activeMonth, 1)
                 ).getUTCDay();
@@ -315,12 +250,10 @@
 
                 const todayStr = getBangkokDateString(new Date());
 
-                // Adds empty cells before the first day of the month
                 for (let i = 0; i < firstDay; i++) {
                     grid.appendChild(document.createElement('div'));
                 }
 
-                // Creates a button for each day of the month
                 for (let d = 1; d <= totalDays; d++) {
                     const dStr =
                         `${this.activeYear}-${String(this.activeMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
@@ -337,7 +270,6 @@
                         btn.className += ' text-slate-700 hover:bg-slate-100';
                     }
 
-                    // Retrieves the order count for the current Bangkok date
                     const eventCount = this.eventsData[dStr] || 0;
                     let badgeHtml = '';
 
@@ -353,17 +285,13 @@
                     grid.appendChild(btn);
                 }
             }
-        /* END BLOCK 2.7 */
+        /* --- [End Block 2.7] --- */
         };
 
-        // Initializes the calendar after the document has loaded
         window.addEventListener('DOMContentLoaded', () => {
             CalendarSystem.init();
         });
-
-        /* ==========================================================
-           END BLOCK 2: CALENDAR LOGIC & STATE
-           ========================================================== */
     </script>
+    <!-- [End Block 2] -->
 </body>
 </html>

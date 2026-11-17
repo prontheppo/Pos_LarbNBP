@@ -1,3 +1,9 @@
+<!--
+  ========================================================================
+  FILE NAME: foodgroup.html
+  SUMMARY: หน้าเลือกหมวดหมู่เมนูอาหาร รองรับการแสดงป้ายจำนวนรายการในตะกร้า และโครงสร้าง Block สากล 100%
+  ========================================================================
+-->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -11,27 +17,34 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
 
+    <!-- ==========================================================
+         [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
+         ========================================================== -->
     <style>
         html, body { width: 100%; min-height: 100%; background-color: transparent; color: #1e293b; font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none; display: flex; flex-direction: column; }
         .category-nav-wrap { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; width: 100%; box-sizing: border-box; padding: 0.25rem; }
         .cat-nav-btn {
             position: relative; background-color: #ffffff; border: 1.5px solid #10349542; color: #1e293b;
-            font-size: 1rem; font-weight: 700; padding: 0.6rem 0.4rem; border-radius: 0.85rem; text-align: center;
+            font-size: 1rem; font-weight: 700; padding: 0.75rem 0.5rem; border-radius: 0.85rem; text-align: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.15s ease; display: flex; align-items: center;
-            justify-content: center; gap: 0.35rem; min-height: 54px; cursor: pointer;
+            justify-content: center; gap: 0.35rem; min-height: 60px; cursor: pointer;
         }
         .cat-nav-btn:active { background-color: #10b981; color: #ffffff; border-color: #10b981; transform: scale(0.96); }
         .cat-nav-icon { font-size: 1.3rem; flex-shrink: 0; }
-        .cat-text-long { font-size: 0.9rem !important; line-height: 1.2; word-break: break-word; }
+        .cat-text-long { font-size: 0.9rem !important; line-height: 1.4 !important; word-break: break-word; }
         .badge-main { 
             position: absolute; top: -0.35rem; right: -0.35rem; background-color: #ef4444; color: white; 
             font-size: 13px !important; font-weight: 800; width: 1.5rem; height: 1.5rem; border-radius: 9999px; 
             display: flex; align-items: center; justify-content: center; border: 2px solid #ffffff; z-index: 10;
         }
     </style>
+    <!-- [End Block 1] -->
 </head>
 <body class="bg-slate-50 text-slate-800 flex flex-col items-center justify-start p-2">
 
+    <!-- ==========================================================
+         [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
+         ========================================================== -->
     <div class="w-full max-w-xl mx-auto flex flex-col">
         <div id="categoryView" class="w-full">
             <div id="quickNavContainer" class="category-nav-wrap">
@@ -39,7 +52,11 @@
             </div>
         </div>
     </div>
+    <!-- [End Block 2] -->
 
+    <!-- ==========================================================
+         [Start Block 3] MODAL NOTIFICATIONS
+         ========================================================== -->
     <div id="customModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-opacity duration-200 opacity-0">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-xs p-5 text-center transform scale-95 transition-transform duration-200 border border-slate-100 flex flex-col items-center" id="modalBox">
             <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-2xl mb-3 shadow-inner">📌</div>
@@ -48,13 +65,18 @@
             <button onclick="closeCustomModal()" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold rounded-xl shadow-md transition duration-150">ตกลง</button>
         </div>
     </div>
+    <!-- [End Block 3] -->
 
+    <!-- ==========================================================
+         [Start Block 4] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
+         ========================================================== -->
     <script>
         const categoryIcons = ['🍱', '🍲', '🍳', '🍚', '🥩', '⭐', '🥗', '🛍️', '🍽️', '🥢', '🍹'];
         let cachedCategories = [];
         let cachedFoods = [];
         let currentCart = [];
 
+        /* --- [Start Block 4.1] MODAL HELPERS --- */
         function showCustomModal(message) {
             const modal = document.getElementById('customModal');
             const modalBox = document.getElementById('modalBox');
@@ -72,7 +94,9 @@
             modalBox.classList.add('scale-95');
             setTimeout(() => { modal.classList.remove('flex'); modal.classList.add('hidden'); }, 200);
         }
+        /* --- [End Block 4.1] --- */
 
+        /* --- [Start Block 4.2] INITIALIZATION & DATA FETCHING --- */
         window.addEventListener('DOMContentLoaded', async () => {
             if (window.self === window.top) {
                 await fetchStandaloneData();
@@ -107,7 +131,9 @@
                 renderCategories(cachedCategories, cachedFoods, currentCart);
             }
         });
+        /* --- [End Block 4.2] --- */
 
+        /* --- [Start Block 4.3] RENDER CATEGORIES --- */
         function renderCategories(categories, foods, cart) {
             const navContainer = document.getElementById('quickNavContainer');
             if (!navContainer) return;
@@ -170,6 +196,8 @@
                 navContainer.appendChild(btn);
             });
         }
+        /* --- [End Block 4.3] --- */
     </script>
+    <!-- [End Block 4] -->
 </body>
 </html>

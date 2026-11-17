@@ -1,0 +1,17 @@
+Please completely reorganize and clean up the code structure and comments in this file. Remove all old notes and reorder the program logically according to actual runtime execution flow. Clearly specify the FILE NAME and a brief SUMMARY in the file header.
+
+Organize the code into main Blocks and sub-blocks, clearly indicating [Start ...] and [End ...] markers following this structural format:
+
+- [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
+  - [Start Block 1.1] ... / [End Block 1.1] ...
+- [End Block 1]
+
+- [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
+  - [Start Block 2.1] ... / [End Block 2.1] ...
+- [End Block 2]
+
+(Add Block 3, Block 4, etc., as appropriate for the file content, such as Modals and Scripts)
+
+*Special Requirement*: For any loading status text or notification messages when there are no food items (e.g., "Loading items..." or "No food items"), always prepend an hourglass icon (⏳) to the front of that message text.
+
+Provide a clean, easy-to-read structure that retains 100% of the original functionality, formatted inside a single clean code block ready for copy-pasting.

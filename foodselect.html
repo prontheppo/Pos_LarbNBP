@@ -1,3 +1,9 @@
+<!--
+  ========================================================================
+  FILE NAME: foodselect.html
+  SUMMARY: หน้าเลือกรายละเอียดเมนูอาหารและกำหนดจำนวน/ไข่ดาว/ราคา พร้อมโครงสร้าง Block สากล 100%
+  ========================================================================
+-->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -11,19 +17,26 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
 
+    <!-- ==========================================================
+         [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
+         ========================================================== -->
     <style>
         html, body {
             width: 100%; height: auto; background-color: #ffffff; color: #1e293b;
             font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none;
             display: flex; flex-direction: column; overflow: hidden; border-radius: 1.5rem;
         }
-        .custom-label { font-size: 16px !important; font-weight: 700; }
-        input[type="number"], input[type="text"] { font-size: 16px !important; }
-        .back-btn { background-color: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; font-weight: 700; font-size: 14px !important; padding: 0.3rem 0.6rem; border-radius: 0.6rem; cursor: pointer; }
+        .custom-label { font-size: 15px !important; font-weight: 700; }
+        input[type="number"], input[type="text"] { font-size: 16px !important; padding-top: 0.45rem !important; padding-bottom: 0.45rem !important; line-height: 1.4 !important; }
+        .back-btn { background-color: #f1f5f9; border: 1.5px solid #cbd5e1; color: #334155; font-weight: 700; font-size: 13px !important; padding: 0.25rem 0.5rem; border-radius: 0.6rem; cursor: pointer; }
     </style>
+    <!-- [End Block 1] -->
 </head>
 <body>
 
+    <!-- ==========================================================
+         [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
+         ========================================================== -->
     <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
         <button type="button" id="popupBackBtn" class="back-btn" onclick="goBackToCategory()">◀ รายการ</button>
         <span id="foodTitleHeader" class="font-extrabold text-sm text-slate-700 truncate px-2">📌 เลือกรายการ</span>
@@ -40,10 +53,10 @@
 
         <div id="selectedCartItemsBox" class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 hidden">
             <div class="flex justify-between items-center mb-1.5">
-                <span class="text-[15px] text-slate-600 font-bold">🛒 รายการที่เลือกไว้แล้ว:</span>
-                <span id="selectedCartCountBadge" class="bg-emerald-600 text-white font-extrabold text-[13px] px-2.5 py-0.5 rounded-full">0 รายการ</span>
+                <span class="text-[14px] text-slate-600 font-bold">🛒 รายการที่เลือกไว้แล้ว:</span>
+                <span id="selectedCartCountBadge" class="bg-emerald-600 text-white font-extrabold text-[12px] px-2.5 py-0.5 rounded-full">0 รายการ</span>
             </div>
-            <div id="selectedCartList" class="space-y-1.5 text-[16px] text-slate-700 max-h-36 overflow-y-auto pr-0.5"></div>
+            <div id="selectedCartList" class="space-y-1.5 text-[15px] text-slate-700 max-h-36 overflow-y-auto pr-0.5"></div>
         </div>
 
         <div id="priceAndQtyGrid" class="grid grid-cols-2 gap-2.5 items-center">
@@ -57,29 +70,29 @@
             </div>
             <div id="qtyBox">
                 <label class="block custom-label text-slate-700 mb-1">จำนวน</label>
-                <div class="flex items-center justify-between bg-slate-50 border border-slate-300 rounded-xl px-2 py-1.5">
-                    <button type="button" onclick="adjustQty(-1)" class="w-7 h-7 bg-white border border-slate-200 rounded-lg text-slate-600 font-bold flex items-center justify-center text-base cursor-pointer">-</button>
+                <div class="flex items-center justify-between bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1.5">
+                    <button type="button" onclick="adjustQty(-1)" class="w-8 h-8 bg-white border border-slate-200 rounded-lg text-slate-700 font-bold flex items-center justify-center text-lg cursor-pointer shadow-2xs">-</button>
                     <span id="foodQty" class="font-extrabold text-base text-slate-800">1</span>
-                    <button type="button" onclick="adjustQty(1)" class="w-7 h-7 bg-white border border-slate-200 rounded-lg text-slate-600 font-bold flex items-center justify-center text-base cursor-pointer">+</button>
+                    <button type="button" onclick="adjustQty(1)" class="w-8 h-8 bg-white border border-slate-200 rounded-lg text-slate-700 font-bold flex items-center justify-center text-lg cursor-pointer shadow-2xs">+</button>
                 </div>
             </div>
         </div>
 
         <div id="eggSection" class="grid grid-cols-2 gap-2 items-center hidden">
-            <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl flex items-center justify-between">
+            <div class="bg-slate-50 border border-slate-200 p-2 rounded-xl flex items-center justify-between">
                 <span class="custom-label text-slate-700 whitespace-nowrap">ไข่ดาว</span>
-                <div class="flex items-center gap-1.5 shrink-0">
-                    <button type="button" onclick="adjustExtra('friedEgg', -1)" class="w-6 h-6 bg-white border rounded-lg font-bold text-base cursor-pointer">-</button>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" onclick="adjustExtra('friedEgg', -1)" class="w-7 h-7 bg-white border rounded-lg font-bold text-base cursor-pointer">-</button>
                     <span id="friedEggQty" class="font-bold text-base w-5 text-center">0</span>
-                    <button type="button" onclick="adjustExtra('friedEgg', 1)" class="w-6 h-6 bg-white border rounded-lg font-bold text-base cursor-pointer">+</button>
+                    <button type="button" onclick="adjustExtra('friedEgg', 1)" class="w-7 h-7 bg-white border rounded-lg font-bold text-base cursor-pointer">+</button>
                 </div>
             </div>
-            <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl flex items-center justify-between">
+            <div class="bg-slate-50 border border-slate-200 p-2 rounded-xl flex items-center justify-between">
                 <span class="custom-label text-slate-700 whitespace-nowrap">ไข่เจียว</span>
-                <div class="flex items-center gap-1.5 shrink-0">
-                    <button type="button" onclick="adjustExtra('omelet', -1)" class="w-6 h-6 bg-white border rounded-lg font-bold text-base cursor-pointer">-</button>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" onclick="adjustExtra('omelet', -1)" class="w-7 h-7 bg-white border rounded-lg font-bold text-base cursor-pointer">-</button>
                     <span id="omeletQty" class="font-bold text-base w-5 text-center">0</span>
-                    <button type="button" onclick="adjustExtra('omelet', 1)" class="w-6 h-6 bg-white border rounded-lg font-bold text-base cursor-pointer">+</button>
+                    <button type="button" onclick="adjustExtra('omelet', 1)" class="w-7 h-7 bg-white border rounded-lg font-bold text-base cursor-pointer">+</button>
                 </div>
             </div>
         </div>
@@ -89,7 +102,11 @@
             <input type="text" id="foodNote" placeholder="(เช่น เผ็ดน้อย, ไม่ใส่ผัก)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-base outline-none focus:border-emerald-500">
         </div>
     </div>
+    <!-- [End Block 2] -->
 
+    <!-- ==========================================================
+         [Start Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
+         ========================================================== -->
     <script>
         let currentFood = null;
         let currentCatId = null;
@@ -103,6 +120,7 @@
         const urlFoodId = urlParams.get('food_id');
         const urlGroupId = urlParams.get('group_id');
 
+        /* --- [Start Block 3.1] INITIALIZATION & LISTENERS --- */
         window.addEventListener('DOMContentLoaded', () => {
             try {
                 const storedCart = JSON.parse(localStorage.getItem('cart') || '[]');
@@ -111,8 +129,6 @@
                 console.error('Invalid cart data:', error);
                 currentCartState = [];
             }
-            // The Host sends INIT_FOOD_SELECT after this iframe finishes loading.
-            // This page does not independently fetch the same food record.
         });
 
         window.addEventListener('message', (event) => {
@@ -127,7 +143,9 @@
                 renderSelectedCartList();
             }
         });
+        /* --- [End Block 3.1] --- */
 
+        /* --- [Start Block 3.2] RESIZE & RENDERING --- */
         let lastReportedHeight = 0;
         let resizeTimer = null;
         function updateParentHeight() {
@@ -155,7 +173,6 @@
             const costPriceBox = document.getElementById('costPriceBox');
             const sellPriceBox = document.getElementById('sellPriceBox');
             const priceLabel = document.getElementById('priceLabel');
-            const priceAndQtyGrid = document.getElementById('priceAndQtyGrid');
             const eggSection = document.getElementById('eggSection');
 
             let defaultCost = '';
@@ -263,7 +280,9 @@
                 window.parent.postMessage({ type: 'DELETE_CART_ITEM_BY_ID', itemId: itemId }, window.location.origin);
             }
         }
+        /* --- [End Block 3.2] --- */
 
+        /* --- [Start Block 3.3] ACTIONS & CART OPERATIONS --- */
         function saveToCart() {
             if (!currentFood) {
                 alert('ไม่พบข้อมูลสินค้า กรุณาลองใหม่อีกครั้ง');
@@ -319,6 +338,8 @@
         function closePopup() {
             if (window.self !== window.top) window.parent.postMessage({ type: 'CLOSE_POPUP' }, window.location.origin);
         }
+        /* --- [End Block 3.3] --- */
     </script>
+    <!-- [End Block 3] -->
 </body>
 </html>

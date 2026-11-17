@@ -1,15 +1,7 @@
 <!--
   ========================================================================
   FILE NAME: foodaddnew.html
-  SUMMARY: มีทั้งหมด 2 บล็อกหลัก | 6 หัวข้อย่อย ดังนี้
-   - [บล็อก 1] ส่วนแสดงผลหน้าจอผู้ใช้ (2 หัวข้อย่อย)
-     - [บล็อก 1.1] ส่วนหัว (Header)
-     - [บล็อก 1.2] ฟอร์มกรอกข้อมูลเมนูอาหารใหม่
-   - [บล็อก 2] ระบบการทำงานและการจัดการฐานข้อมูล (4 หัวข้อย่อย)
-     - [บล็อก 2.1] เริ่มต้นการทำงานเมื่อโหลดหน้าเว็บ
-     - [บล็อก 2.2] ปรับขนาดความสูงของ Popup
-     - [บล็อก 2.3] ปิด Modal และส่งสัญญาณกลับหน้าแม่
-     - [บล็อก 2.4] บันทึกข้อมูลเมนูอาหารใหม่ลง Supabase
+  SUMMARY: หน้าฟอร์มเพิ่มเมนูอาหารใหม่ เชื่อมต่อ Supabase พร้อมโครงสร้าง Block สากล 100%
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -25,6 +17,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
     
+    <!-- ==========================================================
+         [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
+         ========================================================== -->
     <style>
         html, body { 
             width: 100%; min-height: 100%;
@@ -33,20 +28,17 @@
             display: flex; flex-direction: column; 
             border-radius: 0 !important; 
         }
-        .custom-label { font-size: 16px !important; font-weight: 700; }
-        input[type="number"], input[type="text"] { font-size: 16px !important; }
-        .back-btn { background-color: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; font-weight: 700; font-size: 14px !important; padding: 0.3rem 0.6rem; border-radius: 0.6rem; cursor: pointer; }
+        .custom-label { font-size: 15px !important; font-weight: 700; }
+        input[type="number"], input[type="text"] { font-size: 16px !important; padding-top: 0.45rem !important; padding-bottom: 0.45rem !important; line-height: 1.4 !important; }
+        .back-btn { background-color: #f1f5f9; border: 1.5px solid #cbd5e1; color: #334155; font-weight: 700; font-size: 13px !important; padding: 0.25rem 0.5rem; border-radius: 0.6rem; cursor: pointer; }
     </style>
+    <!-- [End Block 1] -->
 </head>
 <body>
 
     <!-- ==========================================================
-         BLOCK 1: UI COMPONENTS & LAYOUT
+         [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
          ========================================================== -->
-
-    <!-- ----------------------------------------------------------
-         BLOCK 1.1: HEADER
-         ---------------------------------------------------------- -->
     <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
         <div class="flex items-center gap-1.5">
             <span class="text-base text-blue-600 font-extrabold flex items-center justify-center">➕</span>
@@ -54,18 +46,12 @@
         </div>
         <button type="button" onclick="closeModal()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
     </div>
-    <!-- END BLOCK 1.1 -->
 
-    <!-- ----------------------------------------------------------
-         BLOCK 1.2: NEW FOOD MENU INPUT FORM
-         ---------------------------------------------------------- -->
     <form id="addMenuForm" onsubmit="saveNewMenuData(event)" class="p-3.5 space-y-3 bg-white w-full">
-        
-        <!-- Category and food name input fields -->
         <div class="grid grid-cols-2 gap-2.5">
             <div>
                 <label class="block custom-label text-slate-700 mb-1">หมวดหมู่</label>
-                <input type="text" id="addCategoryDisplay" readonly value="กำลังโหลด..." 
+                <input type="text" id="addCategoryDisplay" readonly value="⏳ กำลังโหลด..." 
                        class="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-600 outline-none truncate">
             </div>
             <div>
@@ -77,7 +63,6 @@
             </div>
         </div>
 
-        <!-- Three pricing tiers: local, tourist, and Sabaidee -->
         <div>
             <label class="block custom-label text-slate-700 mb-1">ราคา (บาท)</label>
             <div class="grid grid-cols-3 gap-2">
@@ -99,7 +84,6 @@
             </div>
         </div>
 
-        <!-- Cancel and save buttons -->
         <div class="pt-2 grid grid-cols-2 gap-2">
             <button type="button" onclick="closeModal()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl text-base transition cursor-pointer">
                 ยกเลิก
@@ -109,20 +93,16 @@
             </button>
         </div>
     </form>
-    <!-- END BLOCK 1.2 -->
+    <!-- [End Block 2] -->
 
-    <!-- END BLOCK 1 -->
-
+    <!-- ==========================================================
+         [Start Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
+         ========================================================== -->
     <script>
-        /* ==========================================================
-           BLOCK 2: LOGIC & DATABASE OPERATIONS
-           ========================================================== */
         let db;
         let currentGroupId = null;
 
-        /* ----------------------------------------------------------
-           BLOCK 2.1: PAGE INITIALIZATION
-           ---------------------------------------------------------- */
+        /* --- [Start Block 3.1] INITIALIZATION --- */
         window.addEventListener('DOMContentLoaded', () => {
             db = typeof window.supabaseClient !== 'undefined' ? window.supabaseClient : supabaseClient;
 
@@ -136,11 +116,9 @@
             
             updateParentHeight();
         });
-        /* END BLOCK 2.1 */
+        /* --- [End Block 3.1] --- */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.2: AUTOMATIC POPUP HEIGHT ADJUSTMENT
-           ---------------------------------------------------------- */
+        /* --- [Start Block 3.2] POPUP & RESIZE HANDLERS --- */
         let lastReportedHeight = 0;
         let resizeTimer = null;
         function updateParentHeight() {
@@ -159,7 +137,6 @@
             }
         }
 
-        // Observe content changes but report only when the measured height changes.
         const resizeObserver = new ResizeObserver(() => {
             updateParentHeight();
         });
@@ -171,20 +148,14 @@
 
         window.addEventListener('load', updateParentHeight);
 
-
-        /* ----------------------------------------------------------
-           BLOCK 2.3: CLOSE MODAL AND NOTIFY PARENT WINDOW
-           ---------------------------------------------------------- */
         function closeModal() {
             if (window.parent && window.parent !== window) {
                 window.parent.postMessage({ type: 'CLOSE_ADD_MENU' }, window.location.origin);
             }
         }
-        /* END BLOCK 2.3 */
+        /* --- [End Block 3.2] --- */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.4: SAVE NEW FOOD MENU TO SUPABASE
-           ---------------------------------------------------------- */
+        /* --- [Start Block 3.3] SAVE NEW MENU DATA --- */
         async function saveNewMenuData(e) {
             if (e) e.preventDefault();
 
@@ -211,8 +182,6 @@
                 }]);
 
                 if (error) throw error;
-
-                // บันทึกสำเร็จ สั่งปิดหน้าต่างและกลับไปหน้าเดิม
                 closeModal();
             } catch (err) {
                 console.error('Error saving menu:', err);
@@ -221,11 +190,8 @@
                 if (btnSubmit) btnSubmit.disabled = false;
             }
         }
-        /* END BLOCK 2.4 */
-
-        /* ==========================================================
-           END BLOCK 2: LOGIC & DATABASE OPERATIONS
-           ========================================================== */
+        /* --- [End Block 3.3] --- */
     </script>
+    <!-- [End Block 3] -->
 </body>
 </html>

@@ -1,22 +1,7 @@
 <!--
   ========================================================================
   FILE NAME: food_consignment.html
-  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 10 บล็อกย่อย ดังนี้
-
-   - [บล็อก 1] UI COMPONENTS & LAYOUT (ส่วนแสดงผลหน้าจอผู้ใช้)
-     (ประกอบด้วย 4 หัวข้อ)
-       - [บล็อก 1.1] HEADER (ส่วนหัวแสดงชื่อหมวดหมู่และปุ่มปิด)
-       - [บล็อก 1.2] ADD NEW CONSIGNMENT ITEM (ปุ่มเปิดหน้าเพิ่มรายการใหม่)
-       - [บล็อก 1.3] CONSIGNMENT ITEMS GRID (ตารางแสดงรายการสินค้าพร้อม Badge ที่ลอยเด่น)
-       - [บล็อก 1.4] CSS STYLES (รูปแบบ CSS และตำแหน่ง Badge)
-
-   - [บล็อก 2] LOGIC & DATABASE OPERATIONS (ระบบการทำงานและการจัดการข้อมูล)
-     (ประกอบด้วย 5 หัวข้อ)
-       - [บล็อก 2.1] PAGE INITIALIZATION (เริ่มต้นการทำงานเมื่อโหลดหน้าเว็บ)
-       - [บล็อก 2.2] AUTOMATIC POPUP HEIGHT ADJUSTMENT (ปรับความสูง Popup อัตโนมัติ)
-       - [บล็อก 2.3] FETCH ITEMS FROM SUPABASE (ดึงข้อมูลรายการจากตาราง foods)
-       - [บล็อก 2.4] RENDER CONSIGNMENT VIEW (แสดงผลรายการและคำนวณ Badge จำนวน)
-       - [บล็อก 2.5] ACTIONS (เปิดหน้าเพิ่มเมนูและเลือกรายการ)
+  SUMMARY: หน้าเลือกรายการสินค้าฝากซื้อหรือเมนูพิเศษ พร้อมระบบดึงข้อมูลจาก Supabase และโครงสร้าง Block สากล 100%
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -32,9 +17,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <!-- ----------------------------------------------------------
-         BLOCK 1.4: CSS STYLES
-         ---------------------------------------------------------- -->
+    <!-- ==========================================================
+         [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
+         ========================================================== -->
     <style>
         html, body {
             width: 100%; height: auto;
@@ -49,11 +34,10 @@
             border: 1.5px solid #fde68a;
             color: #78350f;
             transition: all 0.2s ease;
-            overflow: visible !important; /* ป้องกันไม่ให้ป้าย Badge ถูกตัดขอบ */
+            overflow: visible !important;
         }
         .consignment-btn:active { transform: scale(0.96); background-color: #fef3c7; }
 
-        /* ปรับตำแหน่ง Badge ให้ลอยเด่นเหลื่อมขอบมุมบนขวาเหมือนรูปที่ 1 */
         .item-badge {
             position: absolute;
             top: -6px;
@@ -74,65 +58,54 @@
             z-index: 50;
         }
     </style>
-    <!-- END BLOCK 1.4 -->
+    <!-- [End Block 1] -->
 </head>
-<body>
+<body class="flex flex-col">
 
     <!-- ==========================================================
-         BLOCK 1: UI COMPONENTS & LAYOUT
+         [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
          ========================================================== -->
-
-    <!-- ----------------------------------------------------------
-         BLOCK 1.1: HEADER
-         ---------------------------------------------------------- -->
+    <!-- HEADER -->
     <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
         <span id="consignmentTitleHeader" class="font-extrabold text-sm text-slate-700 truncate px-2">📌 รายการฝากซื้อ</span>
         <button type="button" onclick="closePopup()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
     </div>
-    <!-- END BLOCK 1.1 -->
 
+    <!-- MAIN CONTENT -->
     <div class="flex flex-col space-y-3 p-3.5 px-4 bg-white w-full">
 
-        <!-- ----------------------------------------------------------
-             BLOCK 1.2: ADD NEW CONSIGNMENT ITEM
-             ---------------------------------------------------------- -->
+        <!-- ADD NEW CONSIGNMENT ITEM (ตรึงไว้ด้านบน ไม่เลื่อนหนี) -->
         <div id="addConsignmentSection" class="bg-amber-50 p-2.5 rounded-2xl border border-amber-200 flex flex-shrink-0">
             <button type="button" onclick="openAddNewMenuModal()" class="w-full h-10 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-sm flex items-center justify-center gap-1.5">
                 <i class="fa-solid fa-circle-plus text-sm"></i> ➕ เพิ่มรายการใหม่
             </button>
         </div>
-        <!-- END BLOCK 1.2 -->
 
-        <!-- ----------------------------------------------------------
-             BLOCK 1.3: CONSIGNMENT ITEMS GRID
-             ---------------------------------------------------------- -->
-        <div id="consignmentGrid" class="grid grid-cols-2 gap-2.5 pt-2 pr-1">
-            <span class="text-slate-400 text-xs py-8 text-center col-span-2 block">⏳ กำลังโหลดรายการ...</span>
+        <!-- CONSIGNMENT ITEMS GRID (จำกัดความสูงและเปิดให้ Scroll เฉพาะส่วนรายการ) -->
+        <div class="max-h-[50vh] overflow-y-auto pr-1">
+            <div id="consignmentGrid" class="grid grid-cols-2 gap-2.5 pt-1">
+                <div class="text-center text-xl text-slate-400 py-8 col-span-2">⏳ กำลังโหลดรายการ...</div>
+            </div>
         </div>
-        <!-- END BLOCK 1.3 -->
 
     </div>
-    <!-- END BLOCK 1 -->
+    <!-- [End Block 2] -->
 
+    <!-- ==========================================================
+         [Start Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
+         ========================================================== -->
     <script>
-        /* ==========================================================
-           BLOCK 2: LOGIC & DATABASE OPERATIONS
-           ========================================================== */
         let consignmentItems = [];
         let currentCart = (() => { try { const value = JSON.parse(localStorage.getItem('cart') || '[]'); return Array.isArray(value) ? value : []; } catch (error) { console.error('Invalid cart data:', error); return []; } })();
         
         const urlParams = new URLSearchParams(window.location.search);
         const targetGroupId = parseInt(urlParams.get('group_id'), 10) || 99;
 
-        /* ----------------------------------------------------------
-           BLOCK 2.1: PAGE INITIALIZATION
-           ---------------------------------------------------------- */
         window.addEventListener('DOMContentLoaded', async () => {
             updateHeaderTitle();
             await fetchConsignmentItemsFromSupabase();
             updateParentHeight();
         });
-        /* END BLOCK 2.1 */
 
         function updateHeaderTitle() {
             const titleEl = document.getElementById('consignmentTitleHeader');
@@ -154,16 +127,13 @@
             }
         });
 
-        /* ----------------------------------------------------------
-           BLOCK 2.2: AUTOMATIC POPUP HEIGHT ADJUSTMENT
-           ---------------------------------------------------------- */
         let lastReportedHeight = 0;
         let resizeTimer = null;
         function updateParentHeight() {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
                 if (window.parent !== window) {
-                    const totalHeight = document.body.scrollHeight + 25;
+                    const totalHeight = document.body.scrollHeight + 20;
                     if (Math.abs(totalHeight - lastReportedHeight) >= 2) {
                         lastReportedHeight = totalHeight;
                         window.parent.postMessage({ type: 'RESIZE_POPUP', height: totalHeight }, window.location.origin);
@@ -171,11 +141,7 @@
                 }
             }, 60);
         }
-        /* END BLOCK 2.2 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.3: FETCH ITEMS FROM SUPABASE
-           ---------------------------------------------------------- */
         async function fetchConsignmentItemsFromSupabase() {
             try {
                 if (typeof supabaseClient !== 'undefined') {
@@ -204,20 +170,16 @@
                 updateParentHeight();
             }
         }
-        /* END BLOCK 2.3 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.4: RENDER CONSIGNMENT VIEW
-           ---------------------------------------------------------- */
         function renderConsignmentView() {
             const grid = document.getElementById('consignmentGrid');
-            grid.className = "grid grid-cols-2 gap-2.5 pt-2 pr-1";
+            grid.className = "grid grid-cols-2 gap-2.5 pt-1";
             grid.innerHTML = '';
 
             updateHeaderTitle();
 
             if (!consignmentItems || consignmentItems.length === 0) {
-                grid.innerHTML = '<span class="text-slate-400 text-xs py-8 text-center col-span-2 block">ยังไม่มีรายการ กดปุ่มเพิ่มด้านบนได้เลย</span>';
+                grid.innerHTML = '<span class="text-slate-400 text-xs py-8 text-center col-span-2 block">⏳ ยังไม่มีรายการ กดปุ่มเพิ่มด้านบนได้เลย</span>';
                 updateParentHeight();
                 return;
             }
@@ -229,28 +191,24 @@
                 );
                 const totalQty = matchedItems.reduce((sum, cartItem) => sum + (Number(cartItem.qty) || 1), 0);
 
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'consignment-btn py-3 px-3 rounded-2xl text-center font-bold text-xs transition cursor-pointer shadow-sm truncate';
+                const btnEl = document.createElement('button');
+                btnEl.type = 'button';
+                btnEl.className = 'consignment-btn py-3 px-3 rounded-2xl text-center font-bold text-xs transition cursor-pointer shadow-sm truncate';
                 
                 let badgeHtml = totalQty > 0 ? `<span class="item-badge">${totalQty}</span>` : '';
 
-                btn.innerHTML = `
+                btnEl.innerHTML = `
                     ${badgeHtml}
                     <div class="truncate">${item.food_name}</div>
                 `;
                 
-                btn.onclick = () => selectConsignmentItem(item);
-                grid.appendChild(btn);
+                btnEl.onclick = () => selectConsignmentItem(item);
+                grid.appendChild(btnEl);
             });
 
             updateParentHeight();
         }
-        /* END BLOCK 2.4 */
 
-        /* ----------------------------------------------------------
-           BLOCK 2.5: ACTIONS
-           ---------------------------------------------------------- */
         function openAddNewMenuModal() {
             const groupNameText = (targetGroupId === 98) ? 'เมนูพิเศษ' : 'สินค้าฝากซื้อ';
             window.parent.postMessage({
@@ -273,11 +231,7 @@
                 window.parent.postMessage({ type: 'CLOSE_POPUP' }, window.location.origin);
             }
         }
-        /* END BLOCK 2.5 */
-
-        /* ==========================================================
-           END BLOCK 2: LOGIC & DATABASE OPERATIONS
-           ========================================================== */
     </script>
+    <!-- [End Block 3] -->
 </body>
 </html>

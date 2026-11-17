@@ -1,17 +1,7 @@
 <!--
   ========================================================================
   FILE NAME: index.html
-  SUMMARY: จัดเรียงปุ่มใหม่เป็น 1 คอลัมน์เดี่ยวทั้งหมด (เรียงจากซ้ายไปขวาของแต่ละแถวเดิม)
-   - [บล็อก 1] UI COMPONENTS & LAYOUT (ส่วนแสดงผลหน้าจอทั้งหมด)
-     - [บล็อก 1.1] โครงสร้างหลัก Main Card (Main Card Layout)
-     - [บล็อก 1.2] ส่วนหัว Header และชื่อร้าน (Header and Restaurant Name)
-     - [บล็อก 1.3] รายการปุ่มเมนูทั้งหมด
-     - [บล็อก 1.4] รูปแบบการแสดงผล CSS (CSS Styles)
-
-   - [บล็อก 2] LOGIC & EVENT HANDLERS (ระบบการทำงานและจัดการเหตุการณ์)
-     - [บล็อก 2.1] PREVENT GESTURE-BASED ZOOM (ป้องกันการซูมหน้าจอด้วย Gesture)
-     - [บล็อก 2.2] PREVENT DOUBLE-TAP ZOOM AND MULTI-TOUCH (ป้องกัน Double Tap Zoom และการแตะหลายนิ้ว)
-     - [บล็อก 2.3] NAVIGATE TO THE SPECIFIED PAGE (ฟังก์ชันเปลี่ยนหน้าเว็บ goToPage)
+  SUMMARY: หน้าหลักเมนูร้านอาหาร ลาบหนองบัวลำภู @เขื่อนขุนด่านปราการชล จัดระเบียบโครงสร้าง Block สากล 100%
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -27,9 +17,9 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- ----------------------------------------------------------
-         BLOCK 1.4: CSS STYLES
-         ---------------------------------------------------------- -->
+    <!-- ==========================================================
+         [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
+         ========================================================== -->
     <style>
         html, body {
             height: 100%;
@@ -91,6 +81,14 @@
             box-sizing: border-box;
         }
 
+        /* คลาสสำหรับแถวแรกที่ต้องการแบ่งเป็น 2 คอลัมน์เท่ากัน */
+        .menu-row-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            width: 100%;
+        }
+
         .menu-btn {
             display: flex;
             align-items: center;
@@ -128,24 +126,18 @@
         .btn-slate { background-color: #334155; }
         .btn-rose { background-color: #e11d48; }
     </style>
-    <!-- END BLOCK 1.4 -->
+    <!-- [End Block 1] -->
 </head>
 
 <body>
 <div class="app-layout">
 
     <!-- ==========================================================
-         BLOCK 1: UI COMPONENTS & LAYOUT
+         [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
          ========================================================== -->
-
-    <!-- ----------------------------------------------------------
-         BLOCK 1.1: MAIN CARD LAYOUT
-         ---------------------------------------------------------- -->
     <div id="homeView" class="main-card">
 
-        <!-- ----------------------------------------------------------
-             BLOCK 1.2: HEADER AND RESTAURANT NAME
-             ---------------------------------------------------------- -->
+        <!-- [Start Block 2.1] HEADER AND RESTAURANT NAME -->
         <div class="header-section">
             <h1 class="font-extrabold text-lg text-slate-800 leading-snug">
                 ลาบหนองบัวลำภู
@@ -157,63 +149,69 @@
                 ระบบจัดการร้านอาหารและสั่งอาหาร
             </p>
         </div>
-        <!-- END BLOCK 1.2 -->
+        <!-- [End Block 2.1] -->
 
-        <!-- ----------------------------------------------------------
-             BLOCK 1.3: ALL MENU BUTTONS
-             ---------------------------------------------------------- -->
+        <!-- [Start Block 2.2] ALL MENU BUTTONS -->
         <div class="menu-list">
 
-            <!-- 1. หน้าสั่งอาหาร (จากซ้าย แถวที่ 1) -->
-            <button type="button"
-                onclick="goToPage('ordersystem.html?tab=1')"
-                class="menu-btn btn-blue">
-                <span>📝 หน้าสั่งอาหาร</span>
-            </button>
+            <!-- แถวที่ 1: แสดง 2 คอลัมน์ (1. หน้าสั่งอาหาร | 2. บันทึกรายจ่าย) -->
+            <div class="menu-row-2col">
+                <button type="button"
+                    onclick="goToPage('ordersystem.html?tab=1')"
+                    class="menu-btn btn-blue">
+                    <span>📝 หน้าสั่งอาหาร</span>
+                </button>
 
-            <!-- 2. สั่งด่วน (จากขวา แถวที่ 1) -->
+                <button type="button"
+                    onclick="goToPage('expenses.html')"
+                    class="menu-btn btn-rose">
+                    <span>💸 บันทึกรายจ่าย</span>
+                </button>
+            </div>
+
+            <!-- สั่งด่วน -->
             <button type="button"
                 onclick="goToPage('QuickOrder.html')"
                 class="menu-btn btn-emerald">
                 <span>⚡ สั่งด่วน</span>
             </button>
 
-            <!-- 3. รายงานการขาย (จากซ้าย แถวที่ 2) -->
+            <!-- รายงานการขาย -->
             <button type="button"
                 onclick="goToPage('salesreport.html')"
                 class="menu-btn btn-amber-600">
                 <span>📊 รายงานการขาย</span>
             </button>
 
-            <!-- 4. Line Report (จากขวา แถวที่ 2) -->
+            <!-- Line Report -->
             <button type="button"
                 onclick="goToPage('linereport.html')"
                 class="menu-btn btn-teal">
                 <span>💬 Line Report</span>
             </button>
 
-            <!-- 5. ตั้งค่าราคาตามพื้นที่ (จากซ้าย แถวที่ 3) -->
+            <!-- ตั้งค่าราคาตามพื้นที่ -->
             <button type="button"
                 onclick="goToPage('set_location_pricing.html')"
                 class="menu-btn btn-teal">
                 <span>📍 ตั้งค่าราคาตามพื้นที่</span>
             </button>
 
-            <!-- 6. ตั้งค่าการจัดส่ง (จากขวา แถวที่ 3) -->
+            <!-- ตั้งค่าการจัดส่ง -->
             <button type="button"
                 onclick="goToPage('settings_delivery.html')"
                 class="menu-btn btn-cyan">
                 <span>🚚 ตั้งค่าการจัดส่ง</span>
             </button>
 
-            <!-- 7. จัดการรายการอาหาร & ราคา (แถวเดิมที่เป็น 1 คอลัมน์) -->
+            <!-- จัดการรายการอาหาร & ราคา -->
             <button type="button"
                 onclick="goToPage('managemenu.html')"
                 class="menu-btn btn-amber-600">
                 <span>📋 จัดการรายการอาหาร & ราคา</span>
             </button>
 
-            <!-- 8. จัดการสต็อกวัตถุดิบ (แถวเดิมที่เป็น 1 คอลัมน์) -->
+            <!-- จัดการสต็อกวัตถุดิบ -->
             <button type="button"
                 onclick="goToPage('stock_dashboard.html')"
                 class="menu-btn btn-purple">
@@ -221,23 +219,18 @@
             </button>
 
         </div>
-        <!-- END BLOCK 1.3 -->
+        <!-- [End Block 2.2] -->
 
     </div>
-    <!-- END BLOCK 1.1 -->
-
-    <!-- END BLOCK 1 -->
+    <!-- [End Block 2] -->
 
 </div>
 
+<!-- ==========================================================
+     [Start Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
+     ========================================================== -->
 <script>
-    /* ==========================================================
-       BLOCK 2: LOGIC & EVENT HANDLERS
-       ========================================================== */
-
-    /* ----------------------------------------------------------
-       BLOCK 2.1: PREVENT GESTURE-BASED ZOOM
-       ---------------------------------------------------------- */
+    /* --- [Start Block 3.1] PREVENT GESTURE-BASED ZOOM --- */
     document.addEventListener('gesturestart', function (e) {
         e.preventDefault();
     }, { passive: false });
@@ -249,13 +242,11 @@
     document.addEventListener('gestureend', function (e) {
         e.preventDefault();
     }, { passive: false });
-    /* END BLOCK 2.1 */
+    /* --- [End Block 3.1] --- */
 
     let lastTouchEnd = 0;
 
-    /* ----------------------------------------------------------
-       BLOCK 2.2: PREVENT DOUBLE-TAP ZOOM AND MULTI-TOUCH
-       ---------------------------------------------------------- */
+    /* --- [Start Block 3.2] PREVENT DOUBLE-TAP ZOOM AND MULTI-TOUCH --- */
     document.addEventListener('touchend', function (event) {
         const now = new Date().getTime();
 
@@ -271,19 +262,14 @@
             event.preventDefault();
         }
     }, { passive: false });
-    /* END BLOCK 2.2 */
+    /* --- [End Block 3.2] --- */
 
-    /* ----------------------------------------------------------
-       BLOCK 2.3: NAVIGATE TO THE SPECIFIED PAGE
-       ---------------------------------------------------------- */
+    /* --- [Start Block 3.3] NAVIGATE TO THE SPECIFIED PAGE --- */
     function goToPage(url) {
         window.location.href = url;
     }
-    /* END BLOCK 2.3 */
-
-    /* ==========================================================
-       END BLOCK 2: LOGIC & EVENT HANDLERS
-       ========================================================== */
+    /* --- [End Block 3.3] --- */
 </script>
+<!-- [End Block 3] -->
 </body>
 </html>

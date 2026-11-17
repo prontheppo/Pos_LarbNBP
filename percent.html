@@ -1,24 +1,9 @@
 <!--
   ========================================================================
   FILE NAME: salereport.html
-  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 10 บล็อกย่อย ดังသည်။
-
+  SUMMARY: แบ่งโครงสร้างออกเป็น 2 บล็อกหลัก และ 9 บล็อกย่อย ดังนี้
    - [บล็อก 1] UI Components & Layout (ส่วนแสดงผลหน้าจอผู้ใช้)
-     (ประกอบด้วย 6 หัวข้อ)
-       - [บล็อก 1.1] HEADER AND TAB NAVIGATION (ส่วนหัวและแถบสลับแท็บเมนู)
-       - [บล็อก 1.2] SALES OVERVIEW TAB (แท็บสรุปยอดขายย้อนหลัง)
-       - [บล็อก 1.3] DAILY ORDERS TAB (แท็บรายงานออร์เดอร์รายวัน)
-       - [บล็อก 1.4] GROUP SALES TAB (แท็บยอดขายแยกตามกลุ่มลูกค้า)
-       - [บล็อก 1.5] GROUP SALES DETAIL MODAL (Modal รายละเอียดกลุ่มลูกค้า)
-       - [บล็อก 1.6] DATE PICKER CALENDAR MODAL (Modal ปฏิทินเลือกวันที่)
-       - [บล็อก 1.7] CSS STYLES (รูปแบบ CSS)
-
    - [บล็อก 2] Logic & Database Operations (ระบบการทำงานและการจัดการฐานข้อมูล)
-     (ประกอบด้วย 4 หัวข้อ)
-       - [บล็อก 2.1] DATE UTILITIES, DATA STRUCTURE, AND INITIALIZATION (ฟังก์ชันวันที่ โครงสร้างข้อมูล และการเริ่มต้นทำงาน)
-       - [บล็อก 2.2] FETCH SUPABASE DATA AND MANAGE CACHE (การดึงข้อมูลจาก Supabase และการจัดเก็บแคช)
-       - [บล็อก 2.3] TAB NAVIGATION AND CALENDAR MANAGEMENT (การสลับแท็บและจัดการปฏิทิน)
-       - [บล็อก 2.4] RENDER OVERVIEW, DAILY ORDERS, GROUP SALES, AND MODALS (การแสดงผลรายการออร์เดอร์ รายงานกลุ่มลูกค้า และ Modal)
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -344,27 +329,25 @@
             }
         });
 
-        // --- คำนวณเปอร์เซ็นต์ค่าคอมมิชชันของรีสอร์ตตามเงื่อนไขใหม่ ---
+        // --- คำนวณเปอร์เซ็นต์ค่าคอมมิชชันของรีสอร์ต ---
         let commissionPercent = 0;
         let resortName = "";
-        if (order.location_id) {
-            const foundLoc = locationsCache.find(l => String(l.location_id) === String(order.location_id));
+        let locationId = order.location_id || "";
+        if (locationId) {
+            const foundLoc = locationsCache.find(l => String(l.location_id) === String(locationId));
             if (foundLoc) {
                 resortName = foundLoc.location_name || "";
                 commissionPercent = Number(foundLoc.commission_percent || 0);
             }
         }
 
-        // ฐานในการคิดเปอร์เซ็นต์: ยอดรวมอาหาร (subtotal) - ต้นทุนสินค้าฝากซื้อ - ค่าส่ง
         let commissionBase = subtotal - consignmentTotal - deliveryFee;
         if (commissionBase < 0) commissionBase = 0;
 
-        // ปัดเศษลงทุกๆ หลักร้อย (เช่น 120 -> 100, 190 -> 100, 350 -> 300)
         let roundedBase = Math.floor(commissionBase / 100) * 100;
         let commissionBaht = commissionPercent > 0 ? Math.round(roundedBase * (commissionPercent / 100)) : 0;
 
-        // --- รายจ่ายรวม (ต้นทุนสินค้าฝากซื้อ + คอมมิชชันรีสอร์ต) ---
-        let totalExpense = consignmentTotal + commissionBaht;
+        let totalExpense = consignmentTotal;
         let netProfitTotal = billTotal - totalExpense;
 
         let groupTypeName = "ชาวบ้าน";
@@ -404,6 +387,7 @@
             netProfitTotal,
             hasExpense: totalExpense > 0,
             groupTypeName,
+            resortName: resortName || (typeId === 2 ? groupTypeName : "ไม่ระบุรีสอร์ต"),
             displayCustomerName: zoneOnly,
             dateStr: getOrderDateStr(order)
         };
@@ -671,25 +655,13 @@
                         </div>
                     </div>` : '';
 
-                let commissionBox = order.commissionBaht > 0 ? `
-                    <div class="bg-purple-50 border border-purple-300 rounded-lg p-2 space-y-1 text-[11px]">
-                        <div class="flex justify-between items-center font-bold text-purple-900">
-                            <span>🟣 ค่าคอมมิชชันรีสอร์ต (${order.commissionPercent}%):</span>
-                            <span class="font-extrabold text-purple-700 text-xs">฿${order.commissionBaht.toLocaleString()}.-</span>
-                        </div>
-                        <div class="text-[10px] text-slate-500">
-                            (จากฐานรายรับสุทธิ ฿${order.commissionBase} ➔ ปัดเศษลงเหลือ ฿${order.roundedBase})
-                        </div>
-                    </div>` : '';
-
                 expenseSection = `
                     <div class="space-y-1">
                         ${consignmentBox}
-                        ${commissionBox}
                     </div>
 
                     <div class="bg-emerald-50 border border-emerald-300 rounded-lg p-2 flex justify-between items-center text-xs mt-1.5">
-                        <span class="font-bold text-emerald-900 flex items-center gap-1"><span>🟢</span> <span>สรุปยอดรับสุทธิ (หักรายจ่ายทั้งหมด):</span></span>
+                        <span class="font-bold text-emerald-900 flex items-center gap-1"><span>🟢</span> <span>สรุปยอดรับสุทธิ (หักต้นทุนฝากซื้อ):</span></span>
                         <span class="font-black text-emerald-600 text-sm">฿${order.netProfitTotal.toLocaleString()}.-</span>
                     </div>
                 `;
@@ -744,13 +716,14 @@
             let groupKey = order.groupTypeName;
 
             if (!globalGroupData[groupKey]) {
-                globalGroupData[groupKey] = { orderCount: 0, totalIncome: 0, totalExpense: 0, netTotal: 0, orders: [] };
+                globalGroupData[groupKey] = { orderCount: 0, totalIncome: 0, totalExpense: 0, netTotal: 0, totalCommission: 0, orders: [] };
             }
 
             globalGroupData[groupKey].orderCount += 1;
             globalGroupData[groupKey].totalIncome += order.computedTotal;
             globalGroupData[groupKey].totalExpense += order.totalExpense;
             globalGroupData[groupKey].netTotal += order.netProfitTotal;
+            globalGroupData[groupKey].totalCommission += order.commissionBaht;
             globalGroupData[groupKey].orders.push(order);
 
             grandTotalOrders += 1;
@@ -772,11 +745,13 @@
 
         let html = '';
         for (let [groupName, data] of Object.entries(globalGroupData)) {
+            let commTag = data.totalCommission > 0 ? `<span class="bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5 rounded font-bold ml-1">คอมรวม ฿${data.totalCommission.toLocaleString()}</span>` : '';
             html += `
                 <div onclick="openGroupModal('${groupName}')" class="bg-white border border-slate-200 hover:border-blue-400 active:scale-95 cursor-pointer transition rounded-xl p-3.5 flex justify-between items-center shadow-xs">
                     <div>
-                        <div class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-                            <span>👥 กลุ่ม:</span> <span class="text-blue-600 font-extrabold truncate max-w-[180px]">${groupName}</span>
+                        <div class="font-bold text-xs text-slate-800 flex items-center gap-1.5 flex-wrap">
+                            <span>👥 กลุ่ม:</span> <span class="text-blue-600 font-extrabold truncate max-w-[150px]">${groupName}</span>
+                            ${commTag}
                         </div>
                         <div class="text-[11px] text-slate-500 mt-1">จำนวนบิล: <span class="font-bold text-slate-700">${data.orderCount} บิล</span> <span class="text-blue-500 ml-1 font-semibold">(ดูรายละเอียด 🔍)</span></div>
                         <div class="text-[10px] text-slate-500 mt-0.5 space-x-2">
@@ -797,8 +772,9 @@
         const group = globalGroupData[groupName];
         if (!group) return;
 
+        let totalCommHeader = group.totalCommission > 0 ? ` | ยอดคอมรวม: ฿${group.totalCommission.toLocaleString()}` : '';
         document.getElementById('modalGroupName').textContent = `👥 กลุ่ม: ${groupName}`;
-        document.getElementById('modalGroupMeta').textContent = `จำนวนบิลทั้งหมด: ${group.orderCount} บิล (รายรับ ฿${group.totalIncome.toLocaleString()} | รายจ่าย ฿${group.totalExpense.toLocaleString()})`;
+        document.getElementById('modalGroupMeta').textContent = `จำนวนบิลทั้งหมด: ${group.orderCount} บิล (รายรับ ฿${group.totalIncome.toLocaleString()} | รายจ่าย ฿${group.totalExpense.toLocaleString()}${totalCommHeader})`;
         document.getElementById('modalGroupTotal').textContent = `฿${group.netTotal.toLocaleString()}.-`;
 
         let listHtml = '';
@@ -819,51 +795,18 @@
                 </div>`;
             }
 
-            let expenseSection = '';
-            if (o.hasExpense) {
-                let yellowItemsHtml = o.parsedItems.filter(i => i.isConsignment).map(item => {
-                    return `<div class="text-[10px] flex justify-between items-center text-yellow-900 py-0.5">
-                        <span>• ${item.name} x${item.qty}</span>
-                        <span class="font-bold">฿${item.costPrice.toLocaleString()}</span>
+            let commissionBox = '';
+            if (o.commissionBaht > 0) {
+                commissionBox = `
+                    <div class="bg-amber-50 border border-amber-300 rounded-lg p-2 my-1.5 flex justify-between items-center text-xs">
+                        <span class="font-bold text-amber-900 flex items-center gap-1"><span>💰</span> <span>ค่าคอมมิชชัน (${o.commissionPercent}%):</span></span>
+                        <span class="font-black text-amber-700 text-sm">฿${o.commissionBaht.toLocaleString()}.-</span>
                     </div>`;
-                }).join('');
-
-                let consignmentBox = o.consignmentTotal > 0 ? `
-                    <div class="bg-yellow-50/80 border border-yellow-300 rounded-lg p-2 space-y-1 mb-1">
-                        <div class="text-[10px] font-bold text-yellow-900">🟡 รายจ่ายซื้อของฝากขาย (ต้นทุน):</div>
-                        ${yellowItemsHtml}
-                        <div class="flex justify-between items-center text-[10px] font-extrabold text-yellow-900 pt-1 border-t border-yellow-200">
-                            <span>รวมต้นทุนสินค้า:</span>
-                            <span>฿${o.consignmentTotal.toLocaleString()}.-</span>
-                        </div>
-                    </div>` : '';
-
-                let commissionBox = o.commissionBaht > 0 ? `
-                    <div class="bg-purple-50 border border-purple-300 rounded-lg p-1.5 text-[10px] mb-1">
-                        <div class="flex justify-between items-center font-bold text-purple-900">
-                            <span>🟣 ค่าคอมมิชชันรีสอร์ต (${o.commissionPercent}%):</span>
-                            <span class="font-extrabold text-purple-700">฿${o.commissionBaht.toLocaleString()}.-</span>
-                        </div>
-                        <div class="text-[9px] text-slate-500">
-                            (ฐาน ฿${o.commissionBase} ➔ ปัดลง ฿${o.roundedBase})
-                        </div>
-                    </div>` : '';
-
-                expenseSection = `
-                    <div class="space-y-1 my-1">
-                        ${consignmentBox}
-                        ${commissionBox}
-                    </div>
-                    <div class="bg-emerald-50 border border-emerald-300 rounded-lg p-1.5 flex justify-between items-center text-[11px]">
-                        <span class="font-bold text-emerald-900">🟢 สรุปยอดรับสุทธิ:</span>
-                        <span class="font-black text-emerald-600">฿${o.netProfitTotal.toLocaleString()}.-</span>
-                    </div>
-                `;
             }
 
             let orderId = o.order_id || o.id;
             listHtml += `
-                <div onclick="goToEditOrder(${orderId})" class="bg-white p-3 rounded-xl border-2 border-red-500 shadow-md space-y-3 cursor-pointer transition active:scale-95">
+                <div onclick="goToEditOrder(${orderId})" class="bg-white p-3 rounded-xl border-2 border-red-500 shadow-md space-y-2 cursor-pointer transition active:scale-95">
                     <div class="flex justify-between items-center border-b border-slate-200 pb-2">
                         <span class="font-bold text-xs text-amber-900 bg-amber-100 px-2.5 py-0.5 rounded">${groupName} ✏️</span>
                         <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded truncate max-w-[200px]">👤 ${o.displayCustomerName}</span>
@@ -872,7 +815,7 @@
                         <div class="text-[10px] font-bold text-red-800 mb-1">🔴 รายรับทั้งหมด:</div>
                         <div class="space-y-1">${redItemsHtml}</div>
                     </div>
-                    ${expenseSection}
+                    ${commissionBox}
                     <div class="flex justify-between pt-1 text-xs font-bold border-t border-slate-200">
                         <span>ยอดรวมบิล:</span>
                         <span class="text-emerald-600 text-sm font-black">฿${o.computedTotal.toLocaleString()}.-</span>

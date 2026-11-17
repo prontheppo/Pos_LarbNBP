@@ -1,6 +1,15 @@
+<!--
+  ========================================================================
+  FILE NAME: ordersystem.html
+  SUMMARY: ระบบรับออเดอร์ร้านลาบหนองบัวลำภู พร้อมโครงสร้างบล็อกสากลและระบบจัดการตะกร้าสินค้า
+  ========================================================================
+-->
+
+<!-- [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
+    <!-- [Start Block 1.1] META TAGS & EXTERNAL DEPENDENCIES -->
     <script src="appInit.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
@@ -11,7 +20,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+    <!-- [End Block 1.1] -->
+
+    <!-- [Start Block 1.2] CORE CSS STYLES -->
     <style>
         :root { --bg-color: #f8fafc; }
         html, body { 
@@ -66,12 +77,16 @@
             .no-print { display: none !important; }
         }
     </style>
+    <!-- [End Block 1.2] -->
 </head>
+<!-- [End Block 1] -->
+
 <body class="bg-slate-50 text-slate-800 antialiased flex flex-col min-h-screen">
 
+    <!-- [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
     <div class="flex-1 w-full max-w-xl mx-auto p-3 flex flex-col relative">
         
-        <!-- TAB 1 -->
+        <!-- [Start Block 2.1] TAB 1: FOOD CATEGORY & SELECTION -->
         <div id="tabContent1" class="flex flex-col w-full flex-1 min-h-0">
             <div class="pb-2 flex-shrink-0">
                 <div class="bg-white p-2.5 px-4 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
@@ -90,8 +105,9 @@
                 <button type="button" onclick="switchTab(2)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-2 rounded-2xl text-xs flex items-center justify-center gap-1 shadow active:scale-95 transition cursor-pointer">🔍 ไปตรวจสอบ</button>
             </div>
         </div>
+        <!-- [End Block 2.1] -->
 
-        <!-- TAB 2 -->
+        <!-- [Start Block 2.2] TAB 2: CART REVIEW & LOCATION SELECTION -->
         <div id="tabContent2" class="flex flex-col w-full hidden">
             <div id="locationSelectorWrapper" class="flex-shrink-0 mb-2"></div>
             <div class="flex-1 flex flex-col min-h-0 gap-2 mb-4">
@@ -106,7 +122,7 @@
                     </div>
                     <div class="flex-1 overflow-y-auto pr-1">
                         <div id="cartPreviewList" class="flex flex-col">
-                            <span class="text-gray-400 text-xs py-8 text-center block">⏳ กำลังโหลดรายการ...</span>
+                            <span class="text-gray-400 text-xs py-8 text-center block">⏳ กำลังโหลดรายการอาหาร...</span>
                         </div>
                     </div>
                 </div>
@@ -116,8 +132,9 @@
                 <button type="button" onclick="goToPrintOrder()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-3 rounded-xl text-xs flex-1 shadow transition flex items-center justify-center gap-1 cursor-pointer">✅ ไปหน้าสรุป/พิมพ์</button>
             </div>
         </div>
+        <!-- [End Block 2.2] -->
 
-        <!-- TAB 3 -->
+        <!-- [Start Block 2.3] TAB 3: ORDER SUMMARY & PRINT PREVIEW -->
         <div id="tabContent3" class="flex flex-col w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-4 hidden mb-4">
             <div class="text-center mb-2 pb-1 flex-shrink-0">
                 <h2 class="font-extrabold text-slate-800 text-base leading-tight">ลาบหนองบัวลำภู @เขื่อนขุนด่าน</h2>
@@ -128,7 +145,7 @@
                 <div class="border-2 border-slate-800 rounded-xl p-3 flex-1 flex flex-col min-h-0 mb-2" style="max-height: 40vh;">
                     <div class="flex-1 overflow-y-auto pr-1">
                         <div id="itemListContainer" class="w-full space-y-1">
-                            <p class="text-slate-300 font-bold text-center text-xs my-auto py-4">ไม่มีรายการอาหาร</p>
+                            <p class="text-slate-300 font-bold text-center text-xs my-auto py-4">⏳ ไม่มีรายการอาหาร</p>
                         </div>
                     </div>
                 </div>
@@ -152,10 +169,13 @@
                 <button type="button" onclick="goToPrintOrder()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl shadow transition cursor-pointer">🖨️ ไปหน้าพิมพ์ (Print Order)</button>
             </div>
         </div>
+        <!-- [End Block 2.3] -->
 
     </div>
+    <!-- [End Block 2] -->
 
-    <!-- POPUP MODAL -->
+    <!-- [Start Block 3] MODALS & POPUP OVERLAYS -->
+    <!-- [Start Block 3.1] DYNAMIC POPUP IFRAME MODAL -->
     <div id="dynamicPopupOverlay" class="custom-modal-overlay" onclick="handleOverlayClick()">
         <div id="popupContainerBox" class="popup-container" onclick="event.stopPropagation()">
             <div class="popup-content-wrapper">
@@ -163,8 +183,9 @@
             </div>
         </div>
     </div>
+    <!-- [End Block 3.1] -->
 
-    <!-- CONFIRM CLEAR MODAL -->
+    <!-- [Start Block 3.2] CONFIRM CLEAR CART MODAL -->
     <div id="confirmClearModalOverlay" class="custom-modal-overlay" onclick="closeConfirmClearModal()">
         <div class="bg-white rounded-3xl max-w-xs w-full p-5 text-center border border-slate-200 shadow-2xl m-4" onclick="event.stopPropagation()">
             <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-3 text-xl font-bold">🗑️</div>
@@ -176,8 +197,12 @@
             </div>
         </div>
     </div>
+    <!-- [End Block 3.2] -->
+    <!-- [End Block 3] -->
 
+    <!-- [Start Block 4] JAVASCRIPT LOGIC & STATE MANAGEMENT -->
     <script>
+        /* --- [Start Block 4.1] Global State & LocalStorage --- */
         let cart = readCartFromStorage();
         let dbFoodsMap = {};
         let locationsData = [];
@@ -216,7 +241,10 @@
         };
         let currentOrderSummary = { itemsCount: 0, totalQty: 0, subtotal: 0, deliveryFee: 0, grandTotal: 0, processedCart: [] };
         let processedItemsForDb = [];
+        /* --- [End Block 4.1] --- */
 
+
+        /* --- [Start Block 4.2] Initialization & Data Fetching --- */
         window.addEventListener('DOMContentLoaded', async () => {
             await Promise.all([
                 fetchLatestFoods(),
@@ -234,8 +262,10 @@
                 switchTab(parseInt(targetTab, 10));
             }
         });
+        /* --- [End Block 4.2] --- */
 
-        // CENTRALIZED POSTMESSAGE HANDLER
+
+        /* --- [Start Block 4.3] PostMessage Communication --- */
         window.addEventListener('message', (event) => {
             const foodGroupFrame = document.getElementById('foodGroupFrame');
             const popupIframe = document.getElementById('popupIframe');
@@ -357,7 +387,10 @@
                 }, getAppOrigin());
             }
         }
+        /* --- [End Block 4.3] --- */
 
+
+        /* --- [Start Block 4.4] Navigation & Tab Switching --- */
         function switchTab(tabIndex) {
             closeDynamicPopup();
             for (let i = 1; i <= 3; i++) {
@@ -371,7 +404,10 @@
             if (tabIndex === 2 || tabIndex === 3) renderOrderSummary();
             if (tabIndex === 3) renderPrintPreviewTab3();
         }
+        /* --- [End Block 4.4] --- */
 
+
+        /* --- [Start Block 4.5] Cart Management & Pricing --- */
         function updateCartUI() {
             cart = readCartFromStorage();
             const totalItems = cart.length;
@@ -382,7 +418,6 @@
             
             sendDataToFoodGroupFrame();
             
-            // ส่งอัปเดตไปให้ popup ถ้าเปิดอยู่
             const popupIframe = document.getElementById('popupIframe');
             if (popupIframe && popupIframe.contentWindow) {
                 if (popupIframe.getAttribute('src')) {
@@ -429,7 +464,10 @@
             closeConfirmClearModal();
             updateCartUI();
         }
+        /* --- [End Block 4.5] --- */
 
+
+        /* --- [Start Block 4.6] Popup Navigation Handlers --- */
         function openDynamicPopup(url, keepPrevious = false, restoring = false) {
             const overlay = document.getElementById('dynamicPopupOverlay');
             const iframe = document.getElementById('popupIframe');
@@ -471,7 +509,10 @@
             document.getElementById('popupIframe').src = '';
             updateCartUI();
         }
+        /* --- [End Block 4.6] --- */
 
+
+        /* --- [Start Block 4.7] Supabase Data Fetchers & Customer Management --- */
         function removevenDuplicateWords(text) {
             if (!text) return '';
             const parts = text.trim().split(/\s+/);
@@ -601,7 +642,10 @@
                 sendDataToFoodGroupFrame();
             }
         }
+        /* --- [End Block 4.7] --- */
 
+
+        /* --- [Start Block 4.8] Order Summary & Render Previews --- */
         function getGroupBasePrice(item, groupId) {
             if (item.price !== undefined && item.price !== null && item.price !== "" && !isNaN(Number(item.price)) && Number(item.price) > 0) {
                 return Number(item.price);
@@ -635,7 +679,7 @@
             if (!listContainer) return;
 
             if (cart.length === 0) {
-                listContainer.innerHTML = '<span class="text-gray-400 text-xs py-8 text-center block">ไม่มีรายการอาหารในตะกร้า</span>';
+                listContainer.innerHTML = '<span class="text-gray-400 text-xs py-8 text-center block">⏳ กำลังโหลดรายการอาหาร...</span>';
                 document.getElementById('cartTotalPrice').textContent = 'รวม 0.-';
                 currentOrderSummary = { itemsCount: 0, totalQty: 0, subtotal: 0, deliveryFee: 0, grandTotal: 0, processedCart: [] };
                 return;
@@ -867,6 +911,9 @@
             sessionStorage.setItem('printOrderData', JSON.stringify(orderPayload));
             window.location.href = 'printorder.html';
         }
+        /* --- [End Block 4.8] --- */
     </script>
+    <!-- [End Block 4] -->
+
 </body>
 </html>
