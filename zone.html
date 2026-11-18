@@ -1,7 +1,7 @@
 <!--
   ========================================================================
   FILE NAME: zone.html
-  SUMMARY: หน้ากาก UI แสดงรายชื่อโซนหรือห้องพัก พร้อมช่องเพิ่มโซนใหม่และ postMessage
+  SUMMARY: หน้ากาก UI แสดงรายชื่อโซนหรือห้องพัก รับข้อมูลผ่าน postMessage
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -32,69 +32,52 @@
 <body class="bg-slate-50 text-slate-800 flex flex-col items-center justify-start p-2">
 
     <div class="w-full max-w-xl mx-auto flex flex-col space-y-3">
-        <!-- ช่องสำหรับเพิ่มโซน/ห้องพักใหม่ (ตามรูปที่ 2) -->
+        <!-- ช่องสำหรับเพิ่มโซน/ห้องพักใหม่ -->
         <div id="addZoneSection" class="bg-blue-50 p-2.5 rounded-2xl border border-blue-200 flex gap-2 shadow-2xs">
             <input type="text" id="newZoneInput" placeholder="➕ เพิ่มโซน/ห้องพักใหม่..." class="flex-1 h-10 px-3 text-xs rounded-xl border border-blue-300 bg-white outline-none font-semibold text-slate-800">
-            <button type="button" onclick="addNewZone()" class="h-10 px-4 bg-blue-500 hover:bg-blue-600 active:scale-95 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-sm shrink-0">+ เพิ่ม</button>
+            <button type="button" onclick="requestAddNewZone()" class="h-10 px-4 bg-blue-500 hover:bg-blue-600 active:scale-95 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-sm shrink-0">+ เพิ่ม</button>
         </div>
 
         <div id="zoneGridContainer" class="zone-wrap">
-            <div class="col-span-2 text-center py-6 text-slate-400 font-bold text-base">⏳ กำลังโหลดโซน/ห้องพัก...</div>
+            <div class="col-span-2 text-center py-6 text-slate-400 font-bold text-base">⏳ กำลังรอข้อมูลโซน/ห้องพัก...</div>
         </div>
     </div>
 
     <script>
         let cachedZones = [];
-
-        window.addEventListener('DOMContentLoaded', async () => {
-            await fetchStandaloneZones();
-        });
-
-        async function fetchStandaloneZones() {
-            const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
-            if (!client) {
-                document.getElementById('zoneGridContainer').innerHTML = '<div class="col-span-2 text-center text-rose-500 text-xs py-4">ไม่พบการเชื่อมต่อ Supabase</div>';
-                return;
-            }
-            try {
-                const { data } = await client.from('location_zone').select('*').order('zone_name', { ascending: true });
-                if (data) cachedZones = data;
-                renderZones(cachedZones);
-            } catch (err) { console.error("Load error:", err); }
-        }
+        let currentLocationId = null;
 
         window.addEventListener('message', (event) => {
             if (event.source !== window.parent || event.origin !== window.location.origin) return;
-            const { type, zones } = event.data || {};
+            const { type, zones, locationId } = event.data || {};
             if (type === 'RENDER_ZONES') {
-                cachedZones = zones || cachedZones;
+                cachedZones = zones || [];
+                if (locationId) currentLocationId = locationId;
                 renderZones(cachedZones);
             }
         });
 
-        async function addNewZone() {
+        function requestAddNewZone() {
             const input = document.getElementById('newZoneInput');
             const name = input.value.trim();
             if (!name) return;
-            const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
-            if (!client) return;
-            try {
-                const { data, error } = await client.from('location_zone').insert([{ zone_name: name }]).select().single();
-                if (error) throw error;
-                if (data) cachedZones.push(data);
-                input.value = '';
-                renderZones(cachedZones);
-            } catch (err) {
-                console.error("Add zone error:", err);
-                alert("ไม่สามารถเพิ่มโซนได้");
+
+            if (window.self !== window.top) {
+                window.parent.postMessage({ 
+                    type: 'ADD_NEW_ZONE', 
+                    zoneName: name, 
+                    locationId: currentLocationId 
+                }, window.location.origin);
             }
+            input.value = '';
         }
 
         function renderZones(zones) {
             const container = document.getElementById('zoneGridContainer');
             if (!container) return;
+
             if (!zones || zones.length === 0) {
-                container.innerHTML = '<div class="col-span-2 text-center py-6 text-slate-400 font-bold text-base">ไม่พบข้อมูลโซน/ห้องพัก</div>';
+                container.innerHTML = '<div class="col-span-2 text-center py-6 text-slate-400 font-bold text-base">ไม่พบข้อมูลโซน/ห้องพักในสถานที่นี้</div>';
                 updateParentHeight();
                 return;
             }

@@ -1,11 +1,9 @@
 <!--
   ========================================================================
   FILE NAME: ordersystem.html
-  SUMMARY: ระบบรับออเดอร์ร้านลาบหนองบัวลำภู เชื่อมต่อ UI location_zone.html ผ่าน postMessage
+  SUMMARY: ระบบรับออเดอร์ร้านลาบหนองบัวลำภู เชื่อมต่อ UI location.html และ zone.html ผ่าน postMessage พร้อมระบบกรองโซน
   ========================================================================
 -->
-
-<!-- [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -46,8 +44,6 @@
             width: 100%; background: #ffffff; overflow-y: auto !important; display: flex; flex-direction: column; 
             max-height: 85vh !important; border-radius: 1.5rem !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
         }
-
-        
         
         #locationFrame {
             width: 100%; height: auto; min-height: 350px; max-height: calc(90vh - 2rem);
@@ -82,8 +78,6 @@
 <body class="bg-slate-50 text-slate-800 antialiased flex flex-col min-h-screen">
 
     <div class="flex-1 w-full max-w-xl mx-auto p-3 flex flex-col relative">
-        
-        <!-- [Start Block 2.1] TAB 1: FOOD CATEGORY & SELECTION -->
         <div id="tabContent1" class="flex flex-col w-full flex-1 min-h-0">
             <div class="pb-2 flex-shrink-0">
                 <div class="bg-white p-2.5 px-4 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
@@ -91,11 +85,9 @@
                     <span class="text-emerald-600 font-extrabold text-base" id="cartCountTextTab1">0 รายการ | 0 ชิ้น</span>
                 </div>
             </div>
-            
             <div class="w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1 min-h-[300px]">
                 <iframe id="foodGroupFrame" src="foodgroup.html" class="w-full h-full border-0"></iframe>
             </div>
-
             <div class="pt-2 pb-4 grid grid-cols-3 gap-2 flex-shrink-0">
                 <button type="button" onclick="window.location.href='index.html'" class="bg-white text-slate-700 border border-slate-300 font-bold py-2.5 px-2 rounded-2xl text-xs flex items-center justify-center gap-1 shadow active:scale-95 transition cursor-pointer">🏠 หน้าหลัก</button>
                 <button type="button" onclick="confirmClearCart()" class="bg-rose-50 text-rose-600 border border-rose-200 font-bold py-2.5 px-2 rounded-2xl text-xs flex items-center justify-center gap-1 shadow active:scale-95 transition cursor-pointer">🗑️ ล้างตะกร้า</button>
@@ -103,7 +95,6 @@
             </div>
         </div>
 
-        <!-- [Start Block 2.2] TAB 2: CART REVIEW & LOCATION SELECTION -->
         <div id="tabContent2" class="flex flex-col w-full hidden">
             <div id="locationSelectorWrapper" class="flex-shrink-0 mb-2"></div>
             <div class="flex-1 flex flex-col min-h-0 gap-2 mb-4">
@@ -129,7 +120,6 @@
             </div>
         </div>
 
-        <!-- [Start Block 2.3] TAB 3: ORDER SUMMARY & PRINT PREVIEW -->
         <div id="tabContent3" class="flex flex-col w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-4 hidden mb-4">
             <div class="text-center mb-2 pb-1 flex-shrink-0">
                 <h2 class="font-extrabold text-slate-800 text-base leading-tight">ลาบหนองบัวลำภู @เขื่อนขุนด่าน</h2>
@@ -164,10 +154,8 @@
                 <button type="button" onclick="goToPrintOrder()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl shadow transition cursor-pointer">🖨️ ไปหน้าพิมพ์ (Print Order)</button>
             </div>
         </div>
-
     </div>
 
-    <!-- MODALS & POPUP OVERLAYS -->
     <div id="dynamicPopupOverlay" class="custom-modal-overlay" onclick="handleOverlayClick()">
         <div id="popupContainerBox" class="popup-container" onclick="event.stopPropagation()">
             <div class="popup-content-wrapper">
@@ -180,7 +168,7 @@
         <div class="popup-container" onclick="event.stopPropagation()">
             <div class="popup-content-wrapper">
                 <div class="flex justify-between items-center px-4 py-3 bg-slate-50 border-b border-slate-100 shrink-0">
-                    <div class="flex items-center gap-2"><span>📍</span><h2 class="font-extrabold text-xs text-slate-800" id="locationModalTitle">เลือกสถานที่ / โซน</h2></div>
+                    <div class="flex items-center gap-2"><span>📍</span><h2 class="font-extrabold text-xs text-slate-800" id="locationModalTitle">เลือกสถานที่จัดส่ง</h2></div>
                     <button type="button" onclick="toggleLocationModal(false)" class="text-slate-400 hover:text-slate-600 font-bold text-base px-2 cursor-pointer">✕</button>
                 </div>
                 <iframe id="locationFrame" src=""></iframe>
@@ -206,6 +194,8 @@
         let customersList = [];
         let selectedCustomerObj = null;
         let locationFoodPricesMap = {};
+        let locationsCache = [];
+        let zonesCache = [];
         let isDeliveryFeeWaived = false;
 
         let cachedCategories = [];
@@ -224,35 +214,20 @@
             }
         }
 
-        function persistCart() {
-            localStorage.setItem('cart', JSON.stringify(cart));
-        }
+        function persistCart() { localStorage.setItem('cart', JSON.stringify(cart)); }
+        function getAppOrigin() { return window.location.origin; }
 
-        function getAppOrigin() {
-            return window.location.origin;
-        }
-
-        let locationData = {
-            groupId: 1, groupName: 'ชาวบ้าน', phone: '', locationName: '', zoneName: '', locationId: null, zoneId: null
-        };
+        let locationData = { groupId: 1, groupName: 'ชาวบ้าน', phone: '', locationName: '', zoneName: '', locationId: null, zoneId: null };
         let currentOrderSummary = { itemsCount: 0, totalQty: 0, subtotal: 0, deliveryFee: 0, grandTotal: 0, processedCart: [] };
         let processedItemsForDb = [];
 
         window.addEventListener('DOMContentLoaded', async () => {
-            await Promise.all([
-                fetchLatestFoods(),
-                fetchCustomersData(),
-                fetchLocationFoodPrices()
-            ]);
-
+            await Promise.all([fetchLatestFoods(), fetchCustomersData(), fetchLocationFoodPrices(), fetchLocationsAndZones()]);
             initLocationComponent('locationSelectorWrapper');
             updateCartUI();
-
             const urlParams = new URLSearchParams(window.location.search);
             const targetTab = urlParams.get('tab');
-            if (targetTab && !isNaN(targetTab)) {
-                switchTab(parseInt(targetTab, 10));
-            }
+            if (targetTab && !isNaN(targetTab)) switchTab(parseInt(targetTab, 10));
         });
 
         window.addEventListener('message', (event) => {
@@ -268,7 +243,7 @@
             if (!event.data || typeof event.data !== 'object' || typeof event.data.type !== 'string') return;
 
             const data = event.data;
-            const { type, catId, catName, height, locationObj, group_id, group_name, cartItem } = data;
+            const { type, catId, catName, height, locationObj, zoneObj, group_id, group_name, cartItem } = data;
 
             if (type === 'RESIZE_POPUP' && isPopupMessage) {
                 const requestedHeight = Number(height);
@@ -291,15 +266,41 @@
             }
 
             if (type === 'SELECT_LOCATION' && isLocationMessage && locationObj && typeof locationObj === 'object') {
-                locationData.locationId = locationObj.location_id ?? null;
-                locationData.locationName = String(locationObj.location_name || '');
-                locationData.zoneId = locationObj.zone_id ?? null;
-                locationData.zoneName = String(locationObj.zone_name || '');
+                const targetLocId = locationObj.location_id ?? null;
+                const targetLocName = String(locationObj.location_name || '');
+
+                locationData.locationId = targetLocId;
+                locationData.locationName = targetLocName;
+
+                if (targetLocName.includes('หน้าร้าน')) {
+                    locationData.zoneId = null;
+                    locationData.zoneName = '';
+                    const btnText = document.getElementById('locationBtnText-locationSelectorWrapper');
+                    if (btnText) btnText.textContent = targetLocName;
+                    toggleLocationModal(false);
+                    renderOrderSummary();
+                    return;
+                }
+
+                const filteredZones = zonesCache.filter(z => Number(z.location_id) === Number(targetLocId));
+                document.getElementById('locationModalTitle').textContent = `เลือกโซน/ห้องพัก (${targetLocName})`;
+                locationFrame.src = 'zone.html';
+                locationFrame.onload = () => {
+                    locationFrame.contentWindow.postMessage({
+                        type: 'RENDER_ZONES',
+                        zones: filteredZones,
+                        locationId: targetLocId
+                    }, getAppOrigin());
+                };
+                return;
+            }
+
+            if (type === 'SELECT_ZONE' && isLocationMessage && zoneObj && typeof zoneObj === 'object') {
+                locationData.zoneId = zoneObj.zone_id ?? null;
+                locationData.zoneName = String(zoneObj.zone_name || '');
 
                 let fullDisplayName = locationData.locationName;
-                if (locationData.zoneName) {
-                    fullDisplayName += ` - ${locationData.zoneName}`;
-                }
+                if (locationData.zoneName) fullDisplayName += ` - ${locationData.zoneName}`;
 
                 const btnText = document.getElementById('locationBtnText-locationSelectorWrapper');
                 if (btnText) btnText.textContent = fullDisplayName;
@@ -309,7 +310,25 @@
                 return;
             }
 
-            // เปลี่ยนให้ทุกหมวดหมู่เรียกใช้ foodmenu.html ทั้งหมด (รวมถึงเมนูพิเศษและฝากซื้อ)
+            if (type === 'ADD_NEW_ZONE' && isLocationMessage) {
+                const { zoneName, locationId } = data;
+                if (zoneName && typeof supabaseClient !== 'undefined') {
+                    supabaseClient.from('location_zone').insert([{ zone_name: zoneName, location_id: locationId }]).select().single()
+                        .then(({ data: newZone, error }) => {
+                            if (!error && newZone) {
+                                zonesCache.push(newZone);
+                                const filteredZones = zonesCache.filter(z => Number(z.location_id) === Number(locationId));
+                                locationFrame.contentWindow.postMessage({
+                                    type: 'RENDER_ZONES',
+                                    zones: filteredZones,
+                                    locationId: locationId
+                                }, getAppOrigin());
+                            }
+                        });
+                }
+                return;
+            }
+
             if ((type === 'SELECT_CATEGORY' || type === 'OPEN_CONSIGNMENT_LIST') && isFoodGroupMessage) {
                 const safeCatId = Number(catId);
                 if (!Number.isFinite(safeCatId)) return;
@@ -331,29 +350,11 @@
                 return;
             }
 
-            if (type === 'BACK_TO_CATEGORY' && isPopupMessage) {
-                navigatePopupBack();
-                return;
-            }
-
-            if (type === 'ADD_TO_CART' && isPopupMessage && cartItem && typeof cartItem === 'object') {
-                addItemToCart(cartItem);
-                return;
-            }
-
-            if (type === 'DELETE_CART_ITEM_BY_ID' && isPopupMessage && data.itemId != null) {
-                removeCartItemById(data.itemId);
-                return;
-            }
-
-            if (type === 'CLOSE_ADD_MENU' && isPopupMessage) {
-                navigatePopupBack();
-                return;
-            }
-
-            if (type === 'CLOSE_POPUP' && isPopupMessage) {
-                closeDynamicPopup();
-            }
+            if (type === 'BACK_TO_CATEGORY' && isPopupMessage) { navigatePopupBack(); return; }
+            if (type === 'ADD_TO_CART' && isPopupMessage && cartItem && typeof cartItem === 'object') { addItemToCart(cartItem); return; }
+            if (type === 'DELETE_CART_ITEM_BY_ID' && isPopupMessage && data.itemId != null) { removeCartItemById(data.itemId); return; }
+            if (type === 'CLOSE_ADD_MENU' && isPopupMessage) { navigatePopupBack(); return; }
+            if (type === 'CLOSE_POPUP' && isPopupMessage) { closeDynamicPopup(); }
         });
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -377,12 +378,7 @@
         function sendDataToFoodGroupFrame() {
             const frame = document.getElementById('foodGroupFrame');
             if (frame && frame.contentWindow) {
-                frame.contentWindow.postMessage({
-                    type: 'RENDER_CATEGORIES',
-                    categories: cachedCategories,
-                    foods: cachedFoods,
-                    cart: cart
-                }, getAppOrigin());
+                frame.contentWindow.postMessage({ type: 'RENDER_CATEGORIES', categories: cachedCategories, foods: cachedFoods, cart: cart }, getAppOrigin());
             }
         }
 
@@ -405,18 +401,9 @@
             cart = readCartFromStorage();
             const totalItems = cart.length;
             const totalQty = cart.reduce((sum, item) => sum + (Number(item.qty) || 1), 0);
-            
             if(document.getElementById('cartCountTextTab1')) document.getElementById('cartCountTextTab1').textContent = `${totalItems} รายการ | ${totalQty} ชิ้น`;
             if(document.getElementById('cartCountTextTab2')) document.getElementById('cartCountTextTab2').textContent = `${totalItems} รายการ | ${totalQty} ชิ้น`;
-            
             sendDataToFoodGroupFrame();
-            
-            const popupIframe = document.getElementById('popupIframe');
-            if (popupIframe && popupIframe.contentWindow) {
-                if (popupIframe.getAttribute('src')) {
-                    popupIframe.contentWindow.postMessage({ type: 'UPDATE_CART_STATE', cart: cart }, getAppOrigin());
-                }
-            }
         }
 
         function addItemToCart(newItem) {
@@ -466,9 +453,7 @@
             if (!restoring) {
                 if (keepPrevious && overlay.classList.contains('active') && iframe.getAttribute('src')) {
                     popupHistory.push(iframe.getAttribute('src'));
-                } else if (!keepPrevious) {
-                    popupHistory = [];
-                }
+                } else if (!keepPrevious) { popupHistory = []; }
             }
 
             if (!keepPrevious) pendingFoodSelectInit = null;
@@ -479,18 +464,11 @@
         }
 
         function navigatePopupBack() {
-            if (popupHistory.length > 0) {
-                const previousUrl = popupHistory.pop();
-                openDynamicPopup(previousUrl, false, true);
-            } else {
-                closeDynamicPopup();
-            }
+            if (popupHistory.length > 0) openDynamicPopup(popupHistory.pop(), false, true);
+            else closeDynamicPopup();
         }
 
-        function handleOverlayClick() {
-            navigatePopupBack();
-        }
-
+        function handleOverlayClick() { navigatePopupBack(); }
         function closeDynamicPopup() {
             popupHistory = [];
             pendingFoodSelectInit = null;
@@ -582,16 +560,29 @@
         }
 
         function openLocationModal() {
-            document.getElementById('locationModalTitle').textContent = 'เลือกสถานที่ / โซน';
+            document.getElementById('locationModalTitle').textContent = '📍 เลือกสถานที่จัดส่ง';
             const iframe = document.getElementById('locationFrame');
-            iframe.src = 'location_zone.html';
+            iframe.src = 'location.html';
             toggleLocationModal(true);
+
+            iframe.onload = () => {
+                iframe.contentWindow.postMessage({ type: 'RENDER_LOCATIONS', locations: locationsCache, counts: {} }, getAppOrigin());
+            };
         }
 
         function toggleLocationModal(show) {
             document.getElementById('locationModalOverlay').classList.toggle('active', show);
-            if (!show) {
-                document.getElementById('locationFrame').src = '';
+            if (!show) document.getElementById('locationFrame').src = '';
+        }
+
+        async function fetchLocationsAndZones() {
+            if (typeof supabaseClient !== 'undefined') {
+                const [locRes, zoneRes] = await Promise.all([
+                    supabaseClient.from('locations').select('*').order('location_name', { ascending: true }),
+                    supabaseClient.from('location_zone').select('*').order('zone_name', { ascending: true })
+                ]);
+                if (locRes.data) locationsCache = locRes.data;
+                if (zoneRes.data) zonesCache = zoneRes.data;
             }
         }
 
@@ -653,10 +644,7 @@
             return Number(item.price || item.unit_price || 0);
         }
 
-        function removeDeliveryFee() {
-            isDeliveryFeeWaived = true;
-            renderOrderSummary();
-        }
+        function removeDeliveryFee() { isDeliveryFeeWaived = true; renderOrderSummary(); }
 
         function renderOrderSummary() {
             cart = readCartFromStorage();
@@ -769,10 +757,7 @@
             };
         }
 
-        function removeCartItem(itemId) {
-            removeCartItemById(itemId);
-            renderOrderSummary();
-        }
+        function removeCartItem(itemId) { removeCartItemById(itemId); renderOrderSummary(); }
 
         function renderPrintPreviewTab3() {
             const container = document.getElementById('itemListContainer');

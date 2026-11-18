@@ -1,7 +1,7 @@
 <!--
   ========================================================================
   FILE NAME: editorder.html
-  SUMMARY: หน้าแก้ไขออร์เดอร์ พร้อมระบบ Popup Iframe, Auto-Resize และโครงสร้าง Block สากล
+  SUMMARY: หน้าแก้ไขออร์เดอร์ พร้อมระบบ Popup Iframe, Auto-Resize และโครงสร้าง Block สากล พร้อมกรองโซน
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -16,9 +16,6 @@
     <script src="supabaseClient.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <!-- ========================================================================
-       [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
-       ======================================================================== -->
     <style>
       :root { --bg-color: #f8fafc; }
       html, body { height: 100dvh; margin: 0; padding: 0; font-family: 'Sarabun', system-ui, -apple-system, sans-serif; background-color: var(--bg-color); touch-action: pan-y; -webkit-user-select: none; user-select: none; }
@@ -52,34 +49,16 @@
       .custom-modal-overlay.active { display: flex !important; }
 
       .popup-container {
-          background: #ffffff !important; 
-          width: 100% !important; 
-          max-width: 28rem !important;
-          height: auto !important; 
-          max-height: 92vh !important; 
-          border-radius: 1.5rem !important; 
+          background: #ffffff !important; width: 100% !important; max-width: 28rem !important;
+          height: auto !important; max-height: 92vh !important; border-radius: 1.5rem !important; 
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
-          display: flex; flex-direction: column; 
-          overflow: hidden !important; 
-          position: relative;
+          display: flex; flex-direction: column; overflow: hidden !important; position: relative;
           animation: popupFadeIn 0.2s ease-out;
       }
       @keyframes popupFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
       
-      .popup-content-wrapper { 
-          width: 100%; 
-          background: #ffffff; 
-          display: flex; flex-direction: column; 
-          overflow-y: auto; 
-          border-radius: 1.5rem !important; 
-      }
-      
-      #popupIframe {
-          width: 100%; 
-          height: auto; 
-          border: 0; display: block; 
-          background: transparent;
-      }
+      .popup-content-wrapper { width: 100%; background: #ffffff; display: flex; flex-direction: column; overflow-y: auto; border-radius: 1.5rem !important; }
+      #popupIframe { width: 100%; height: auto; border: 0; display: block; background: transparent; }
 
       .wheel::-webkit-scrollbar { display: none; }
       .wheel { -ms-overflow-style: none; scrollbar-width: none; scroll-snap-type: y mandatory; }
@@ -89,16 +68,10 @@
       }
       .single-line-box { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
   </style>
-    <!-- [End Block 1] -->
 </head>
 <body class="bg-slate-100 flex items-center justify-center">
 
-<!-- ========================================================================
-   [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
-   ======================================================================== -->
 <div class="app-container shadow-2xl w-full border border-slate-100 flex flex-col">
-
-    <!-- HEADER: ส่วนหัวของหน้าจอแก้ไข -->
     <div class="p-4 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
         <div class="flex items-center gap-2">
             <button type="button" onclick="goBackToReport()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold active:scale-95 transition">
@@ -112,23 +85,19 @@
         <button type="button" onclick="goBackToReport()" class="text-slate-400 hover:text-slate-600 font-bold text-base px-2">✕</button>
     </div>
 
-    <!-- MAIN BODY: ส่วนแสดงฟอร์ม ข้อมูลลูกค้า และรายการอาหาร -->
     <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-white flex flex-col">
         <div id="editLocationSelectorWrapper" class="shrink-0"></div>
-
         <div class="space-y-1.5 flex-1 flex flex-col min-h-0">
             <span class="text-xs font-bold text-slate-500 shrink-0">🍱 รายการอาหารในออเดอร์</span>
             <div class="border-2 border-slate-200 rounded-2xl p-3 flex-1 overflow-y-auto space-y-2 bg-slate-50/50" id="editOrderItemsContainer">
                 <div class="text-center text-slate-400 py-6 text-xs">⏳ กำลังโหลดรายการอาหาร...</div>
             </div>
         </div>
-
         <button type="button" onclick="openCategoryModalForEdit()" class="w-full py-3 border-2 border-dashed border-emerald-400 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-2xl flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer text-sm shrink-0">
             <span>+</span> เพิ่มรายการอาหาร
         </button>
     </div>
 
-    <!-- FOOTER ACTIONS: ส่วนสรุปยอดเงินและปุ่มดำเนินการ (บันทึก/ลบ/ยกเลิก) -->
     <div class="p-4 bg-white border-t border-slate-100 space-y-3 shrink-0 shadow-lg">
         <div class="flex justify-between items-end">
             <span class="text-xs text-slate-500 font-bold" id="editCartCountText">0 รายการ | 0 ชิ้น</span>
@@ -137,21 +106,14 @@
                 <span class="text-lg font-black text-slate-800" id="editTotalPrice">0 บาท</span>
             </div>
         </div>
-
         <div class="grid grid-cols-3 gap-2">
             <button type="button" onclick="goBackToReport()" class="py-2.5 bg-slate-100 text-slate-600 font-bold text-xs rounded-xl hover:bg-slate-200 active:scale-95 transition">✕ ยกเลิก</button>
             <button type="button" onclick="deleteCurrentEditingOrder()" class="py-2.5 bg-rose-500 text-white font-bold text-xs rounded-xl shadow-md hover:bg-rose-600 active:scale-95 transition">🗑️ ลบ</button>
             <button type="button" onclick="saveOrderEditData()" class="py-2.5 bg-amber-500 text-white font-bold text-xs rounded-xl shadow-md hover:bg-amber-600 active:scale-95 transition">✏️ บันทึก</button>
         </div>
     </div>
-
 </div>
-<!-- [End Block 2] -->
 
-<!-- ========================================================================
-   [Start Block 3] MODAL CONTAINERS & POPUPS
-   ======================================================================== -->
-<!-- CALENDAR SELECTION MODAL -->
 <div id="calendarModalOverlay" class="custom-modal-overlay" onclick="toggleModal('calendarModalOverlay','calendarModalBox',false)">
     <div id="calendarModalBox" class="popup-container" onclick="event.stopPropagation()">
         <div class="popup-content-wrapper">
@@ -164,7 +126,6 @@
     </div>
 </div>
 
-<!-- LOCATION / ZONE SELECTION MODAL -->
 <div id="subLocZoneModal" class="custom-modal-overlay" onclick="toggleModal('subLocZoneModal','subLocZoneBox',false)">
     <div id="subLocZoneBox" class="popup-container" onclick="event.stopPropagation()">
         <div class="popup-content-wrapper">
@@ -177,7 +138,6 @@
     </div>
 </div>
 
-<!-- DYNAMIC POPUP MODAL -->
 <div id="dynamicPopupOverlay" class="custom-modal-overlay" onclick="handleOverlayClick()">
     <div id="popupContainerBox" class="popup-container" onclick="event.stopPropagation()">
         <div class="popup-content-wrapper">
@@ -186,7 +146,6 @@
     </div>
 </div>
 
-<!-- CUSTOM ALERT MODAL -->
 <div id="customAlertModal" class="custom-modal-overlay" onclick="toggleModal('customAlertModal','customAlertBox',false)">
     <div class="popup-container max-w-xs p-5 text-center bg-white rounded-3xl shadow-2xl m-4" onclick="event.stopPropagation()" id="customAlertBox">
         <div id="customAlertIcon" class="text-3xl mb-2">🎉</div>
@@ -195,21 +154,14 @@
         <div id="customAlertButtons" class="flex gap-2"></div>
     </div>
 </div>
-<!-- [End Block 3] -->
 
-
-<!-- ========================================================================
-   [Start Block 4] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
-   ======================================================================== -->
 <script>
-/* --- [Start Block 4.1] Global Variables & Initialization --- */
 let db = null, targetOrderId = null, currentEditingOrder = null;
 let currentEditingOrderItems = [], locationsCache = [], zonesCache = [], foodsCache = [], categoriesCache = [], customersList = [];
 let selectedCustomerObj = null;
 let locationFoodPricesMap = {}, isDeliveryFeeWaived = false;
 let selectedOrderDate = '', curH = '00', curM = '00';
 const ITEM_HEIGHT = 36;
-
 let popupHistory = [];
 let pendingFoodSelectInit = null;
 
@@ -218,20 +170,13 @@ function getAppOrigin() { return window.location.origin; }
 window.onload = async function() {
     const urlParams = new URLSearchParams(window.location.search);
     targetOrderId = urlParams.get('order_id');
-    
-    if (!targetOrderId) {
-        window.location.href = 'salereport.html';
-        return;
-    }
-
+    if (!targetOrderId) { window.location.href = 'salereport.html'; return; }
     db = window.supabaseClient || supabaseClient;
     renderEditLocationComponent('editLocationSelectorWrapper');
     await fetchMasterDataAndOrder();
 };
 
-function goBackToReport() {
-    window.location.href = 'salereport.html';
-}
+function goBackToReport() { window.location.href = 'salereport.html'; }
 
 function formatThaiDateDisplay(dateStr) {
     if (!dateStr) return 'เลือกวันที่';
@@ -239,10 +184,7 @@ function formatThaiDateDisplay(dateStr) {
     const thaiMonthsShort = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
     return `${parseInt(d)} ${thaiMonthsShort[parseInt(m)-1]} ${parseInt(y)+543}`;
 }
-/* --- [End Block 4.1] --- */
 
-
-/* --- [Start Block 4.2] Data Fetching & Master Setup --- */
 async function fetchMasterDataAndOrder() {
     if (!db) return;
     try {
@@ -274,12 +216,8 @@ async function fetchMasterDataAndOrder() {
             curH = String(d.getHours()).padStart(2,'0');
             curM = String(d.getMinutes()).padStart(2,'0');
             document.getElementById('editOrderDateBtnText').textContent = formatThaiDateDisplay(selectedOrderDate);
-            const wheelH = document.getElementById('wheelH');
-            const wheelM = document.getElementById('wheelM');
-            if(wheelH && wheelM) {
-                scrollToValue(wheelH, parseInt(curH, 10));
-                scrollToValue(wheelM, parseInt(curM, 10));
-            }
+            const wheelH = document.getElementById('wheelH'), wheelM = document.getElementById('wheelM');
+            if(wheelH && wheelM) { scrollToValue(wheelH, parseInt(curH, 10)); scrollToValue(wheelM, parseInt(curM, 10)); }
         }
 
         const typeId = Number(currentEditingOrder.customer_type_id || 1);
@@ -308,16 +246,10 @@ async function fetchMasterDataAndOrder() {
 
         const rawItems = typeof currentEditingOrder.items === 'string' ? JSON.parse(currentEditingOrder.items) : (currentEditingOrder.items || []);
         currentEditingOrderItems = Array.isArray(rawItems) ? rawItems.map(normalizeOrderItem) : [];
-
         renderEditOrderModalItems();
-    } catch (err) {
-        showAlert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลได้', '❌', goBackToReport);
-    }
+    } catch (err) { showAlert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลได้', '❌', goBackToReport); }
 }
-/* --- [End Block 4.2] --- */
 
-
-/* --- [Start Block 4.3] Component Renderers --- */
 function renderEditLocationComponent(containerId) {
     document.getElementById(containerId).innerHTML = `
         <div class="bg-amber-50/50 border border-amber-200 rounded-2xl p-3 shadow-sm space-y-2">
@@ -347,28 +279,20 @@ function renderEditLocationComponent(containerId) {
                 <div class="col-span-6 flex flex-col justify-center">
                     <span class="text-[10px] font-bold text-slate-400 mb-0.5 ml-1">⏰ เวลา (เลื่อนขึ้น-ลง)</span>
                     <div class="single-line-box px-2 h-[36px] flex items-center justify-center gap-1">
-                        <div class="relative w-10 h-[36px] overflow-hidden">
-                            <div id="wheelH" class="wheel w-full h-full overflow-y-auto"></div>
-                        </div>
+                        <div class="relative w-10 h-[36px] overflow-hidden"><div id="wheelH" class="wheel w-full h-full overflow-y-auto"></div></div>
                         <span class="text-xs font-black text-slate-800 pb-0.5">:</span>
-                        <div class="relative w-10 h-[36px] overflow-hidden">
-                            <div id="wheelM" class="wheel w-full h-full overflow-y-auto"></div>
-                        </div>
+                        <div class="relative w-10 h-[36px] overflow-hidden"><div id="wheelM" class="wheel w-full h-full overflow-y-auto"></div></div>
                         <span class="text-[10px] font-bold text-slate-600 self-end mb-1">น.</span>
                     </div>
                 </div>
             </div>
-
             <input type="hidden" id="editCustomerGroupSelect" value="1">
             <input type="hidden" id="editSelectedLocationId" value="">
             <input type="hidden" id="editSelectedZoneId" value="">
         </div>`;
     initTimeWheels();
 }
-/* --- [End Block 4.3] --- */
 
-
-/* --- [Start Block 4.4] User Interaction, Autocomplete & Time Wheels --- */
 function handleCustomerInput(val) {
     document.querySelectorAll('.customer-input-field').forEach(inp => { if (inp.value !== val) inp.value = val; });
     selectedCustomerObj = null;
@@ -458,32 +382,19 @@ function normalizeOrderItem(item) {
     const p = Number(item.unit_price || item.price || 0);
     const fId = Number(item.food_id || item.id || 9999);
     const fName = item.name || item.food_name || 'รายการ';
-    
     return {
         item_id: item.item_id || `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-        food_id: fId,
-        name: fName,
-        food_name: fName,
-        qty: q,
-        quantity: q,
-        price: Number(item.price || p),
-        unit_price: Number(item.unit_price || p),
-        total_price: Number(item.total_price || (p * q)),
-        note: item.note || '',
+        food_id: fId, name: fName, food_name: fName, qty: q, quantity: q,
+        price: Number(item.price || p), unit_price: Number(item.unit_price || p),
+        total_price: Number(item.total_price || (p * q)), note: item.note || '',
         food_group_id: Number(item.food_group_id || 1),
-        friedEggQty: Number(item.friedEggQty || 0),
-        omeletQty: Number(item.omeletQty || 0),
+        friedEggQty: Number(item.friedEggQty || 0), omeletQty: Number(item.omeletQty || 0),
         base_price: item.base_price !== undefined ? item.base_price : null,
-        cost_price: Number(item.cost_price || 0),
-        isSpecialMenu: Boolean(item.isSpecialMenu),
-        is_buying_resell: Boolean(item.is_buying_resell),
-        originalIndex: Number(item.originalIndex || 0)
+        cost_price: Number(item.cost_price || 0), isSpecialMenu: Boolean(item.isSpecialMenu),
+        is_buying_resell: Boolean(item.is_buying_resell), originalIndex: Number(item.originalIndex || 0)
     };
 }
-/* --- [End Block 4.4] --- */
 
-
-/* --- [Start Block 4.5] Popup & Iframe Management --- */
 function openCalendarModal() {
     document.getElementById('calendarFrame').src = 'calendar.html';
     toggleModal('calendarModalOverlay', 'calendarModalBox', true);
@@ -496,17 +407,11 @@ function openSubLocationModal() {
     toggleModal('subLocZoneModal', 'subLocZoneBox', true);
 
     iframe.onload = () => {
-        iframe.contentWindow.postMessage({
-            type: 'RENDER_LOCATIONS',
-            locations: locationsCache,
-            counts: {}
-        }, getAppOrigin());
+        iframe.contentWindow.postMessage({ type: 'RENDER_LOCATIONS', locations: locationsCache, counts: {} }, getAppOrigin());
     };
 }
 
-function openCategoryModalForEdit() {
-    openDynamicPopup('foodgroup.html', false);
-}
+function openCategoryModalForEdit() { openDynamicPopup('foodgroup.html', false); }
 
 function openDynamicPopup(url, keepPrevious = false, restoring = false) {
     const overlay = document.getElementById('dynamicPopupOverlay');
@@ -514,11 +419,8 @@ function openDynamicPopup(url, keepPrevious = false, restoring = false) {
     if (!url || !iframe) return;
 
     if (!restoring) {
-        if (keepPrevious && overlay.classList.contains('active') && iframe.getAttribute('src')) {
-            popupHistory.push(iframe.getAttribute('src'));
-        } else if (!keepPrevious) {
-            popupHistory = [];
-        }
+        if (keepPrevious && overlay.classList.contains('active') && iframe.getAttribute('src')) popupHistory.push(iframe.getAttribute('src'));
+        else if (!keepPrevious) popupHistory = [];
     }
 
     iframe.style.height = '200px';
@@ -537,11 +439,8 @@ function openDynamicPopup(url, keepPrevious = false, restoring = false) {
 }
 
 function navigatePopupBack() {
-    if (popupHistory.length > 0) {
-        openDynamicPopup(popupHistory.pop(), false, true);
-    } else {
-        closeDynamicPopup();
-    }
+    if (popupHistory.length > 0) openDynamicPopup(popupHistory.pop(), false, true);
+    else closeDynamicPopup();
 }
 
 function handleOverlayClick() { navigatePopupBack(); }
@@ -560,7 +459,6 @@ window.addEventListener('message', (event) => {
 
     const data = event.data;
     const { type, catId, catName, height, locationObj, zoneObj, group_id, group_name, cartItem, action, selectedDate } = data;
-
     const popupIframe = document.getElementById('popupIframe');
     const locationZoneFrame = document.getElementById('locationZoneFrame');
 
@@ -570,11 +468,8 @@ window.addEventListener('message', (event) => {
     if (type === 'RESIZE_POPUP') {
         const requestedHeight = Number(height);
         if (Number.isFinite(requestedHeight) && requestedHeight > 0) {
-            if (isPopupMessage) {
-                popupIframe.style.height = `${requestedHeight}px`;
-            } else if (isLocationMessage) {
-                locationZoneFrame.style.height = `${Math.min(requestedHeight, 450)}px`;
-            }
+            if (isPopupMessage) popupIframe.style.height = `${requestedHeight}px`;
+            else if (isLocationMessage) locationZoneFrame.style.height = `${Math.min(requestedHeight, 450)}px`;
         }
         return;
     }
@@ -589,18 +484,10 @@ window.addEventListener('message', (event) => {
         }
 
         const filteredZones = zonesCache.filter(z => Number(z.location_id) === Number(targetLocId));
-        if (filteredZones.length === 0) {
-            selectLocationAndZone(targetLocId, targetLocName, null, '');
-            return;
-        }
-
         document.getElementById('locationModalTitle').textContent = `เลือกโซน/ห้องพัก (${targetLocName})`;
         locationZoneFrame.src = 'zone.html';
         locationZoneFrame.onload = () => {
-            locationZoneFrame.contentWindow.postMessage({
-                type: 'RENDER_ZONES',
-                zones: filteredZones
-            }, getAppOrigin());
+            locationZoneFrame.contentWindow.postMessage({ type: 'RENDER_ZONES', zones: filteredZones, locationId: targetLocId }, getAppOrigin());
         };
         return;
     }
@@ -610,17 +497,29 @@ window.addEventListener('message', (event) => {
         const zoneName = String(zoneObj.zone_name || '');
         const currentLocId = document.getElementById('editSelectedLocationId').value || '';
         const currentLocName = document.getElementById('editLocationBtnText').textContent.split(' - ')[0] || '';
-
         selectLocationAndZone(currentLocId, currentLocName, zoneId, zoneName);
         return;
     }
 
-    // แก้ไขทุกกรณีของการเลือกหมวดหมู่หรือเปิดรายการ ให้บังคับวิ่งไปที่ foodmenu.html เสมอเพื่อป้องกัน Error ไฟล์หาย
+    if (type === 'ADD_NEW_ZONE' && isLocationMessage) {
+        const { zoneName, locationId } = data;
+        if (zoneName && typeof db !== 'undefined') {
+            db.from('location_zone').insert([{ zone_name: zoneName, location_id: locationId }]).select().single()
+                .then(({ data: newZone, error }) => {
+                    if (!error && newZone) {
+                        zonesCache.push(newZone);
+                        const filteredZones = zonesCache.filter(z => Number(z.location_id) === Number(locationId));
+                        locationZoneFrame.contentWindow.postMessage({ type: 'RENDER_ZONES', zones: filteredZones, locationId: locationId }, getAppOrigin());
+                    }
+                });
+        }
+        return;
+    }
+
     if (type === 'SELECT_CATEGORY' || type === 'OPEN_CONSIGNMENT_LIST') {
         const safeCatId = Number(catId);
         if (!Number.isFinite(safeCatId)) return;
-        const url = `foodmenu.html?group_id=${safeCatId}&name=${encodeURIComponent(String(catName || ''))}`;
-        openDynamicPopup(url, true);
+        openDynamicPopup(`foodmenu.html?group_id=${safeCatId}&name=${encodeURIComponent(String(catName || ''))}`, true);
         return;
     }
 
@@ -636,25 +535,10 @@ window.addEventListener('message', (event) => {
         return;
     }
 
-    if (type === 'BACK_TO_CATEGORY') {
-        navigatePopupBack();
-        return;
-    }
-
-    if (type === 'ADD_TO_CART' && cartItem) {
-        addItemToEditCart(cartItem);
-        return;
-    }
-
-    if (type === 'DELETE_CART_ITEM_BY_ID' && data.itemId != null) {
-        removeEditCartItemById(data.itemId);
-        return;
-    }
-
-    if (type === 'CLOSE_POPUP') {
-        closeDynamicPopup();
-        return;
-    }
+    if (type === 'BACK_TO_CATEGORY') { navigatePopupBack(); return; }
+    if (type === 'ADD_TO_CART' && cartItem) { addItemToEditCart(cartItem); return; }
+    if (type === 'DELETE_CART_ITEM_BY_ID' && data.itemId != null) { removeEditCartItemById(data.itemId); return; }
+    if (type === 'CLOSE_POPUP') { closeDynamicPopup(); return; }
 
     if (action === 'SELECT_DATE' && selectedDate) {
         selectedOrderDate = selectedDate;
@@ -662,10 +546,7 @@ window.addEventListener('message', (event) => {
         toggleModal('calendarModalOverlay', 'calendarModalBox', false);
     }
 });
-/* --- [End Block 4.5] --- */
 
-
-/* --- [Start Block 4.6] Cart & Price Calculation Engine --- */
 function addItemToEditCart(newItem) {
     const safeQty = Math.max(1, Number(newItem.qty || newItem.quantity) || 1);
     const foodId = Number(newItem.food_id || newItem.id || 9999);
@@ -680,23 +561,12 @@ function addItemToEditCart(newItem) {
 
     const normalizedItem = {
         item_id: newItem.item_id || `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-        food_id: foodId,
-        name: foodName,
-        food_name: foodName,
-        qty: safeQty,
-        quantity: safeQty,
-        price: unitPrice,
-        unit_price: finalUnitPrice,
-        total_price: subtotalPrice,
-        note: newItem.note || '',
-        food_group_id: Number(newItem.food_group_id || 1),
-        friedEggQty: daoQty,
-        omeletQty: jiaoQty,
+        food_id: foodId, name: foodName, food_name: foodName, qty: safeQty, quantity: safeQty,
+        price: unitPrice, unit_price: finalUnitPrice, total_price: subtotalPrice, note: newItem.note || '',
+        food_group_id: Number(newItem.food_group_id || 1), friedEggQty: daoQty, omeletQty: jiaoQty,
         base_price: newItem.base_price !== undefined ? newItem.base_price : null,
-        cost_price: Number(newItem.cost_price || 0),
-        isSpecialMenu: Boolean(newItem.isSpecialMenu),
-        is_buying_resell: Boolean(newItem.is_buying_resell),
-        originalIndex: currentEditingOrderItems.length
+        cost_price: Number(newItem.cost_price || 0), isSpecialMenu: Boolean(newItem.isSpecialMenu),
+        is_buying_resell: Boolean(newItem.is_buying_resell), originalIndex: currentEditingOrderItems.length
     };
 
     currentEditingOrderItems.push(normalizedItem);
@@ -812,10 +682,7 @@ function renderEditOrderModalItems() {
     document.getElementById('editCartCountText').textContent = `${currentEditingOrderItems.length} รายการ | ${totalQty} ชิ้น`;
     document.getElementById('editTotalPrice').textContent = `${(totalCartPrice + deliveryFee).toLocaleString()} บาท`;
 }
-/* --- [End Block 4.6] --- */
 
-
-/* --- [Start Block 4.7] Database Operations & Actions --- */
 async function ensureCustomerSaved(inputValue) {
     const val = removeDuplicateWords(inputValue);
     if (!val) return null;
@@ -851,28 +718,22 @@ async function saveOrderEditData() {
         }
 
         const updatePayload = {
-            customer_type_id: customerType,
-            customer_name: customerDisplayName,
+            customer_type_id: customerType, customer_name: customerDisplayName,
             customer_id: customerObj ? String(customerObj.customer_id || '') : null,
             location_id: locationId ? Number(locationId) : null,
             zone_id: zoneId ? Number(zoneId) : null,
             items: JSON.stringify(currentEditingOrderItems),
-            subtotal: subtotal,
-            delivery_fee: deliveryFee,
+            subtotal: subtotal, delivery_fee: deliveryFee,
             total_price: subtotal + deliveryFee,
             total_qty: currentEditingOrderItems.reduce((sum, item) => sum + Number(item.qty || 1), 0)
         };
 
-        if (selectedOrderDate) {
-            updatePayload.created_at = new Date(`${selectedOrderDate}T${timeVal}:00`).toISOString();
-        }
+        if (selectedOrderDate) updatePayload.created_at = new Date(`${selectedOrderDate}T${timeVal}:00`).toISOString();
 
         const { error } = await db.from('orders').update(updatePayload).eq('order_id', targetOrderId);
         if (error) throw error;
         showAlert('สำเร็จ', 'บันทึกการแก้ไขเรียบร้อยแล้ว!', '🎉', () => goBackToReport());
-    } catch (err) {
-        showAlert('เกิดข้อผิดพลาด', err.message, '❌');
-    }
+    } catch (err) { showAlert('เกิดข้อผิดพลาด', err.message, '❌'); }
 }
 
 async function deleteCurrentEditingOrder() {
@@ -882,15 +743,10 @@ async function deleteCurrentEditingOrder() {
             const { error } = await db.from('orders').delete().eq('order_id', targetOrderId);
             if (error) throw error;
             showAlert('สำเร็จ', 'ลบออเดอร์เรียบร้อยแล้ว', '🗑️', () => goBackToReport());
-        } catch (err) {
-            showAlert('เกิดข้อผิดพลาด', err.message, '❌');
-        }
+        } catch (err) { showAlert('เกิดข้อผิดพลาด', err.message, '❌'); }
     }, true);
 }
-/* --- [End Block 4.7] --- */
 
-
-/* --- [Start Block 4.8] UI Helpers & Custom Alerts --- */
 function toggleModal(modalId, boxId, show = true) {
     const m = document.getElementById(modalId);
     if(m) m.classList.toggle('active', show);
@@ -914,7 +770,6 @@ function showAlert(title, message, icon = '🎉', onOk = null, isConfirm = false
     }
     toggleModal('customAlertModal','customAlertBox',true);
 }
-/* --- [End Block 4.8] --- */
 </script>
-<!-- [End Block 4] -->
+</body>
 </html>
