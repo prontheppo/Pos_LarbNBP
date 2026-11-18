@@ -15,3 +15,24 @@ Organize the code into main Blocks and sub-blocks, clearly indicating [Start ...
 *Special Requirement*: For any loading status text or notification messages when there are no food items (e.g., "Loading items..." or "No food items"), always prepend an hourglass icon (⏳) to the front of that message text.
 
 Provide a clean, easy-to-read structure that retains 100% of the original functionality, formatted inside a single clean code block ready for copy-pasting.
+
+
+
+
+ช่วยปรับแก้และจัดระเบียบโค้ดในไฟล์นี้ให้เป็นมาตรฐานเดียวกันทั้งหมด (Standardization) โดยมีเงื่อนไขและข้อกำหนดดังนี้ครับ:
+
+1. ความเป็นเอกภาพของหน่วยวัด (Unified Units): 
+   - แปลงหน่วยวัดความสูง ความกว้าง และระยะห่างทั้งหมด (เช่น vh, dvh, %, rem หรือหน่วยสัดส่วนอื่น ๆ) ในส่วนของ CSS, Style หรือ Layout ให้เปลี่ยนเป็นหน่วยพิกเซล (px) ทั้งหมดทุกตำแหน่ง อย่างเหมาะสมสำหรับการแสดงผลบนมือถือ (Mobile-First)
+   - กำหนดขนาดตัวอักษร (font-size) ในช่องกรอกข้อมูล (input) และฟอร์มต่าง ๆ ให้เป็นพิกเซลที่แน่นอน (เช่น 16px) เพื่อป้องกันหน้าจอมือถือซูมเองอัตโนมัติ
+
+2. มาตรฐานตัวอักษรและฟอนต์ (Typography):
+   - ควบคุมฟอนต์หลักของระบบให้เป็น 'Sarabun', sans-serif ตัวเดียวทั้งไฟล์อย่างชัดเจน เพื่อความสะอาดและเป็นระเบียบ
+
+3. จัดระเบียบสไตล์และโค้ด (Styling & Structure):
+   - เคลียร์ความซ้ำซ้อนของการใช้ CSS ล้วนทับกับ Tailwind CSS (เช่น การใช้ !important พร่ำเพรื่อ) ให้ปรับมาใช้สไตล์ที่เป็นระบบ ระมัดระวังไม่ให้เกิดความขัดแย้งของ CSS
+   - แยกส่วนโครงสร้าง บล็อก (Block 1, Block 2, Block 3) และการจัดการ JavaScript ให้สะอาด อ่านง่าย
+
+4. ความสมบูรณ์ของระบบ (Functionality Integrity):
+   - ต้องมั่นใจว่าตรรกะการทำงานทั้งหมด (เช่น ระบบตะกร้าสินค้า, ฟังก์ชัน JavaScript, การรับส่ง postMessage กับ Iframe, และการเชื่อมต่อฐานข้อมูล Supabase) ยังคงทำงานได้ปกติ 100% ไม่พังหรือสูญหาย
+
+ขอโค้ดฉบับเต็มตั้งแต่ต้นจนจบแบบสมบูรณ์ สามารถคัดลอกไปวางทับไฟล์เดิมได้ทันทีโดยไม่ต้องตัดทอนครับ

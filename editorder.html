@@ -164,7 +164,7 @@
     </div>
 </div>
 
-<!-- LOCATION / ZONE SELECTION MODAL (เชื่อมต่อกับ location.html และ zone.html ผ่านระบบ PostMessage) -->
+<!-- LOCATION / ZONE SELECTION MODAL -->
 <div id="subLocZoneModal" class="custom-modal-overlay" onclick="toggleModal('subLocZoneModal','subLocZoneBox',false)">
     <div id="subLocZoneBox" class="popup-container" onclick="event.stopPropagation()">
         <div class="popup-content-wrapper">
@@ -177,7 +177,7 @@
     </div>
 </div>
 
-<!-- DYNAMIC POPUP MODAL (FOOD SELECTION VIA IFRAME) -->
+<!-- DYNAMIC POPUP MODAL -->
 <div id="dynamicPopupOverlay" class="custom-modal-overlay" onclick="handleOverlayClick()">
     <div id="popupContainerBox" class="popup-container" onclick="event.stopPropagation()">
         <div class="popup-content-wrapper">
@@ -212,18 +212,13 @@ const ITEM_HEIGHT = 36;
 
 let popupHistory = [];
 let pendingFoodSelectInit = null;
-let lastPopupHeight = 0;
 
 function getAppOrigin() { return window.location.origin; }
-
-function readCartFromStorage() { return currentEditingOrderItems; }
-function persistCart() {}
 
 window.onload = async function() {
     const urlParams = new URLSearchParams(window.location.search);
     targetOrderId = urlParams.get('order_id');
     
-    // ตรวจสอบว่าถ้าไม่มี order_id ให้เด้งกลับไปหน้า salereport.html ทันทีโดยไม่ค้างหน้า แจ้งเตือนผิดพลาด
     if (!targetOrderId) {
         window.location.href = 'salereport.html';
         return;
@@ -235,7 +230,6 @@ window.onload = async function() {
 };
 
 function goBackToReport() {
-    // บังคับลิงก์กลับไปที่หน้า salereport.html อย่างแม่นยำ
     window.location.href = 'salereport.html';
 }
 
@@ -459,7 +453,33 @@ function removeDuplicateWords(text) {
     return (parts.length === 2 && parts[0] === parts[1]) ? parts[0] : text.trim();
 }
 
-function normalizeOrderItem(item) { return item; }
+function normalizeOrderItem(item) {
+    const q = Number(item.qty || item.quantity || 1);
+    const p = Number(item.unit_price || item.price || 0);
+    const fId = Number(item.food_id || item.id || 9999);
+    const fName = item.name || item.food_name || 'รายการ';
+    
+    return {
+        item_id: item.item_id || `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        food_id: fId,
+        name: fName,
+        food_name: fName,
+        qty: q,
+        quantity: q,
+        price: Number(item.price || p),
+        unit_price: Number(item.unit_price || p),
+        total_price: Number(item.total_price || (p * q)),
+        note: item.note || '',
+        food_group_id: Number(item.food_group_id || 1),
+        friedEggQty: Number(item.friedEggQty || 0),
+        omeletQty: Number(item.omeletQty || 0),
+        base_price: item.base_price !== undefined ? item.base_price : null,
+        cost_price: Number(item.cost_price || 0),
+        isSpecialMenu: Boolean(item.isSpecialMenu),
+        is_buying_resell: Boolean(item.is_buying_resell),
+        originalIndex: Number(item.originalIndex || 0)
+    };
+}
 /* --- [End Block 4.4] --- */
 
 
@@ -559,7 +579,6 @@ window.addEventListener('message', (event) => {
         return;
     }
 
-    // [Step 1] เมื่อผู้ใช้เลือกสถานที่จาก location.html ให้กรองโซนเฉพาะ location_id นั้น แล้วโหลด zone.html ต่อ
     if (type === 'SELECT_LOCATION' && isLocationMessage && locationObj && typeof locationObj === 'object') {
         const targetLocId = locationObj.location_id ?? null;
         const targetLocName = String(locationObj.location_name || '');
@@ -586,7 +605,6 @@ window.addEventListener('message', (event) => {
         return;
     }
 
-    // [Step 2] เมื่อผู้ใช้เลือกโซนจาก zone.html เสร็จสิ้น บันทึกค่าและปิด Modal
     if (type === 'SELECT_ZONE' && isLocationMessage && zoneObj && typeof zoneObj === 'object') {
         const zoneId = zoneObj.zone_id ?? null;
         const zoneName = String(zoneObj.zone_name || '');
@@ -597,20 +615,12 @@ window.addEventListener('message', (event) => {
         return;
     }
 
-    if (type === 'SELECT_CATEGORY') {
+    // แก้ไขทุกกรณีของการเลือกหมวดหมู่หรือเปิดรายการ ให้บังคับวิ่งไปที่ foodmenu.html เสมอเพื่อป้องกัน Error ไฟล์หาย
+    if (type === 'SELECT_CATEGORY' || type === 'OPEN_CONSIGNMENT_LIST') {
         const safeCatId = Number(catId);
         if (!Number.isFinite(safeCatId)) return;
-        const url = (safeCatId === 98 || safeCatId === 99)
-            ? `food_consignment.html?group_id=${safeCatId}&name=${encodeURIComponent(String(catName || ''))}`
-            : `foodmenu.html?group_id=${safeCatId}&name=${encodeURIComponent(String(catName || ''))}`;
+        const url = `foodmenu.html?group_id=${safeCatId}&name=${encodeURIComponent(String(catName || ''))}`;
         openDynamicPopup(url, true);
-        return;
-    }
-
-    if (type === 'OPEN_CONSIGNMENT_LIST') {
-        const safeCatId = Number(catId);
-        if (!Number.isFinite(safeCatId)) return;
-        openDynamicPopup(`food_consignment.html?group_id=${safeCatId}&name=${encodeURIComponent(String(catName || ''))}`, true);
         return;
     }
 
@@ -657,9 +667,38 @@ window.addEventListener('message', (event) => {
 
 /* --- [Start Block 4.6] Cart & Price Calculation Engine --- */
 function addItemToEditCart(newItem) {
-    const safeQty = Math.max(1, Number(newItem.qty) || 1);
-    const normalizedItem = { ...newItem, qty: safeQty };
-    if (normalizedItem.item_id == null) normalizedItem.item_id = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const safeQty = Math.max(1, Number(newItem.qty || newItem.quantity) || 1);
+    const foodId = Number(newItem.food_id || newItem.id || 9999);
+    const foodName = newItem.name || newItem.food_name || 'รายการ';
+    
+    let basePrice = getGroupBasePriceForEdit(newItem, Number(document.getElementById('editCustomerGroupSelect').value || 1));
+    let unitPrice = Number(newItem.unit_price || newItem.price || basePrice) || 0;
+    let daoQty = Number(newItem.friedEggQty || 0);
+    let jiaoQty = Number(newItem.omeletQty || 0);
+    let finalUnitPrice = unitPrice + (daoQty * 10) + (jiaoQty * 10);
+    let subtotalPrice = finalUnitPrice * safeQty;
+
+    const normalizedItem = {
+        item_id: newItem.item_id || `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        food_id: foodId,
+        name: foodName,
+        food_name: foodName,
+        qty: safeQty,
+        quantity: safeQty,
+        price: unitPrice,
+        unit_price: finalUnitPrice,
+        total_price: subtotalPrice,
+        note: newItem.note || '',
+        food_group_id: Number(newItem.food_group_id || 1),
+        friedEggQty: daoQty,
+        omeletQty: jiaoQty,
+        base_price: newItem.base_price !== undefined ? newItem.base_price : null,
+        cost_price: Number(newItem.cost_price || 0),
+        isSpecialMenu: Boolean(newItem.isSpecialMenu),
+        is_buying_resell: Boolean(newItem.is_buying_resell),
+        originalIndex: currentEditingOrderItems.length
+    };
+
     currentEditingOrderItems.push(normalizedItem);
     renderEditOrderModalItems();
 }

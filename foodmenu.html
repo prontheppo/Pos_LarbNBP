@@ -1,7 +1,7 @@
 <!--
   ========================================================================
   FILE NAME: foodmenu.html
-  SUMMARY: หน้าแสดงรายการอาหารในแต่ละหมวดหมู่ พร้อมระบบกรองสินค้า, ป้ายนับจำนวนในตะกร้า และโครงสร้าง Block สากล 100%
+  SUMMARY: หน้าแสดงรายการอาหารในแต่ละหมวดหมู่ พร้อมระบบกรองสินค้า, ปุ่มเพิ่มเมนู, ป้ายนับจำนวนในตะกร้า และโครงสร้าง Block สากล 100%
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -24,7 +24,7 @@
         html, body {
             width: 100%; height: auto; background-color: #ffffff; color: #1e293b;
             font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none;
-            display: flex; flex-direction: column; overflow: hidden; border-radius: 1.5rem;
+            display: flex; flex-direction: column; overflow-y: auto; border-radius: 1.5rem;
         }
         .food-btn { position: relative; border: 1.5px solid #ef4444; color: #166534; background-color: #ffffff; transition: all 0.2s ease; }
         .food-btn:active { transform: scale(0.96); background-color: #fef2f2; }
@@ -53,10 +53,16 @@
          ========================================================== -->
     <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
         <span id="groupTitleName" class="font-extrabold text-sm text-slate-700 truncate px-2">📌 หมวดหมู่เมนู</span>
-        <button type="button" onclick="closePopup()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
+        <div class="flex items-center gap-1.5">
+            <!-- ปุ่มเพิ่มเมนู (ตำแหน่งตามที่วงกลมสีแดงในรูป) -->
+            <button type="button" onclick="openAddMenuModal()" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1 shadow transition cursor-pointer">
+                <span>➕</span> เมนู
+            </button>
+            <button type="button" onclick="closePopup()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
+        </div>
     </div>
 
-    <div class="p-3.5 space-y-3 bg-white w-full">
+    <div class="p-3.5 pb-12 space-y-3 bg-white w-full">
         <div id="foodListGrid" class="grid grid-cols-2 gap-2.5">
             <div class="col-span-2 text-center text-slate-400 py-8 text-xs font-bold">⏳ กำลังโหลดข้อมูล...</div>
         </div>

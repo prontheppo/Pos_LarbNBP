@@ -1,7 +1,7 @@
 <!--
   ========================================================================
   FILE NAME: expenses.html
-  SUMMARY: หน้าบันทึกรายจ่ายร้านค้า พร้อมระบบดึงประวัติ, จัดการรายจ่ายวันนี้ และโครงสร้าง Block สากล 100%
+  SUMMARY: หน้าบันทึกรายจ่ายร้านค้า พร้อมป๊อปอัปเครื่องคิดเลข (คลิกช่องจำนวนเงินเพื่อเปิด, กด = เพื่อคำนวณและปิดอัตโนมัติ, คลิกนอกกรอบเพื่อปิด) 100%
   ========================================================================
 -->
 <!DOCTYPE html>
@@ -14,6 +14,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
     <title>บันทึกรายจ่าย - ลาบหนองบัวลำภู</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
 
     <!-- ==========================================================
          [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
@@ -36,6 +37,31 @@
             transform: scale(0.95);
             background-color: #fee2e2;
             border-color: #ef4444;
+        }
+
+        /* ดีไซน์ปุ่มเครื่องคิดเลข */
+        .calc-btn {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            transition: all 0.1s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .calc-btn:active {
+            transform: scale(0.95);
+            background-color: #f1f5f9;
+        }
+        .calc-btn-op {
+            background-color: #f8fafc;
+            color: #ea580c;
+            font-weight: 800;
+        }
+        .calc-btn-equal {
+            background-color: #f97316;
+            color: #ffffff;
+            font-weight: 800;
+        }
+        .calc-btn-equal:active {
+            background-color: #ea580c;
         }
     </style>
     <!-- [End Block 1] -->
@@ -80,12 +106,13 @@
                     </div>
                 </div>
 
-                <!-- จำนวนเงิน -->
+                <!-- จำนวนเงิน (คลิกเพื่อเปิดป๊อปอัปเครื่องคิดเลข) -->
                 <div>
                     <label class="font-extrabold text-xs text-slate-700 block mb-1">💰 จำนวนเงิน (บาท)</label>
                     <div class="relative flex items-center">
-                        <input type="number" id="expenseAmountInput" placeholder="0" inputmode="numeric" class="w-full h-12 pl-3 pr-10 text-xl font-black text-red-600 border-2 border-red-300 rounded-xl outline-none focus:ring-2 focus:ring-red-500 bg-red-50/20">
-                        <span class="absolute right-3 font-bold text-slate-400 text-sm">บาท</span>
+                        <!-- คลิกที่ช่องนี้เพื่อเปิดป๊อปอัปเครื่องคิดเลข -->
+                        <input type="text" id="expenseAmountInput" placeholder="0" readonly onclick="openCalculatorPopup()" class="w-full h-12 pl-3 pr-10 text-xl font-black text-red-600 border-2 border-red-300 rounded-xl outline-none focus:ring-2 focus:ring-red-500 bg-red-50/20 cursor-pointer">
+                        <span class="absolute right-3 font-bold text-slate-400 text-sm pointer-events-none">บาท</span>
                     </div>
                 </div>
 
@@ -145,6 +172,50 @@
         </div>
     </div>
 
+    <!-- POPUP MODAL (เครื่องคิดเลขแบบลอย) -->
+    <div id="calculatorModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-xs" onclick="handleCalculatorOutsideClick(event)">
+        <div class="bg-white w-full max-w-xs rounded-3xl p-4 shadow-2xl flex flex-col space-y-3 animate-scale">
+            
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                <h3 class="font-extrabold text-sm text-slate-800">🧮 คำนวณจำนวนเงิน</h3>
+                <button type="button" onclick="closeCalculatorPopup()" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center cursor-pointer">✕</button>
+            </div>
+
+            <!-- หน้าจอแสดงผลในเครื่องคิดเลข -->
+            <div class="bg-slate-50 border-2 border-slate-200 rounded-xl p-3 flex flex-col justify-end items-end h-20 shadow-inner">
+                <div id="calcScreen" class="text-2xl font-black text-red-600 tracking-wider truncate w-full text-right">0</div>
+            </div>
+
+            <!-- แผงปุ่มกดเครื่องคิดเลข -->
+            <div class="grid grid-cols-4 gap-2">
+                <button type="button" onclick="calcClear()" class="calc-btn h-12 rounded-xl font-extrabold text-red-500 text-sm cursor-pointer">AC</button>
+                <button type="button" onclick="calcAppend('(')" class="calc-btn calc-btn-op h-12 rounded-xl text-base cursor-pointer">(</button>
+                <button type="button" onclick="calcAppend(')')" class="calc-btn calc-btn-op h-12 rounded-xl text-base cursor-pointer">)</button>
+                <button type="button" onclick="calcAppend('/')" class="calc-btn calc-btn-op h-12 rounded-xl text-base cursor-pointer">÷</button>
+
+                <button type="button" onclick="calcAppend('7')" class="calc-btn h-12 rounded-xl font-bold text-base cursor-pointer">7</button>
+                <button type="button" onclick="calcAppend('8')" class="calc-btn h-12 rounded-xl font-bold text-base cursor-pointer">8</button>
+                <button type="button" onclick="calcAppend('9')" class="calc-btn h-12 rounded-xl font-bold text-base cursor-pointer">9</button>
+                <button type="button" onclick="calcAppend('*')" class="calc-btn calc-btn-op h-12 rounded-xl text-base cursor-pointer">×</button>
+
+                <button type="button" onclick="calcAppend('4')" class="calc-btn h-12 rounded-xl font-bold text-base cursor-pointer">4</button>
+                <button type="button" onclick="calcAppend('5')" class="calc-btn h-12 rounded-xl font-bold text-base cursor-pointer">5</button>
+                <button type="button" onclick="calcAppend('6')" class="calc-btn h-12 rounded-xl font-bold text-base cursor-pointer">6</button>
+                <button type="button" onclick="calcAppend('-')" class="calc-btn calc-btn-op h-12 rounded-xl text-base cursor-pointer">-</button>
+
+                <button type="button" onclick="calcAppend('1')" class="calc-btn h-12 rounded-xl font-bold text-base cursor-pointer">1</button>
+                <button type="button" onclick="calcAppend('2')" class="calc-btn h-12 rounded-xl font-bold text-base cursor-pointer">2</button>
+                <button type="button" onclick="calcAppend('3')" class="calc-btn h-12 rounded-xl font-bold text-base cursor-pointer">3</button>
+                <button type="button" onclick="calcAppend('+')" class="calc-btn calc-btn-op h-12 rounded-xl text-base cursor-pointer">+</button>
+
+                <button type="button" onclick="calcBackspace()" class="calc-btn h-12 rounded-xl font-bold text-sm text-slate-500 cursor-pointer" title="ลบทีละตัว">⌫</button>
+                <button type="button" onclick="calcAppend('0')" class="calc-btn h-12 rounded-xl font-bold text-base cursor-pointer">0</button>
+                <button type="button" onclick="calcCalculateResult()" class="calc-btn calc-btn-equal col-span-2 h-12 rounded-xl text-xl cursor-pointer shadow-sm">=</button>
+            </div>
+
+        </div>
+    </div>
+
     <!-- CUSTOM DELETE CONFIRM MODAL (หน้าต่างยืนยันลบ) -->
     <div id="deleteConfirmModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-xs">
         <div class="bg-white w-full max-w-xs rounded-2xl p-5 shadow-2xl flex flex-col items-center text-center space-y-4 animate-scale">
@@ -169,10 +240,76 @@
     <script>
         let currentPopupType = '';
         let pendingDeleteId = null;
+        let calcInput = '0';
 
         document.addEventListener('DOMContentLoaded', () => {
             loadTodayExpenses();
         });
+
+        /* --- [Start Calculator Popup Logic] --- */
+        function openCalculatorPopup() {
+            const currentVal = document.getElementById('expenseAmountInput').value.trim();
+            calcInput = (currentVal && currentVal !== '0') ? currentVal : '0';
+            document.getElementById('calcScreen').innerText = calcInput;
+            document.getElementById('calculatorModal').classList.remove('hidden');
+        }
+
+        function closeCalculatorPopup() {
+            document.getElementById('calculatorModal').classList.add('hidden');
+        }
+
+        function handleCalculatorOutsideClick(event) {
+            if (event.target.id === 'calculatorModal') {
+                closeCalculatorPopup();
+            }
+        }
+
+        function calcAppend(val) {
+            if (calcInput === '0' && !['+', '-', '*', '/'].includes(val)) {
+                calcInput = val;
+            } else {
+                calcInput += val;
+            }
+            document.getElementById('calcScreen').innerText = calcInput;
+        }
+
+        function calcClear() {
+            calcInput = '0';
+            document.getElementById('calcScreen').innerText = calcInput;
+        }
+
+        function calcBackspace() {
+            if (calcInput.length > 1) {
+                calcInput = calcInput.slice(0, -1);
+            } else {
+                calcInput = '0';
+            }
+            document.getElementById('calcScreen').innerText = calcInput;
+        }
+
+        function calcCalculateResult() {
+            try {
+                let expression = calcInput.replace(/÷/g, '/').replace(/×/g, '*');
+                let result = eval(expression);
+                if (result === undefined || isNaN(result) || !isFinite(result)) {
+                    calcInput = '0';
+                } else {
+                    if (!Number.isInteger(result)) {
+                        result = parseFloat(result.toFixed(2));
+                    }
+                    calcInput = String(result);
+                }
+
+                // นำผลลัพธ์ไปใส่ในช่องกรอกหลัก และปิดหน้าต่างเครื่องคิดเลขทันที
+                document.getElementById('expenseAmountInput').value = calcInput;
+                closeCalculatorPopup();
+            } catch (err) {
+                calcInput = 'Error';
+                document.getElementById('calcScreen').innerText = calcInput;
+                setTimeout(calcClear, 1200);
+            }
+        }
+        /* --- [End Calculator Popup Logic] --- */
 
         /* --- [Start Block 4.1] LOAD TODAY EXPENSES --- */
         async function loadTodayExpenses() {
@@ -382,9 +519,9 @@
                 openPopup('item');
                 return;
             }
-            if (!amount || amount <= 0) {
-                alert('กรุณากรอกจำนวนเงินให้ถูกต้อง');
-                document.getElementById('expenseAmountInput').focus();
+            if (!amount || amount <= 0 || isNaN(amount)) {
+                alert('กรุณากรอกหรือคำนวณจำนวนเงินให้ถูกต้อง');
+                openCalculatorPopup();
                 return;
             }
 

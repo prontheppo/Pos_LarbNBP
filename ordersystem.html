@@ -9,7 +9,6 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <!-- [Start Block 1.1] META TAGS & EXTERNAL DEPENDENCIES -->
     <script src="appInit.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
@@ -20,9 +19,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- [End Block 1.1] -->
 
-    <!-- [Start Block 1.2] CORE CSS STYLES -->
     <style>
         :root { --bg-color: #f8fafc; }
         html, body { 
@@ -37,17 +34,21 @@
             display: none; align-items: center; justify-content: center; z-index: 9999; padding: 1rem; 
         }
         .custom-modal-overlay.active { display: flex !important; }
+
         .popup-container {
             background: transparent !important; width: 100% !important; max-width: 28rem !important;
             height: auto !important; max-height: 90vh !important; border-radius: 0 !important; box-shadow: none !important;
-            display: flex; flex-direction: column; overflow: hidden !important; position: relative;
+            display: flex; flex-direction: column; overflow: visible !important; position: relative;
             animation: popupFadeIn 0.2s ease-out;
         }
         @keyframes popupFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         .popup-content-wrapper { 
-            width: 100%; background: #ffffff; overflow: hidden; display: flex; flex-direction: column; flex: 0 1 auto; 
-            border-radius: 1.5rem !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+            width: 100%; background: #ffffff; overflow-y: auto !important; display: flex; flex-direction: column; 
+            max-height: 85vh !important; border-radius: 1.5rem !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
         }
+
+        
+        
         #locationFrame {
             width: 100%; height: auto; min-height: 350px; max-height: calc(90vh - 2rem);
             border: 0; display: block; background: transparent; transition: height 0.15s ease;
@@ -77,13 +78,9 @@
             .no-print { display: none !important; }
         }
     </style>
-    <!-- [End Block 1.2] -->
 </head>
-<!-- [End Block 1] -->
-
 <body class="bg-slate-50 text-slate-800 antialiased flex flex-col min-h-screen">
 
-    <!-- [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
     <div class="flex-1 w-full max-w-xl mx-auto p-3 flex flex-col relative">
         
         <!-- [Start Block 2.1] TAB 1: FOOD CATEGORY & SELECTION -->
@@ -105,7 +102,6 @@
                 <button type="button" onclick="switchTab(2)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-2 rounded-2xl text-xs flex items-center justify-center gap-1 shadow active:scale-95 transition cursor-pointer">🔍 ไปตรวจสอบ</button>
             </div>
         </div>
-        <!-- [End Block 2.1] -->
 
         <!-- [Start Block 2.2] TAB 2: CART REVIEW & LOCATION SELECTION -->
         <div id="tabContent2" class="flex flex-col w-full hidden">
@@ -132,7 +128,6 @@
                 <button type="button" onclick="goToPrintOrder()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-3 rounded-xl text-xs flex-1 shadow transition flex items-center justify-center gap-1 cursor-pointer">✅ ไปหน้าสรุป/พิมพ์</button>
             </div>
         </div>
-        <!-- [End Block 2.2] -->
 
         <!-- [Start Block 2.3] TAB 3: ORDER SUMMARY & PRINT PREVIEW -->
         <div id="tabContent3" class="flex flex-col w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-4 hidden mb-4">
@@ -169,13 +164,10 @@
                 <button type="button" onclick="goToPrintOrder()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl shadow transition cursor-pointer">🖨️ ไปหน้าพิมพ์ (Print Order)</button>
             </div>
         </div>
-        <!-- [End Block 2.3] -->
 
     </div>
-    <!-- [End Block 2] -->
 
-    <!-- [Start Block 3] MODALS & POPUP OVERLAYS -->
-    <!-- [Start Block 3.1] DYNAMIC POPUP IFRAME MODAL -->
+    <!-- MODALS & POPUP OVERLAYS -->
     <div id="dynamicPopupOverlay" class="custom-modal-overlay" onclick="handleOverlayClick()">
         <div id="popupContainerBox" class="popup-container" onclick="event.stopPropagation()">
             <div class="popup-content-wrapper">
@@ -183,9 +175,7 @@
             </div>
         </div>
     </div>
-    <!-- [End Block 3.1] -->
 
-    <!-- [Start Block 3.2] LOCATION / ZONE MODAL (เชื่อมโยงกับ location_zone.html) -->
     <div id="locationModalOverlay" class="custom-modal-overlay" onclick="toggleLocationModal(false)">
         <div class="popup-container" onclick="event.stopPropagation()">
             <div class="popup-content-wrapper">
@@ -197,9 +187,7 @@
             </div>
         </div>
     </div>
-    <!-- [End Block 3.2] -->
 
-    <!-- [Start Block 3.3] CONFIRM CLEAR CART MODAL -->
     <div id="confirmClearModalOverlay" class="custom-modal-overlay" onclick="closeConfirmClearModal()">
         <div class="bg-white rounded-3xl max-w-xs w-full p-5 text-center border border-slate-200 shadow-2xl m-4" onclick="event.stopPropagation()">
             <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-3 text-xl font-bold">🗑️</div>
@@ -211,12 +199,8 @@
             </div>
         </div>
     </div>
-    <!-- [End Block 3.3] -->
-    <!-- [End Block 3] -->
 
-    <!-- [Start Block 4] JAVASCRIPT LOGIC & STATE MANAGEMENT -->
     <script>
-        /* --- [Start Block 4.1] Global State & LocalStorage --- */
         let cart = readCartFromStorage();
         let dbFoodsMap = {};
         let customersList = [];
@@ -253,10 +237,7 @@
         };
         let currentOrderSummary = { itemsCount: 0, totalQty: 0, subtotal: 0, deliveryFee: 0, grandTotal: 0, processedCart: [] };
         let processedItemsForDb = [];
-        /* --- [End Block 4.1] --- */
 
-
-        /* --- [Start Block 4.2] Initialization & Data Fetching --- */
         window.addEventListener('DOMContentLoaded', async () => {
             await Promise.all([
                 fetchLatestFoods(),
@@ -273,10 +254,7 @@
                 switchTab(parseInt(targetTab, 10));
             }
         });
-        /* --- [End Block 4.2] --- */
 
-
-        /* --- [Start Block 4.3] PostMessage Communication --- */
         window.addEventListener('message', (event) => {
             const foodGroupFrame = document.getElementById('foodGroupFrame');
             const popupIframe = document.getElementById('popupIframe');
@@ -290,9 +268,8 @@
             if (!event.data || typeof event.data !== 'object' || typeof event.data.type !== 'string') return;
 
             const data = event.data;
-            const { type, catId, catName, food, height, locationObj, group_id, group_name, cartItem } = data;
+            const { type, catId, catName, height, locationObj, group_id, group_name, cartItem } = data;
 
-            // จัดการความสูง Iframe ของ Modal ทั่วไป
             if (type === 'RESIZE_POPUP' && isPopupMessage) {
                 const requestedHeight = Number(height);
                 if (!Number.isFinite(requestedHeight) || requestedHeight <= 0) return;
@@ -305,7 +282,6 @@
                 return;
             }
 
-            // จัดการความสูง Iframe ของ Modal เลือกสถานที่ / โซน (location_zone.html)
             if (type === 'RESIZE_POPUP' && isLocationMessage) {
                 const requestedHeight = Number(height);
                 if (Number.isFinite(requestedHeight) && requestedHeight > 0) {
@@ -314,7 +290,6 @@
                 return;
             }
 
-            // รับค่าเมื่อเลือกสถานที่และโซนสำเร็จจาก location_zone.html
             if (type === 'SELECT_LOCATION' && isLocationMessage && locationObj && typeof locationObj === 'object') {
                 locationData.locationId = locationObj.location_id ?? null;
                 locationData.locationName = String(locationObj.location_name || '');
@@ -334,27 +309,19 @@
                 return;
             }
 
-            if (type === 'SELECT_CATEGORY' && isFoodGroupMessage) {
+            // เปลี่ยนให้ทุกหมวดหมู่เรียกใช้ foodmenu.html ทั้งหมด (รวมถึงเมนูพิเศษและฝากซื้อ)
+            if ((type === 'SELECT_CATEGORY' || type === 'OPEN_CONSIGNMENT_LIST') && isFoodGroupMessage) {
                 const safeCatId = Number(catId);
                 if (!Number.isFinite(safeCatId)) return;
-                const url = (safeCatId === 98 || safeCatId === 99)
-                    ? `food_consignment.html?group_id=${safeCatId}&name=${encodeURIComponent(String(catName || ''))}`
-                    : `foodmenu.html?group_id=${safeCatId}&name=${encodeURIComponent(String(catName || ''))}`;
+                const url = `foodmenu.html?group_id=${safeCatId}&name=${encodeURIComponent(String(catName || ''))}`;
                 openDynamicPopup(url, false);
                 return;
             }
 
-            if (type === 'OPEN_CONSIGNMENT_LIST' && isFoodGroupMessage) {
-                const safeCatId = Number(catId);
-                if (!Number.isFinite(safeCatId)) return;
-                openDynamicPopup(`food_consignment.html?group_id=${safeCatId}&name=${encodeURIComponent(String(catName || ''))}`, false);
-                return;
-            }
-
-            if ((type === 'OPEN_FOOD_SELECT' || type === 'SELECT_CONSIGNMENT_ITEM') && isPopupMessage) {
-                if (!food || food.food_id == null || !Number.isFinite(Number(catId))) return;
-                pendingFoodSelectInit = { type: 'INIT_FOOD_SELECT', food, catId: Number(catId) };
-                openDynamicPopup(`foodselect.html?food_id=${encodeURIComponent(food.food_id)}&group_id=${encodeURIComponent(catId)}`, true);
+            if (type === 'OPEN_FOOD_SELECT' && isPopupMessage) {
+                if (!data.food || data.food.food_id == null || !Number.isFinite(Number(catId))) return;
+                pendingFoodSelectInit = { type: 'INIT_FOOD_SELECT', food: data.food, catId: Number(catId) };
+                openDynamicPopup(`foodselect.html?food_id=${encodeURIComponent(data.food.food_id)}&group_id=${encodeURIComponent(catId)}`, true);
                 return;
             }
 
@@ -418,10 +385,7 @@
                 }, getAppOrigin());
             }
         }
-        /* --- [End Block 4.3] --- */
 
-
-        /* --- [Start Block 4.4] Navigation & Tab Switching --- */
         function switchTab(tabIndex) {
             closeDynamicPopup();
             toggleLocationModal(false);
@@ -436,10 +400,7 @@
             if (tabIndex === 2 || tabIndex === 3) renderOrderSummary();
             if (tabIndex === 3) renderPrintPreviewTab3();
         }
-        /* --- [End Block 4.4] --- */
 
-
-        /* --- [Start Block 4.5] Cart Management & Pricing --- */
         function updateCartUI() {
             cart = readCartFromStorage();
             const totalItems = cart.length;
@@ -496,10 +457,7 @@
             closeConfirmClearModal();
             updateCartUI();
         }
-        /* --- [End Block 4.5] --- */
 
-
-        /* --- [Start Block 4.6] Popup Navigation Handlers --- */
         function openDynamicPopup(url, keepPrevious = false, restoring = false) {
             const overlay = document.getElementById('dynamicPopupOverlay');
             const iframe = document.getElementById('popupIframe');
@@ -541,10 +499,7 @@
             document.getElementById('popupIframe').src = '';
             updateCartUI();
         }
-        /* --- [End Block 4.6] --- */
 
-
-        /* --- [Start Block 4.7] Supabase Data Fetchers & Customer Management --- */
         function removevenDuplicateWords(text) {
             if (!text) return '';
             const parts = text.trim().split(/\s+/);
@@ -626,11 +581,10 @@
             renderOrderSummary();
         }
 
-        // ฟังก์ชันสั่งเปิด Modal และโหลดไฟล์ location_zone.html เข้ามาทำงานร่วมกัน
         function openLocationModal() {
             document.getElementById('locationModalTitle').textContent = 'เลือกสถานที่ / โซน';
             const iframe = document.getElementById('locationFrame');
-            iframe.src = 'location_zone.html'; // โหลดไฟล์ location_zone.html ที่จัดการทั้ง Location และ Zone ในตัว
+            iframe.src = 'location_zone.html';
             toggleLocationModal(true);
         }
 
@@ -676,10 +630,7 @@
                 sendDataToFoodGroupFrame();
             }
         }
-        /* --- [End Block 4.7] --- */
 
-
-        /* --- [Start Block 4.8] Order Summary & Render Previews --- */
         function getGroupBasePrice(item, groupId) {
             if (item.price !== undefined && item.price !== null && item.price !== "" && !isNaN(Number(item.price)) && Number(item.price) > 0) {
                 return Number(item.price);
@@ -787,7 +738,6 @@
             const isTouristWithoutLocation = (locationData.groupId === 2 && !locationData.locationId);
 
             if (!isTouristWithoutLocation && locationData.groupId === 2 && !isStoreFront && !isDeliveryFeeWaived) {
-                // ค่าจัดส่งเริ่มต้น หรือดึงจากตาราง locations ตาม locationId
                 deliveryFee = 20; 
             }
 
@@ -943,9 +893,6 @@
             sessionStorage.setItem('printOrderData', JSON.stringify(orderPayload));
             window.location.href = 'printorder.html';
         }
-        /* --- [End Block 4.8] --- */
     </script>
-    <!-- [End Block 4] -->
-
 </body>
 </html>
