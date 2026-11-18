@@ -1,12 +1,13 @@
 <!--
-  ========================================================================
-  FILE NAME: foodgroup.html
-  SUMMARY: หน้าเลือกหมวดหมู่เมนูอาหาร ปรับความสูง Auto-Resize ตามเนื้อหาจริง 100%
-  ========================================================================
+ =================================
+  File Name : foodgroup.html
+ =================================
 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
+    <!-- [Start Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
+    <!-- การตั้งค่าเริ่มต้น เมตาแท็ก และโหลดไลบรารีภายนอก -->
     <script src="appInit.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,10 +17,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
+    <!-- [End Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
 
-    <!-- ==========================================================
-         [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
-         ========================================================== -->
+    <!-- [Start Block 1.2] GLOBAL STYLES -->
+    <!-- การกำหนดสไตล์ CSS พื้นฐานของหน้าเลือกหมวดหมู่เมนูอาหาร -->
     <style>
         html, body { 
             width: 100%; height: auto; min-height: auto; 
@@ -28,6 +29,11 @@
             user-select: none; display: flex; flex-direction: column; 
             overflow: hidden; border-radius: 1.5rem; 
         }
+
+        input, select, textarea, button {
+            font-size: 16px;
+        }
+
         .category-nav-wrap { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; width: 100%; box-sizing: border-box; padding: 0.25rem; }
         .cat-nav-btn {
             position: relative; background-color: #ffffff; border: 1.5px solid #10349542; color: #1e293b;
@@ -44,12 +50,13 @@
             display: flex; align-items: center; justify-content: center; border: 2px solid #ffffff; z-index: 10;
         }
     </style>
-    <!-- [End Block 1] -->
+    <!-- [End Block 1.2] GLOBAL STYLES -->
 </head>
 <body class="bg-slate-50 text-slate-800 flex flex-col items-center justify-start p-2">
 
     <!-- ==========================================================
          [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
+         ส่วนติดต่อผู้ใช้และองค์ประกอบหน้าจอแสดงรายการหมวดหมู่
          ========================================================== -->
     <div class="w-full max-w-xl mx-auto flex flex-col">
         <!-- ปล่อยโล่ง ไม่ล็อก max-height เพื่อให้ขยายตามจำนวนหมวดหมู่จริง -->
@@ -59,30 +66,44 @@
             </div>
         </div>
     </div>
-    <!-- [End Block 2] -->
+    <!-- [End Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
 
     <!-- ==========================================================
          [Start Block 3] MODAL NOTIFICATIONS
+         หน้าต่างแจ้งเตือน (Modal)
          ========================================================== -->
     <div id="customModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-opacity duration-200 opacity-0">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-xs p-5 text-center transform scale-95 transition-transform duration-200 border border-slate-100 flex flex-col items-center" id="modalBox">
             <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-2xl mb-3 shadow-inner">📌</div>
             <h3 class="text-base font-bold text-slate-800 mb-1">แจ้งเตือน</h3>
             <p id="modalMessage" class="text-slate-600 text-sm mb-5 font-medium leading-relaxed"></p>
-            <button onclick="closeCustomModal()" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold rounded-xl shadow-md transition duration-150">ตกลง</button>
+            <button onclick="closeCustomModal()" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold rounded-xl shadow-md transition duration-150 cursor-pointer">ตกลง</button>
         </div>
     </div>
-    <!-- [End Block 3] -->
+    <!-- [End Block 3] MODAL NOTIFICATIONS -->
 
     <!-- ==========================================================
-         [Start Block 4] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
+         [Start Block 4] JAVASCRIPT CORE LOGIC & FUNCTIONS
+         การทำงานส่วนตรรกะ การดึงข้อมูลจาก Supabase และการปรับขนาด iframe
          ========================================================== -->
     <script>
+        /* --- [Start Block 4.1] GLOBAL VARIABLES & INITIALIZATION --- */
+        /* การประกาศตัวแปรส่วนกลางและการตั้งค่าเริ่มต้นเมื่อโหลดหน้าเว็บ */
         const categoryIcons = ['🍱', '🍲', '🍳', '🍚', '🥩', '⭐', '🥗', '🛍️', '🍽️', '🥢', '🍹'];
         let cachedCategories = [];
         let cachedFoods = [];
         let currentCart = [];
 
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (window.self === window.top) {
+                await fetchStandaloneData();
+            }
+            updateParentHeight();
+        });
+        /* --- [End Block 4.1] GLOBAL VARIABLES & INITIALIZATION --- */
+
+        /* --- [Start Block 4.2] MODAL HANDLERS --- */
+        /* ฟังก์ชันการเปิด/ปิดหน้าต่างแจ้งเตือน */
         function showCustomModal(message) {
             const modal = document.getElementById('customModal');
             const modalBox = document.getElementById('modalBox');
@@ -100,14 +121,10 @@
             modalBox.classList.add('scale-95');
             setTimeout(() => { modal.classList.remove('flex'); modal.classList.add('hidden'); }, 200);
         }
+        /* --- [End Block 4.2] MODAL HANDLERS --- */
 
-        window.addEventListener('DOMContentLoaded', async () => {
-            if (window.self === window.top) {
-                await fetchStandaloneData();
-            }
-            updateParentHeight();
-        });
-
+        /* --- [Start Block 4.3] DATA FETCHING & POSTMESSAGE LISTENERS --- */
+        /* ฟังก์ชันดึงข้อมูลหมวดหมู่และเมนูจาก Supabase หรือรับข้อความจากแม่ข่ายผ่าน postMessage */
         async function fetchStandaloneData() {
             const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
             if (!client) {
@@ -137,8 +154,10 @@
                 renderCategories(cachedCategories, cachedFoods, currentCart);
             }
         });
+        /* --- [End Block 4.3] DATA FETCHING & POSTMESSAGE LISTENERS --- */
 
-        // ฟังก์ชันส่งความสูงจริงแบบไดนามิก (ใช้ ResizeObserver และ scrollHeight)
+        /* --- [Start Block 4.4] AUTO-RESIZE & RENDERING LOGIC --- */
+        /* ฟังก์ชันปรับความสูง iframe อัตโนมัติและเรนเดอร์ปุ่มหมวดหมู่อาหาร */
         function updateParentHeight() {
             if (window.parent !== window) {
                 const totalHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
@@ -222,7 +241,8 @@
 
             updateParentHeight();
         }
+        /* --- [End Block 4.4] AUTO-RESIZE & RENDERING LOGIC --- */
     </script>
-    <!-- [End Block 4] -->
+    <!-- [End Block 4] JAVASCRIPT CORE LOGIC & FUNCTIONS -->
 </body>
 </html>

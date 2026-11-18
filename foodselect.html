@@ -1,12 +1,13 @@
 <!--
-  ========================================================================
-  FILE NAME: foodselect.html
-  SUMMARY: หน้าเลือกรายละเอียดเมนูอาหารและกำหนดจำนวน/ไข่ดาว/ราคา พร้อมโครงสร้าง Block สากล 100%
-  ========================================================================
+ =================================
+  File Name : foodselect.html
+ =================================
 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
+    <!-- [Start Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
+    <!-- การตั้งค่าเริ่มต้น เมตาแท็ก และโหลดไลบรารีภายนอก -->
     <script src="appInit.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
@@ -16,26 +17,32 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
+    <!-- [End Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
 
-    <!-- ==========================================================
-         [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
-         ========================================================== -->
+    <!-- [Start Block 1.2] GLOBAL STYLES -->
+    <!-- การกำหนดสไตล์ CSS พื้นฐานของหน้าเลือกรายละเอียดเมนูอาหาร -->
     <style>
         html, body {
             width: 100%; height: auto; background-color: #ffffff; color: #1e293b;
             font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none;
             display: flex; flex-direction: column; overflow: hidden; border-radius: 1.5rem;
         }
+
+        input, select, textarea, button {
+            font-size: 16px;
+        }
+
         .custom-label { font-size: 15px !important; font-weight: 700; }
         input[type="number"], input[type="text"] { font-size: 16px !important; padding-top: 0.45rem !important; padding-bottom: 0.45rem !important; line-height: 1.4 !important; }
         .back-btn { background-color: #f1f5f9; border: 1.5px solid #cbd5e1; color: #334155; font-weight: 700; font-size: 13px !important; padding: 0.25rem 0.5rem; border-radius: 0.6rem; cursor: pointer; }
     </style>
-    <!-- [End Block 1] -->
+    <!-- [End Block 1.2] GLOBAL STYLES -->
 </head>
 <body>
 
     <!-- ==========================================================
          [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
+         ส่วนติดต่อผู้ใช้และองค์ประกอบหน้าจอเลือกรายละเอียดเมนูอาหาร
          ========================================================== -->
     <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
         <button type="button" id="popupBackBtn" class="back-btn" onclick="goBackToCategory()">◀ รายการ</button>
@@ -102,12 +109,15 @@
             <input type="text" id="foodNote" placeholder="(เช่น เผ็ดน้อย, ไม่ใส่ผัก)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-base outline-none focus:border-emerald-500">
         </div>
     </div>
-    <!-- [End Block 2] -->
+    <!-- [End Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
 
     <!-- ==========================================================
-         [Start Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
+         [Start Block 3] JAVASCRIPT CORE LOGIC & FUNCTIONS
+         การทำงานส่วนตรรกะ ฟังก์ชันจัดการตะกร้า และการปรับขนาด iframe
          ========================================================== -->
     <script>
+        /* --- [Start Block 3.1] INITIALIZATION & LISTENERS --- */
+        /* การตั้งค่าเริ่มต้นและการรับส่งข้อความผ่าน postMessage */
         let currentFood = null;
         let currentCatId = null;
         let currentQty = 1;
@@ -120,7 +130,6 @@
         const urlFoodId = urlParams.get('food_id');
         const urlGroupId = urlParams.get('group_id');
 
-        /* --- [Start Block 3.1] INITIALIZATION & LISTENERS --- */
         window.addEventListener('DOMContentLoaded', () => {
             try {
                 const storedCart = JSON.parse(localStorage.getItem('cart') || '[]');
@@ -143,9 +152,10 @@
                 renderSelectedCartList();
             }
         });
-        /* --- [End Block 3.1] --- */
+        /* --- [End Block 3.1] INITIALIZATION & LISTENERS --- */
 
-        /* --- [Start Block 3.2] RESIZE & RENDERING --- */
+        /* --- [Start Block 3.2] AUTO-RESIZE & RENDERING LOGIC --- */
+        /* ฟังก์ชันปรับความสูง iframe อัตโนมัติและเรนเดอร์รายละเอียดเมนู */
         let lastReportedHeight = 0;
         let resizeTimer = null;
         function updateParentHeight() {
@@ -280,9 +290,10 @@
                 window.parent.postMessage({ type: 'DELETE_CART_ITEM_BY_ID', itemId: itemId }, window.location.origin);
             }
         }
-        /* --- [End Block 3.2] --- */
+        /* --- [End Block 3.2] AUTO-RESIZE & RENDERING LOGIC --- */
 
         /* --- [Start Block 3.3] ACTIONS & CART OPERATIONS --- */
+        /* ฟังก์ชันบันทึกรายการลงตะกร้าและนำทางกลับหมวดหมู่ */
         function saveToCart() {
             if (!currentFood) {
                 alert('ไม่พบข้อมูลสินค้า กรุณาลองใหม่อีกครั้ง');
@@ -338,8 +349,8 @@
         function closePopup() {
             if (window.self !== window.top) window.parent.postMessage({ type: 'CLOSE_POPUP' }, window.location.origin);
         }
-        /* --- [End Block 3.3] --- */
+        /* --- [End Block 3.3] ACTIONS & CART OPERATIONS --- */
     </script>
-    <!-- [End Block 3] -->
+    <!-- [End Block 3] JAVASCRIPT CORE LOGIC & FUNCTIONS -->
 </body>
 </html>

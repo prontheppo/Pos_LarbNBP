@@ -1,12 +1,13 @@
 <!--
-  ========================================================================
-  FILE NAME: location.html
-  SUMMARY: หน้ากาก UI แสดงรายชื่อสถานที่ พร้อมช่องเพิ่มสถานที่ใหม่และ postMessage
-  ========================================================================
+ =================================
+  File Name : location.html
+ =================================
 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
+    <!-- [Start Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
+    <!-- การตั้งค่าเริ่มต้น เมตาแท็ก และโหลดไลบรารีภายนอก -->
     <script src="appInit.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,15 +17,23 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
+    <!-- [End Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
 
+    <!-- [Start Block 1.2] GLOBAL STYLES -->
+    <!-- การกำหนดสไตล์ CSS พื้นฐานของหน้าเลือกสถานที่จัดส่ง -->
     <style>
         html, body { width: 100%; min-height: 100%; background-color: transparent; color: #1e293b; font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none; display: flex; flex-direction: column; }
+
+        input, select, textarea, button {
+            font-size: 16px;
+        }
+
         .location-wrap { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; width: 100%; box-sizing: border-box; }
         .location-btn {
             position: relative; background-color: #ffffff; border: 1.5px solid #f59e0b42; color: #1e293b;
             font-size: 1rem; font-weight: 700; padding: 0.75rem 0.5rem; border-radius: 0.85rem; text-align: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.15s ease; display: flex; align-items: center;
-            justify-content: center; gap: 0.35rem; min-height: 60px; cursor: pointer;
+            justify-content: center; gap: 0.5rem; min-height: 60px; cursor: pointer;
         }
         .location-btn:active { background-color: #f59e0b; color: #ffffff; border-color: #d97706; transform: scale(0.96); }
         .badge-main { 
@@ -33,11 +42,16 @@
             display: flex; align-items: center; justify-content: center; border: 2px solid #ffffff; z-index: 10;
         }
     </style>
+    <!-- [End Block 1.2] GLOBAL STYLES -->
 </head>
 <body class="bg-slate-50 text-slate-800 flex flex-col items-center justify-start p-2">
 
+    <!-- ==========================================================
+         [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
+         ส่วนติดต่อผู้ใช้และองค์ประกอบหน้าจอเลือกสถานที่
+         ========================================================== -->
     <div class="w-full max-w-xl mx-auto flex flex-col space-y-3">
-        <!-- ช่องสำหรับเพิ่มสถานที่ใหม่ (ตามรูปที่ 1) -->
+        <!-- ช่องสำหรับเพิ่มสถานที่ใหม่ -->
         <div id="addLocationSection" class="bg-amber-50 p-2.5 rounded-2xl border border-amber-200 flex gap-2 shadow-2xs">
             <input type="text" id="newLocationInput" placeholder="➕ เพิ่มสถานที่ใหม่..." class="flex-1 h-10 px-3 text-xs rounded-xl border border-amber-300 bg-white outline-none font-semibold text-slate-800">
             <button type="button" onclick="addNewLocation()" class="h-10 px-4 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-sm shrink-0">+ เพิ่ม</button>
@@ -47,15 +61,25 @@
             <div class="col-span-2 text-center py-6 text-slate-400 font-bold text-base">⏳ กำลังโหลดสถานที่...</div>
         </div>
     </div>
+    <!-- [End Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
 
+    <!-- ==========================================================
+         [Start Block 3] JAVASCRIPT CORE LOGIC & FUNCTIONS
+         การทำงานส่วนตรรกะ การดึงข้อมูลสถานที่ และการจัดการอีเวนต์
+         ========================================================== -->
     <script>
+        /* --- [Start Block 3.1] GLOBAL VARIABLES & INITIALIZATION --- */
+        /* การประกาศตัวแปรส่วนกลางและการดึงข้อมูลสถานที่เมื่อโหลดหน้าเว็บ */
         let cachedLocations = [];
         let activeOrdersCount = {};
 
         window.addEventListener('DOMContentLoaded', async () => {
             await fetchStandaloneLocations();
         });
+        /* --- [End Block 3.1] GLOBAL VARIABLES & INITIALIZATION --- */
 
+        /* --- [Start Block 3.2] DATA FETCHING & POSTMESSAGE HANDLERS --- */
+        /* ฟังก์ชันดึงข้อมูลสถานที่จาก Supabase และรับข้อความจากหน้าแม่ผ่าน postMessage */
         async function fetchStandaloneLocations() {
             const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
             if (!client) {
@@ -78,7 +102,10 @@
                 renderLocations(cachedLocations);
             }
         });
+        /* --- [End Block 3.2] DATA FETCHING & POSTMESSAGE HANDLERS --- */
 
+        /* --- [Start Block 3.3] LOCATION ACTIONS & RENDERING --- */
+        /* ฟังก์ชันเพิ่มสถานที่ใหม่ เรนเดอร์ปุ่มสถานที่ และปรับขนาดความสูง iframe อัตโนมัติ */
         async function addNewLocation() {
             const input = document.getElementById('newLocationInput');
             const name = input.value.trim();
@@ -95,6 +122,27 @@
                 console.error("Add location error:", err);
                 alert("ไม่สามารถเพิ่มสถานที่ได้");
             }
+        }
+
+        // ฟังก์ชันเลือกไอคอนหลากหลายรูปแบบตามชื่อสถานที่
+        function getLocationIcon(name) {
+            const n = name.toLowerCase();
+            if (n.includes('home') || n.includes('บ้าน') || n.includes('โฟกัส')) return '🏠';
+            if (n.includes('room') || n.includes('ห้อง') || n.includes('พัก')) return '🛏️';
+            if (n.includes('brook') || n.includes('ธรรมชาติ') || n.includes('สวน')) return '🌿';
+            if (n.includes('น้ำ') || n.includes('แก่ง')) return '🌊';
+            if (n.includes('ชิลล์') || n.includes('cafe') || n.includes('เฮฮา')) return '🎈';
+            if (n.includes('รีสอร์ท') || n.includes('เดอะ')) return '🏢';
+            if (n.includes('บาหลี') || n.includes('ไทย')) return '🌴';
+            if (n.includes('ร้าน') || n.includes('หน้า')) return '🛎️';
+            
+            // รายการไอคอนสำรองแบบกระจายตัวเลือกหลากหลาย (ไม่ซ้ำซาก)
+            const diverseIcons = ['🏡', '⭐', '⛺', '🎯', '🛋️', '🌺', '🏰', '🎪', '🍀', '🚀'];
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) {
+                hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return diverseIcons[Math.abs(hash) % diverseIcons.length];
         }
 
         function renderLocations(locations) {
@@ -116,7 +164,8 @@
                 const count = activeOrdersCount[loc.location_id] || 0;
                 const badgeHTML = count > 0 ? `<span class="badge-main">${count}</span>` : '';
                 
-                btn.innerHTML = `<span>📍</span> <span class="truncate">${loc.location_name}</span>${badgeHTML}`;
+                const icon = getLocationIcon(loc.location_name);
+                btn.innerHTML = `<span class="text-lg">${icon}</span> <span class="truncate">${loc.location_name}</span>${badgeHTML}`;
 
                 btn.onclick = () => {
                     if (window.self !== window.top) {
@@ -134,6 +183,8 @@
                 window.parent.postMessage({ type: 'RESIZE_POPUP', height: totalHeight }, window.location.origin);
             }
         }
+        /* --- [End Block 3.3] LOCATION ACTIONS & RENDERING --- */
     </script>
+    <!-- [End Block 3] JAVASCRIPT CORE LOGIC & FUNCTIONS -->
 </body>
 </html>

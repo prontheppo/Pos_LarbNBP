@@ -1,12 +1,13 @@
 <!--
-  ========================================================================
+ =================================
   FILE NAME: printorder.html
-  SUMMARY: หน้าพิมพ์ใบเสร็จและบันทึกออร์เดอร์ลง Supabase จัดระเบียบโครงสร้าง Block สากล 100%
-  ========================================================================
+ =================================
 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
+    <!-- [Start Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
+    <!-- การตั้งค่าเริ่มต้น เมตาแท็ก และโหลดไลบรารีภายนอก -->
     <script src="appInit.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
@@ -16,12 +17,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- [End Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
 
-    <!-- ==========================================================
-         [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
-         ========================================================== -->
+    <!-- [Start Block 1.2] GLOBAL STYLES -->
+    <!-- การกำหนดสไตล์ CSS และการตั้งค่าสำหรับการพิมพ์ใบเสร็จ -->
     <style>
         body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 0; }
+        input, select, textarea, button { font-size: 16px; }
         @media print {
             body * { visibility: hidden; }
             #printArea, #printArea * { visibility: visible; }
@@ -29,12 +31,13 @@
             .no-print { display: none !important; }
         }
     </style>
-    <!-- [End Block 1] -->
+    <!-- [End Block 1.2] GLOBAL STYLES -->
 </head>
 <body class="flex flex-col items-center justify-start min-h-screen p-3">
 
     <!-- ==========================================================
          [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
+         ส่วนแสดงผลใบเสร็จรายการอาหาร สรุปยอดรวม และปุ่มควบคุมการบันทึก/พิมพ์
          ========================================================== -->
 
     <!-- [Start Block 2.1] RECEIPT AND ITEM DISPLAY AREA -->
@@ -54,6 +57,7 @@
             </div>
 
             <!-- [Start Block 2.2] ORDER TOTAL AND QUANTITY SUMMARY -->
+            <!-- ส่วนสรุปจำนวนรายการและราคารวมทั้งหมด -->
             <div class="flex items-center justify-between border-b-2 border-dashed border-slate-200 pb-2 mb-2 flex-shrink-0">
                 <div class="border border-slate-800 rounded-lg px-2 py-0.5">
                     <span id="summaryQty" class="font-extrabold text-xs text-slate-800">0 รายการ - 0 ชิ้น</span>
@@ -62,7 +66,7 @@
                     <span class="font-extrabold text-sm text-slate-900">รวม <span id="summaryTotal">0</span> บาท</span>
                 </div>
             </div>
-            <!-- [End Block 2.2] -->
+            <!-- [End Block 2.2] ORDER TOTAL AND QUANTITY SUMMARY -->
 
             <div id="touristOnlySection" class="hidden text-center flex-shrink-0 my-0.5">
                 <p class="text-[11px] font-bold text-slate-700">⭐ ขอบพระคุณที่อุดหนุนค่ะ ⭐</p>
@@ -73,25 +77,28 @@
         </div>
 
         <!-- [Start Block 2.3] USER ACTION BUTTONS -->
+        <!-- ปุ่มควบคุมย้อนกลับ บันทึกออร์เดอร์ และบันทึกพร้อมพิมพ์ -->
         <div class="pt-2 border-t border-slate-100 flex gap-2 flex-shrink-0 no-print mt-3">
             <button type="button" onclick="window.location.href='ordersystem.html?tab=2'" class="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-extrabold text-xs rounded-xl transition cursor-pointer">⬅ กลับไปแก้ไข</button>
             <button type="button" onclick="handleSaveOrder(false)" id="saveOnlyBtn" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow transition cursor-pointer">💾 บันทึก</button>
             <button type="button" onclick="handleSaveOrder(true)" id="saveAndPrintBtn" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl shadow transition cursor-pointer">🖨️ บันทึก / พิมพ์</button>
         </div>
-        <!-- [End Block 2.3] -->
+        <!-- [End Block 2.3] USER ACTION BUTTONS -->
 
     </div>
-    <!-- [End Block 2.1] -->
+    <!-- [End Block 2.1] RECEIPT AND ITEM DISPLAY AREA -->
 
-    <!-- [End Block 2] -->
+    <!-- [End Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
 
     <!-- ==========================================================
          [Start Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
+         การทำงานส่วนตรรกะ การดึงข้อมูลจาก Session Storage การเรนเดอร์ใบเสร็จ และบันทึกลง Supabase
          ========================================================== -->
     <script>
+        /* --- [Start Block 3.1] STATE VARIABLES & INITIALIZATION --- */
+        /* การประกาศตัวแปรส่วนกลางและการโหลดข้อมูลออร์เดอร์จาก Session Storage เมื่อเปิดหน้าเว็บ */
         let orderData = null;
 
-        /* --- [Start Block 3.1] LOAD ORDER DATA FROM SESSION STORAGE --- */
         window.addEventListener('DOMContentLoaded', () => {
             const rawData = sessionStorage.getItem('printOrderData');
             if (!rawData) {
@@ -114,9 +121,10 @@
                 });
             }
         });
-        /* --- [End Block 3.1] --- */
+        /* --- [End Block 3.1] STATE VARIABLES & INITIALIZATION --- */
 
-        /* --- [Start Block 3.2] RENDER RECEIPT AND ORDER DETAILS --- */
+        /* --- [Start Block 3.2] RENDER RECEIPT & PREVIEW --- */
+        /* ฟังก์ชันเรนเดอร์รายละเอียดรายการอาหารในใบเสร็จสำหรับตรวจสอบก่อนบันทึก/พิมพ์ */
         function renderPrintPreview() {
             const { locationData, customerDisplayName, orderSummary } = orderData;
             const container = document.getElementById('itemListContainer');
@@ -187,9 +195,10 @@
             document.getElementById('summaryQty').textContent = `${orderSummary.itemsCount} รายการ - ${orderSummary.totalQty} ชิ้น`;
             document.getElementById('summaryTotal').textContent = orderSummary.grandTotal.toLocaleString();
         }
-        /* --- [End Block 3.2] --- */
+        /* --- [End Block 3.2] RENDER RECEIPT & PREVIEW --- */
 
-        /* --- [Start Block 3.3] SAVE ORDER TO SUPABASE AND HANDLE PRINTING --- */
+        /* --- [Start Block 3.3] SAVE ORDER & PRINT HANDLER --- */
+        /* ฟังก์ชันบันทึกข้อมูลออร์เดอร์ลงฐานข้อมูล Supabase และสั่งพิมพ์ใบเสร็จ (ถ้าต้องการ) */
         async function handleSaveOrder(shouldPrint = false) {
             try {
                 const saveBtn1 = document.getElementById('saveOnlyBtn');
@@ -239,8 +248,8 @@
                 if (saveBtn2) saveBtn2.disabled = false;
             }
         }
-        /* --- [End Block 3.3] --- */
+        /* --- [End Block 3.3] SAVE ORDER & PRINT HANDLER --- */
     </script>
-    <!-- [End Block 3] -->
+    <!-- [End Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS -->
 </body>
 </html>

@@ -1,12 +1,13 @@
 <!--
-  ========================================================================
+ =================================
   FILE NAME: settings_delivery.html
-  SUMMARY: ตั้งค่าเรทค่าส่งตามสถานที่ จัดระเบียบโครงสร้าง Block สากล 100%
-  ========================================================================
+ =================================
 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
+    <!-- [Start Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
+    <!-- การตั้งค่าเริ่มต้น เมตาแท็ก และโหลดไลบรารีภายนอก -->
     <script src="appInit.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
@@ -14,10 +15,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ตั้งค่าเรทค่าส่งตามสถานที่ - ลาบหนองบัวลำภู</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- [End Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
 
-    <!-- ==========================================================
-         [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
-         ========================================================== -->
+    <!-- [Start Block 1.2] GLOBAL STYLES -->
+    <!-- การกำหนดสไตล์ CSS และตารางข้อมูลสำหรับหน้าตั้งค่าเรทค่าส่ง -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap');
         html, body {
@@ -27,6 +28,10 @@
             margin: 0; padding: 0;
             height: 100vh;
             overflow: hidden;
+        }
+
+        input, select, textarea, button {
+            font-size: 16px;
         }
 
         .excel-table {
@@ -57,7 +62,7 @@
             background: transparent;
             width: 100%;
             text-align: center;
-            font-size: 12px;
+            font-size: 16px;
             font-weight: 600;
             outline: none;
             padding: 2px 0;
@@ -68,16 +73,18 @@
             border-radius: 2px;
         }
     </style>
-    <!-- [End Block 1] -->
+    <!-- [End Block 1.2] GLOBAL STYLES -->
 </head>
 <body class="p-2 max-w-2xl mx-auto h-full flex flex-col">
 
     <!-- ==========================================================
          [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
+         ส่วนติดต่อผู้ใช้ หน้าจอตั้งค่าเรทค่าส่งและเปอร์เซ็นต์ส่วนแบ่งรีสอร์ต
          ========================================================== -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 flex flex-col h-full overflow-hidden">
 
         <!-- [Start Block 2.1] HEADER AND ADMIN NAVIGATION -->
+        <!-- ส่วนหัวและปุ่มกลับหน้าผู้ดูแลระบบ -->
         <div class="flex justify-between items-center mb-2 pb-2 border-b shrink-0">
             <div>
                 <h1 class="font-extrabold text-sm text-slate-800 flex items-center gap-1.5">⚙️ ตั้งค่าเรทค่าส่ง & เปอร์เซ็นต์รีสอร์ต</h1>
@@ -87,13 +94,15 @@
                 ⬅️ กลับหน้าผู้ดูแลระบบ
             </a>
         </div>
-        <!-- [End Block 2.1] -->
+        <!-- [End Block 2.1] HEADER AND ADMIN NAVIGATION -->
 
         <!-- [Start Block 2.2] LOADING STATUS -->
+        <!-- ข้อความแสดงสถานะกำลังโหลดข้อมูล -->
         <div id="loadingText" class="text-center text-xs text-slate-400 py-6">⏳ กำลังโหลดข้อมูล...</div>
-        <!-- [End Block 2.2] -->
+        <!-- [End Block 2.2] LOADING STATUS -->
 
         <!-- [Start Block 2.3] LOCATION DELIVERY SETTINGS TABLE -->
+        <!-- ตารางแสดงรายการสถานที่และช่องกรอกแก้ไขข้อมูลแบบเรียลไทม์ -->
         <div class="flex-1 overflow-y-auto relative rounded border border-slate-200">
             <table id="locationTable" class="excel-table text-xs hidden">
                 <thead>
@@ -109,16 +118,18 @@
                 </tbody>
             </table>
         </div>
-        <!-- [End Block 2.3] -->
+        <!-- [End Block 2.3] LOCATION DELIVERY SETTINGS TABLE -->
 
     </div>
-    <!-- [End Block 2] -->
+    <!-- [End Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
 
     <!-- ==========================================================
          [Start Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
+         การทำงานส่วนตรรกะ การเชื่อมต่อ Supabase การดึงข้อมูล และการบันทึกอัตโนมัติ
          ========================================================== -->
     <script>
         /* --- [Start Block 3.1] INITIALIZATION & SUPABASE CLIENT --- */
+        /* การเริ่มต้นการทำงานเมื่อโหลดหน้าเว็บและตรวจสอบการเชื่อมต่อ Supabase */
         window.addEventListener('DOMContentLoaded', async () => {
             await fetchAndRenderLocations();
         });
@@ -128,9 +139,10 @@
             if (typeof supabase?.from === 'function') return supabase;
             return null;
         }
-        /* --- [End Block 3.1] --- */
+        /* --- [End Block 3.1] INITIALIZATION & SUPABASE CLIENT --- */
 
         /* --- [Start Block 3.2] FETCH & RENDER LOCATION DATA --- */
+        /* ฟังก์ชันดึงข้อมูลสถานที่จากฐานข้อมูลและเรนเดอร์ลงในตาราง */
         async function fetchAndRenderLocations() {
             const _db = getSupabaseClient();
             const loadingText = document.getElementById('loadingText');
@@ -185,9 +197,10 @@
                 loadingText.textContent = '❌ เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + err.message;
             }
         }
-        /* --- [End Block 3.2] --- */
+        /* --- [End Block 3.2] FETCH & RENDER LOCATION DATA --- */
 
         /* --- [Start Block 3.3] AUTO-SAVE LOCATION SETTINGS --- */
+        /* ฟังก์ชันบันทึกข้อมูลเรทค่าส่งและเปอร์เซ็นต์ส่วนแบ่งอัตโนมัติเมื่อผู้ใช้แก้ไขข้อมูลในตาราง */
         async function autoSaveLocationRule(locId) {
             const _db = getSupabaseClient();
             if (!_db) return;
@@ -228,8 +241,8 @@
                 alert('❌ บันทึกไม่สำเร็จ: ' + err.message);
             }
         }
-        /* --- [End Block 3.3] --- */
+        /* --- [End Block 3.3] AUTO-SAVE LOCATION SETTINGS --- */
     </script>
-    <!-- [End Block 3] -->
+    <!-- [End Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS -->
 </body>
 </html>

@@ -1,12 +1,13 @@
 <!--
-  ========================================================================
+ =================================
   FILE NAME: salereport.html
-  SUMMARY: รายงานการขายและการจัดการ พร้อมระบบดึงรายจ่ายจากตาราง expenses มาสรุปยอดรวม 100%
-  ========================================================================
+ =================================
 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
+    <!-- [Start Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
+    <!-- การตั้งค่าเริ่มต้น เมตาแท็ก และโหลดไลบรารีภายนอก -->
     <script src="appInit.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
@@ -17,10 +18,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- [End Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
 
-    <!-- ==========================================================
-         [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
-         ========================================================== -->
+    <!-- [Start Block 1.2] GLOBAL STYLES -->
+    <!-- การกำหนดสไตล์ CSS พื้นฐานของหน้ารายงานการขาย -->
     <style>
       :root { --bg-color: #f8fafc; }
       html, body {
@@ -35,10 +36,13 @@
         background: #ffffff; display: flex; flex-direction: column;
         box-sizing: border-box; overflow: hidden;
       }
+      input, select, textarea, button {
+        font-size: 16px;
+      }
       ::-webkit-scrollbar { display: none; }
       .tab-content { display: none; height: 100%; width: 100%; flex-direction: column; overflow: hidden; }
       .tab-content.active { display: flex; }
-      .tab-btn { transition: all 0.2s ease; border: 1px solid transparent; }
+      .tab-btn { transition: all 0.2s ease; border: 1px solid transparent; cursor: pointer; }
       .tab-btn.tab-overview { background-color: #faf5ff; color: #7e22ce; }
       .tab-btn.tab-daily { background-color: #eff6ff; color: #1d4ed8; }
       .tab-btn.tab-group { background-color: #fdf4ff; color: #a21caf; }
@@ -48,16 +52,18 @@
         font-weight: 800; border-color: #cbd5e1; transform: scale(1.02);
       }
     </style>
-    <!-- [End Block 1] -->
+    <!-- [End Block 1.2] GLOBAL STYLES -->
 </head>
 <body class="bg-slate-100 flex items-center justify-center antialiased">
 
 <div class="app-container shadow-2xl w-full border border-slate-100">
     <!-- ==========================================================
          [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
+         ส่วนติดต่อผู้ใช้และองค์ประกอบหน้าจอรายงานการขายและรายจ่าย (แบ่งเป็น Tab สรุป, รายวัน, กลุ่ม)
          ========================================================== -->
 
     <!-- [Start Block 2.1] HEADER AND TAB NAVIGATION -->
+    <!-- ส่วนหัวของแอปพลิเคชันและปุ่มสลับแท็บแสดงรายงาน -->
     <header class="bg-white border-b border-slate-200 shrink-0">
         <div class="px-4 pt-3 pb-2 flex justify-between items-center">
             <div class="flex items-center gap-2">
@@ -84,9 +90,10 @@
             </button>
         </div>
     </header>
-    <!-- [End Block 2.1] -->
+    <!-- [End Block 2.1] HEADER AND TAB NAVIGATION -->
 
     <!-- [Start Block 2.2] SALES OVERVIEW TAB -->
+    <!-- แท็บสรุปยอดขายและรายจ่ายย้อนหลัง 15 วัน -->
     <div id="tabOverview" class="tab-content">
         <div class="p-3 bg-slate-50 border-b border-slate-100 shrink-0">
             <div class="bg-purple-50 p-2.5 rounded-xl border border-purple-100 flex justify-between items-center">
@@ -98,9 +105,10 @@
             <div class="text-center text-slate-400 py-10 text-xs font-medium">⏳ กำลังโหลดสรุปยอดขายและรายจ่าย...</div>
         </div>
     </div>
-    <!-- [End Block 2.2] -->
+    <!-- [End Block 2.2] SALES OVERVIEW TAB -->
 
     <!-- [Start Block 2.3] DAILY ORDERS TAB -->
+    <!-- แท็บแสดงรายการออร์เดอร์ขายและรายจ่ายร้านค้าประจำวัน -->
     <div id="tabDaily" class="tab-content">
         <div class="p-3 bg-slate-50 border-b border-slate-100 space-y-2 shrink-0">
             <div class="bg-blue-50 p-2 rounded-xl border border-blue-100 flex items-center justify-between">
@@ -128,9 +136,10 @@
         <!-- พื้นที่แสดงรายการ (แยก ออร์เดอร์ขาย และ รายจ่ายร้านค้า) -->
         <div class="p-3 overflow-y-auto space-y-3 bg-slate-100 flex-1" id="dailyOrdersContainer" style="-webkit-overflow-scrolling: touch;"></div>
     </div>
-    <!-- [End Block 2.3] -->
+    <!-- [End Block 2.3] DAILY ORDERS TAB -->
 
     <!-- [Start Block 2.4] GROUP SALES TAB -->
+    <!-- แท็บสรุปยอดขายแยกตามกลุ่มลูกค้า -->
     <div id="tabGroupSales" class="tab-content">
         <div class="p-3 bg-slate-50 border-b border-slate-100 shrink-0 space-y-2.5">
             <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100 flex items-center justify-between">
@@ -145,10 +154,11 @@
             <div class="text-center text-slate-400 py-10 text-xs font-medium">กำลังโหลดข้อมูลยอดขาย...</div>
         </div>
     </div>
-    <!-- [End Block 2.4] -->
+    <!-- [End Block 2.4] GROUP SALES TAB -->
 </div>
 
 <!-- [Start Block 2.5] GROUP SALES DETAIL MODAL -->
+<!-- หน้าต่างป๊อปอัปแสดงรายละเอียดออร์เดอร์ของแต่ละกลุ่มลูกค้า -->
 <div id="groupDetailModal" onclick="handleOutsideModalClick(event)" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
     <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl flex flex-col max-h-[80vh] overflow-hidden transform scale-95 transition-transform duration-200" id="groupDetailBox">
         <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
@@ -165,9 +175,10 @@
         </div>
     </div>
 </div>
-<!-- [End Block 2.5] -->
+<!-- [End Block 2.5] GROUP SALES DETAIL MODAL -->
 
 <!-- [Start Block 2.6] DATE PICKER CALENDAR MODAL -->
+<!-- หน้าต่างป๊อปอัปเลือกวันที่ (ปฏิทิน) -->
 <div id="calendarModal" onclick="handleCalendarOutsideClick(event)" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
     <div class="bg-white w-full max-w-xs rounded-2xl shadow-2xl overflow-hidden relative flex flex-col transform scale-95 transition-transform duration-200" id="calendarBox">
         <div class="bg-slate-800 text-white p-3 flex justify-between items-center">
@@ -177,14 +188,17 @@
         <iframe id="calendarIframe" src="" class="w-full h-[380px] border-none"></iframe>
     </div>
 </div>
-<!-- [End Block 2.6] -->
+<!-- [End Block 2.6] DATE PICKER CALENDAR MODAL -->
 
-<!-- [End Block 2] -->
+<!-- [End Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
 
 <!-- ==========================================================
      [Start Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
+     การทำงานส่วนตรรกะ การดึงข้อมูลจาก Supabase การคำนวณรายรับ-รายจ่าย และการแสดงผลรายงาน
      ========================================================== -->
 <script>
+    /* --- [Start Block 3.1] STATE VARIABLES & INITIALIZATION --- */
+    /* ตัวแปรส่วนกลางและการเริ่มต้นการทำงานเมื่อโหลดหน้าเว็บ */
     let db;
     let allOrdersCache = [];
     let allExpensesCache = [];
@@ -194,7 +208,6 @@
     let currentSelectedDate = '';
     let globalGroupData = {};
 
-    /* --- [Start Block 3.1] DATE UTILITIES & INITIALIZATION --- */
     function getTodayString() {
         const d = new Date();
         const year = d.getFullYear();
@@ -377,9 +390,10 @@
             dateStr: getOrderDateStr(order)
         };
     }
-    /* --- [End Block 3.1] --- */
+    /* --- [End Block 3.1] STATE VARIABLES & INITIALIZATION --- */
 
     /* --- [Start Block 3.2] FETCH SUPABASE DATA & CACHE --- */
+    /* ฟังก์ชันดึงข้อมูลจาก Supabase ทั้งข้อมูลสถานที่ ออร์เดอร์ และรายจ่าย */
     async function fetchMasterData() {
         if (!db) return;
         try {
@@ -395,7 +409,6 @@
         pastDate.setDate(pastDate.getDate() - 15);
         const pastDateStr = pastDate.toISOString().split('T')[0] + 'T00:00:00';
         
-        // 1. ดึงข้อมูลออร์เดอร์
         const ordRes = await db.from('orders')
             .select('*')
             .gte('created_at', pastDateStr)
@@ -407,7 +420,6 @@
             allOrdersCache = normalized;
         }
 
-        // 2. ดึงข้อมูลรายจ่าย (จากตาราง expenses)
         const expRes = await db.from('expenses')
             .select('*')
             .gte('created_at', pastDateStr)
@@ -437,7 +449,6 @@
         const startStr = `${targetDateStr}T00:00:00`;
         const endStr = `${targetDateStr}T23:59:59.999`;
 
-        // โหลด orders วันนั้นเพิ่ม ถ้ายังไม่มีในแคช
         const ordRes = await db.from('orders')
             .select('*')
             .gte('created_at', startStr)
@@ -454,7 +465,6 @@
             });
         }
 
-        // โหลด expenses วันนั้นเพิ่ม ถ้ายังไม่มีในแคช
         const expRes = await db.from('expenses')
             .select('*')
             .gte('created_at', startStr)
@@ -483,9 +493,10 @@
         if (document.getElementById('txtDailyDate')) document.getElementById('txtDailyDate').textContent = text;
         if (document.getElementById('txtGroupDate')) document.getElementById('txtGroupDate').textContent = text;
     }
-    /* --- [End Block 3.2] --- */
+    /* --- [End Block 3.2] FETCH SUPABASE DATA & CACHE --- */
 
     /* --- [Start Block 3.3] TAB NAVIGATION & CALENDAR --- */
+    /* ฟังก์ชันสลับแท็บเมนูและการจัดการป๊อปอัปปฏิทิน */
     async function switchTab(tabName, btnEl) {
         currentActiveTab = tabName;
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active-tab'));
@@ -549,14 +560,14 @@
         }
         if (event.data.action === 'CLOSE_MODAL') closeCalendarModal();
     });
-    /* --- [End Block 3.3] --- */
+    /* --- [End Block 3.3] TAB NAVIGATION & CALENDAR --- */
 
     /* --- [Start Block 3.4] RENDER REPORTS & MODALS --- */
+    /* ฟังก์ชันคำนวณและแสดงผลรายงานยอดขาย รายจ่าย และหน้าต่างรายละเอียด */
     function renderOverviewData() {
         const container = document.getElementById('overviewDateListContainer');
         if (!container) return;
         
-        // รวบรวมวันที่ทั้งหมดจากทั้ง orders และ expenses
         let allDatesSet = new Set();
         allOrdersCache.forEach(o => { if (o.dateStr) allDatesSet.add(o.dateStr); });
         allExpensesCache.forEach(e => { if (e.dateStr) allDatesSet.add(e.dateStr); });
@@ -572,7 +583,6 @@
             dateGroups[dateStr] = { totalIncome: 0, storeExpense: 0, netTotal: 0, count: 0, expenseCount: 0 };
         });
 
-        // คำนวณรายรับจากออร์เดอร์
         allOrdersCache.forEach(order => {
             let dateStr = order.dateStr;
             if (!dateStr || !dateGroups[dateStr]) return;
@@ -580,7 +590,6 @@
             dateGroups[dateStr].count += 1;
         });
 
-        // คำนวณรายจ่ายร้านค้าจากตาราง expenses
         allExpensesCache.forEach(exp => {
             let dateStr = exp.dateStr;
             if (!dateStr || !dateGroups[dateStr]) return;
@@ -588,7 +597,6 @@
             dateGroups[dateStr].expenseCount += 1;
         });
 
-        // สรุปยอดสุทธิ (รายรับ - รายจ่ายร้านค้า)
         Object.keys(dateGroups).forEach(dateStr => {
             let g = dateGroups[dateStr];
             g.netTotal = g.totalIncome - g.storeExpense;
@@ -650,7 +658,6 @@
         let totalIncome = 0;
         let totalStoreExpense = 0;
 
-        // 1. แสดงส่วนของรายจ่ายร้านค้าก่อน (จากหน้า expenses.html)
         let expenseSectionHtml = '';
         if (filteredExpenses.length > 0) {
             let expenseItemsHtml = filteredExpenses.map(exp => {
@@ -681,7 +688,6 @@
                 </div>`;
         }
 
-        // 2. แสดงรายการออร์เดอร์ขาย
         let ordersHtml = '';
         filteredOrders.forEach(order => {
             totalIncome += order.computedTotal;
@@ -751,7 +757,7 @@
         }
 
         globalGroupData = {};
-        let grandTotalOrders = 0, grandTotalIncome = 0, grandTotalNet = 0;
+        let grandTotalOrders = 0, grandTotalIncome = 0;
 
         filteredOrders.forEach(order => {
             let groupKey = order.groupTypeName;
@@ -879,8 +885,8 @@
     function goToEditOrder(orderId) {
         window.location.href = `editorder.html?order_id=${orderId}`;
     }
-    /* --- [End Block 3.4] --- */
+    /* --- [End Block 3.4] RENDER REPORTS & MODALS --- */
 </script>
-<!-- [End Block 3] -->
+<!-- [End Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS -->
 </body>
 </html>

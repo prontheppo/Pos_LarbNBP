@@ -1,12 +1,12 @@
 <!--
-  ========================================================================
-  FILE NAME: adjus_schema.html
-  SUMMARY: Supabase - Data Explorer & SQL Exporter จัดระเบียบโครงสร้าง Block สากล 100%
-  ========================================================================
+ =================================
+  File Name : adjus_schema.html
+ =================================
 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
+  <!-- [Start Block 1.1] HEAD CONFIGURATION -->
   <!-- Initialize Application -->
   <script src="appInit.js"></script>
 
@@ -22,12 +22,12 @@
 
   <!-- Initialize Supabase Client -->
   <script src="supabaseClient.js"></script>
+  <!-- [End Block 1.1] HEAD CONFIGURATION -->
 
-  <!-- ==========================================================
-       [Start Block 1] SETUP, CONFIG & GLOBAL STYLES
-       ========================================================== -->
+  <!-- [Start Block 1.2] GLOBAL STYLES -->
   <style>
     html, body {
+      font-family: 'Sarabun', sans-serif;
       background-color: #000000;
       color: #ffffff;
       touch-action: manipulation;
@@ -36,6 +36,10 @@
       height: auto;
       margin: 0;
       padding: 0;
+    }
+
+    input, select, textarea, button {
+      font-size: 16px;
     }
 
     ::-webkit-scrollbar {
@@ -52,16 +56,18 @@
       border-radius: 9999px;
     }
   </style>
-  <!-- [End Block 1] -->
+  <!-- [End Block 1.2] GLOBAL STYLES -->
 </head>
 
 <body class="min-h-screen pt-28 pb-16 px-3 relative">
 
   <!-- ==========================================================
        [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
+       ส่วนติดต่อผู้ใช้และองค์ประกอบหน้าจอ
        ========================================================== -->
 
   <!-- [Start Block 2.1] STICKY HEADER & NAVIGATION -->
+  <!-- ส่วนหัวของหน้าเว็บและปุ่มควบคุมหลัก -->
   <div class="fixed top-0 left-0 right-0 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800 p-3 z-40 shadow-xl">
     <div class="max-w-7xl mx-auto space-y-2">
 
@@ -88,25 +94,28 @@
       </div>
 
       <div id="statusText" class="text-[11px] font-semibold text-center text-zinc-400 truncate">
-        พร้อมใช้งานระบบ (ดึงข้อมูล Comment จาก Supabase ของจริง)
+        ⏳ พร้อมใช้งานระบบ (ดึงข้อมูล Comment จาก Supabase ของจริง)
       </div>
     </div>
   </div>
-  <!-- [End Block 2.1] -->
+  <!-- [End Block 2.1] STICKY HEADER & NAVIGATION -->
 
   <!-- [Start Block 2.2] TABLES DISPLAY CONTAINER -->
+  <!-- ส่วนแสดงผลรายการตารางข้อมูลจากฐานข้อมูล -->
   <div class="max-w-7xl mx-auto space-y-6">
     <div id="tablesContainer" class="space-y-6"></div>
   </div>
-  <!-- [End Block 2.2] -->
+  <!-- [End Block 2.2] TABLES DISPLAY CONTAINER -->
 
-  <!-- [End Block 2] -->
+  <!-- [End Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
 
   <!-- ==========================================================
        [Start Block 3] JAVASCRIPT CORE LOGIC & FUNCTIONS
+       การทำงานส่วนตรรกะและฟังก์ชันของระบบ
        ========================================================== -->
   <script>
     /* --- [Start Block 3.1] GLOBAL VARIABLES & CONFIGURATIONS --- */
+    /* การประกาศตัวแปรส่วนกลางและการตั้งค่าพื้นฐาน */
     let tablesDataCache = {};
     let tableCommentsMap = {};
 
@@ -134,9 +143,10 @@
 
       return 'id';
     }
-    /* --- [End Block 3.1] --- */
+    /* --- [End Block 3.1] GLOBAL VARIABLES & CONFIGURATIONS --- */
 
     /* --- [Start Block 3.2] DATABASE FETCH OPERATIONS --- */
+    /* ฟังก์ชันสำหรับการดึงข้อมูลและเชื่อมต่อกับฐานข้อมูล Supabase */
     async function fetchTablesWithComments() {
       try {
         const { data, error } = await supabaseClient.rpc('get_tables_with_comments');
@@ -209,9 +219,10 @@
 
       status.innerHTML = `<span class="text-emerald-400">✅ ดึงข้อมูลสำเร็จทั้งหมด ${tableList.length} ตาราง (รวม ${totalCount} รายการ)</span>`;
     }
-    /* --- [End Block 3.2] --- */
+    /* --- [End Block 3.2] DATABASE FETCH OPERATIONS --- */
 
     /* --- [Start Block 3.3] UI RENDERING FUNCTIONS --- */
+    /* ฟังก์ชันสำหรับการสร้างและเรนเดอร์การแสดงผลการ์ดตารางข้อมูล */
     function renderTableCard(tableName, rows, errorMsg) {
       const container = document.getElementById('tablesContainer');
       const section = document.createElement('div');
@@ -251,7 +262,7 @@
       if (errorMsg) {
         html += `<p class="text-xs text-rose-300 bg-black/50 p-2.5 rounded-lg border border-rose-900/30">❌ เกิดข้อผิดพลาด: ${errorMsg}</p>`;
       } else if (!rows || rows.length === 0) {
-        html += `<p class="text-xs text-zinc-500 py-2 italic">-- ไม่มีข้อมูลในตารางนี้ --</p>`;
+        html += `<p class="text-xs text-zinc-500 py-2 italic">⏳ ไม่มีรายการอาหาร</p>`;
       } else {
         const headers = Object.keys(rows[0]);
 
@@ -285,9 +296,10 @@
       section.innerHTML = html;
       container.appendChild(section);
     }
-    /* --- [End Block 3.3] --- */
+    /* --- [End Block 3.3] UI RENDERING FUNCTIONS --- */
 
     /* --- [Start Block 3.4] SQL EXPORTER FUNCTIONS --- */
+    /* ฟังก์ชันสำหรับการแปลงข้อมูลเป็น SQL Statement และส่งออกไฟล์ schema.sql */
     function getSqlType(col, val, pkName) {
       if (col === pkName) {
         return "BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY";
@@ -491,8 +503,8 @@
         status.innerHTML = `<span class="text-rose-400">❌ เกิดข้อผิดพลาดในการลบตาราง orders: ${err.message}</span>`;
       }
     }
-    /* --- [End Block 3.4] --- */
+    /* --- [End Block 3.4] SQL EXPORTER FUNCTIONS --- */
   </script>
-  <!-- [End Block 3] -->
+  <!-- [End Block 3] JAVASCRIPT CORE LOGIC & FUNCTIONS -->
 </body>
 </html>

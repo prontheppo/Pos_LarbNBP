@@ -1,12 +1,13 @@
 <!--
-  ========================================================================
-  FILE NAME: expenses.html
-  SUMMARY: หน้าบันทึกรายจ่ายร้านค้า พร้อมป๊อปอัปเครื่องคิดเลข (คลิกช่องจำนวนเงินเพื่อเปิด, กด = เพื่อคำนวณและปิดอัตโนมัติ, คลิกนอกกรอบเพื่อปิด) 100%
-  ========================================================================
+ =================================
+  File Name : expenses.html
+ =================================
 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
+    <!-- [Start Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
+    <!-- การตั้งค่าเริ่มต้น เมตาแท็ก และโหลดไลบรารีภายนอก -->
     <script src="appInit.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
@@ -15,10 +16,10 @@
     <title>บันทึกรายจ่าย - ลาบหนองบัวลำภู</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- [End Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
 
-    <!-- ==========================================================
-         [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
-         ========================================================== -->
+    <!-- [Start Block 1.2] GLOBAL STYLES -->
+    <!-- การกำหนดสไตล์ CSS พื้นฐานของระบบและปุ่มเครื่องคิดเลข -->
     <style>
         :root { --bg-color: #f1f5f9; }
         html, body {
@@ -27,6 +28,10 @@
             font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none;
         }
         .page-container { display: flex; flex-direction: column; height: 100vh; max-width: 672px; margin: 0 auto; box-sizing: border-box; }
+
+        input, select, textarea, button {
+            font-size: 16px;
+        }
         
         .icon-choice-btn {
             background-color: #f8fafc;
@@ -64,21 +69,27 @@
             background-color: #ea580c;
         }
     </style>
-    <!-- [End Block 1] -->
+    <!-- [End Block 1.2] GLOBAL STYLES -->
 </head>
 <body>
 
     <!-- ==========================================================
          [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
+         ส่วนติดต่อผู้ใช้และองค์ประกอบหน้าจอ
          ========================================================== -->
     <div class="page-container">
+        <!-- [Start Block 2.1] HEADER -->
+        <!-- ส่วนหัวของหน้าเว็บและปุ่มย้อนกลับหน้าหลัก -->
         <div class="p-3 bg-white border-b border-slate-200 shrink-0">
             <div class="flex items-center justify-between">
                 <h1 class="font-extrabold text-sm text-slate-800">💸 บันทึกรายจ่ายของร้าน</h1>
                 <a href="index.html" class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-bold no-underline">🏠 หน้าหลัก</a>
             </div>
         </div>
+        <!-- [End Block 2.1] HEADER -->
 
+        <!-- [Start Block 2.2] MAIN EXPENSE FORM CONTAINER -->
+        <!-- ฟอร์มกรอกรายการรายจ่ายและสรุปยอดวันนี้ -->
         <div class="flex-1 p-3 space-y-3 overflow-y-auto">
             <!-- ฟอร์มกรอกรายจ่าย -->
             <div class="bg-white border-2 border-red-500/30 rounded-2xl p-4 shadow-sm space-y-3">
@@ -136,17 +147,22 @@
             </div>
 
         </div>
+        <!-- [End Block 2.2] MAIN EXPENSE FORM CONTAINER -->
 
+        <!-- [Start Block 2.3] FOOTER SUBMIT BUTTON -->
+        <!-- ปุ่มกดบันทึกรายจ่ายด้านล่าง -->
         <div class="p-3 bg-white border-t border-slate-200 shrink-0">
             <button type="button" onclick="submitExpenseOrder()" id="btnSubmitExpense" class="w-full bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold py-3.5 rounded-xl text-sm shadow transition flex items-center justify-center gap-1.5 cursor-pointer">
                 <span>💾</span> <span>บันทึกรายจ่ายนี้</span>
             </button>
         </div>
+        <!-- [End Block 2.3] FOOTER SUBMIT BUTTON -->
     </div>
-    <!-- [End Block 2] -->
+    <!-- [End Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
 
     <!-- ==========================================================
          [Start Block 3] MODALS & POPUP OVERLAYS
+         หน้าต่างป๊อปอัปเลือกรายการ เครื่องคิดเลข และยืนยันการลบ
          ========================================================== -->
     <!-- POPUP MODAL (เลือกรายการ / หมายเหตุ) -->
     <div id="selectionModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-xs">
@@ -232,12 +248,15 @@
             </div>
         </div>
     </div>
-    <!-- [End Block 3] -->
+    <!-- [End Block 3] MODALS & POPUP OVERLAYS -->
 
     <!-- ==========================================================
-         [Start Block 4] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
+         [Start Block 4] JAVASCRIPT CORE LOGIC & FUNCTIONS
+         การทำงานส่วนตรรกะ ฟังก์ชันคำนวณ และการจัดการฐานข้อมูล Supabase
          ========================================================== -->
     <script>
+        /* --- [Start Block 4.1] GLOBAL VARIABLES & INITIALIZATION --- */
+        /* การประกาศตัวแปรส่วนกลางและการโหลดรายการวันนี้เมื่อเปิดหน้าเว็บ */
         let currentPopupType = '';
         let pendingDeleteId = null;
         let calcInput = '0';
@@ -245,8 +264,10 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadTodayExpenses();
         });
+        /* --- [End Block 4.1] GLOBAL VARIABLES & INITIALIZATION --- */
 
-        /* --- [Start Calculator Popup Logic] --- */
+        /* --- [Start Block 4.2] CALCULATOR POPUP LOGIC --- */
+        /* ฟังก์ชันการทำงานของหน้าต่างเครื่องคิดเลขและการคำนวณตัวเลข */
         function openCalculatorPopup() {
             const currentVal = document.getElementById('expenseAmountInput').value.trim();
             calcInput = (currentVal && currentVal !== '0') ? currentVal : '0';
@@ -309,9 +330,10 @@
                 setTimeout(calcClear, 1200);
             }
         }
-        /* --- [End Calculator Popup Logic] --- */
+        /* --- [End Block 4.2] CALCULATOR POPUP LOGIC --- */
 
-        /* --- [Start Block 4.1] LOAD TODAY EXPENSES --- */
+        /* --- [Start Block 4.3] EXPENSES DATA OPERATIONS (LOAD & DELETE) --- */
+        /* ฟังก์ชันโหลดรายการรายจ่ายประจำวันจาก Supabase และการลบรายการ */
         async function loadTodayExpenses() {
             const listContainer = document.getElementById('todayExpenseList');
             const totalContainer = document.getElementById('todayTotalAmount');
@@ -332,7 +354,7 @@
                 if (error) throw error;
 
                 if (!data || data.length === 0) {
-                    listContainer.innerHTML = '<div class="text-center text-xs text-slate-400 py-3">⏳ ยังไม่มีการบันทึกรายจ่ายวันนี้</div>';
+                    listContainer.innerHTML = '<div class="text-center text-xs text-slate-400 py-3">⏳ ไม่มีรายการรายจ่าย</div>';
                     totalContainer.innerText = '0';
                     return;
                 }
@@ -367,9 +389,7 @@
                 listContainer.innerHTML = '<div class="text-center text-xs text-red-400 py-2">ไม่สามารถดึงข้อมูลวันนี้ได้</div>';
             }
         }
-        /* --- [End Block 4.1] --- */
 
-        /* --- [Start Block 4.2] DELETE EXPENSE LOGIC --- */
         function openDeleteModal(expenseId) {
             pendingDeleteId = expenseId;
             document.getElementById('deleteConfirmModal').classList.remove('hidden');
@@ -402,9 +422,10 @@
                 closeDeleteModal();
             }
         };
-        /* --- [End Block 4.2] --- */
+        /* --- [End Block 4.3] EXPENSES DATA OPERATIONS (LOAD & DELETE) --- */
 
-        /* --- [Start Block 4.3] POPUP SELECTION & MODAL HANDLERS --- */
+        /* --- [Start Block 4.4] SELECTION POPUP & SUBMIT HANDLERS --- */
+        /* ฟังก์ชันการเลือกรายการจากประวัติ พิมพ์ข้อความเอง และบันทึกข้อมูลลงฐานข้อมูล */
         async function openPopup(type) {
             currentPopupType = type;
             const modal = document.getElementById('selectionModal');
@@ -433,7 +454,7 @@
                 grid.innerHTML = '';
 
                 if (uniqueValues.length === 0) {
-                    grid.innerHTML = '<div class="col-span-2 text-center text-xs text-slate-400 py-6">⏳ ยังไม่มีประวัติในระบบ สามารถพิมพ์เพิ่มด้านล่างได้เลยครับ</div>';
+                    grid.innerHTML = '<div class="col-span-2 text-center text-xs text-slate-400 py-6">⏳ ไม่มีประวัติ สามารถพิมพ์เพิ่มด้านล่างได้เลยครับ</div>';
                     return;
                 }
 
@@ -505,9 +526,7 @@
             }
             closePopup();
         }
-        /* --- [End Block 4.3] --- */
 
-        /* --- [Start Block 4.4] SUBMIT EXPENSE ACTION --- */
         async function submitExpenseOrder() {
             const itemName = document.getElementById('itemNameInput').value.trim();
             const amountInput = document.getElementById('expenseAmountInput').value;
@@ -566,8 +585,8 @@
                 btn.innerHTML = '<span>💾</span> <span>บันทึกรายจ่ายนี้</span>';
             }
         }
-        /* --- [End Block 4.4] --- */
+        /* --- [End Block 4.4] SELECTION POPUP & SUBMIT HANDLERS --- */
     </script>
-    <!-- [End Block 4] -->
+    <!-- [End Block 4] JAVASCRIPT CORE LOGIC & FUNCTIONS -->
 </body>
 </html>

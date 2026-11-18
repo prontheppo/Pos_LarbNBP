@@ -1,12 +1,13 @@
 <!--
-  ========================================================================
-  FILE NAME: foodaddnew.html
-  SUMMARY: หน้าฟอร์มเพิ่มเมนูอาหารใหม่ เชื่อมต่อ Supabase พร้อมโครงสร้าง Block สากล 100%
-  ========================================================================
+ =================================
+  File Name : foodaddnew.html
+ =================================
 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
+    <!-- [Start Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
+    <!-- การตั้งค่าเริ่มต้น เมตาแท็ก และโหลดไลบรารีภายนอก -->
     <script src="appInit.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no">
@@ -16,10 +17,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
-    
-    <!-- ==========================================================
-         [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
-         ========================================================== -->
+    <!-- [End Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
+
+    <!-- [Start Block 1.2] GLOBAL STYLES -->
+    <!-- การกำหนดสไตล์ CSS พื้นฐานของหน้าฟอร์มเพิ่มเมนูอาหาร -->
     <style>
         html, body { 
             width: 100%; min-height: 100%;
@@ -28,16 +29,22 @@
             display: flex; flex-direction: column; 
             border-radius: 0 !important; 
         }
+
+        input, select, textarea, button {
+            font-size: 16px;
+        }
+
         .custom-label { font-size: 15px !important; font-weight: 700; }
         input[type="number"], input[type="text"] { font-size: 16px !important; padding-top: 0.45rem !important; padding-bottom: 0.45rem !important; line-height: 1.4 !important; }
         .back-btn { background-color: #f1f5f9; border: 1.5px solid #cbd5e1; color: #334155; font-weight: 700; font-size: 13px !important; padding: 0.25rem 0.5rem; border-radius: 0.6rem; cursor: pointer; }
     </style>
-    <!-- [End Block 1] -->
+    <!-- [End Block 1.2] GLOBAL STYLES -->
 </head>
 <body>
 
     <!-- ==========================================================
          [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
+         ส่วนติดต่อผู้ใช้และองค์ประกอบหน้าจอฟอร์มเพิ่มเมนูอาหาร
          ========================================================== -->
     <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
         <div class="flex items-center gap-1.5">
@@ -93,16 +100,18 @@
             </button>
         </div>
     </form>
-    <!-- [End Block 2] -->
+    <!-- [End Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
 
     <!-- ==========================================================
-         [Start Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
+         [Start Block 3] JAVASCRIPT CORE LOGIC & FUNCTIONS
+         การทำงานส่วนตรรกะ ฟังก์ชันการบันทึกข้อมูล และการปรับขนาด iframe
          ========================================================== -->
     <script>
+        /* --- [Start Block 3.1] INITIALIZATION & SETUP --- */
+        /* การกำหนดค่าเริ่มต้นและการรับค่าพารามิเตอร์หมวดหมู่ */
         let db;
         let currentGroupId = null;
 
-        /* --- [Start Block 3.1] INITIALIZATION --- */
         window.addEventListener('DOMContentLoaded', () => {
             db = typeof window.supabaseClient !== 'undefined' ? window.supabaseClient : supabaseClient;
 
@@ -116,9 +125,10 @@
             
             updateParentHeight();
         });
-        /* --- [End Block 3.1] --- */
+        /* --- [End Block 3.1] INITIALIZATION & SETUP --- */
 
-        /* --- [Start Block 3.2] POPUP & RESIZE HANDLERS --- */
+        /* --- [Start Block 3.2] RESIZE & POPUP HANDLERS --- */
+        /* ฟังก์ชันปรับความสูงอัตโนมัติของ iframe และการปิดหน้าต่าง */
         let lastReportedHeight = 0;
         let resizeTimer = null;
         function updateParentHeight() {
@@ -153,9 +163,10 @@
                 window.parent.postMessage({ type: 'CLOSE_ADD_MENU' }, window.location.origin);
             }
         }
-        /* --- [End Block 3.2] --- */
+        /* --- [End Block 3.2] RESIZE & POPUP HANDLERS --- */
 
-        /* --- [Start Block 3.3] SAVE NEW MENU DATA --- */
+        /* --- [Start Block 3.3] DATABASE SAVE OPERATIONS --- */
+        /* ฟังก์ชันบันทึกข้อมูลเมนูอาหารใหม่ลงฐานข้อมูล Supabase */
         async function saveNewMenuData(e) {
             if (e) e.preventDefault();
 
@@ -190,8 +201,8 @@
                 if (btnSubmit) btnSubmit.disabled = false;
             }
         }
-        /* --- [End Block 3.3] --- */
+        /* --- [End Block 3.3] DATABASE SAVE OPERATIONS --- */
     </script>
-    <!-- [End Block 3] -->
+    <!-- [End Block 3] JAVASCRIPT CORE LOGIC & FUNCTIONS -->
 </body>
 </html>

@@ -1,12 +1,13 @@
 <!--
-  ========================================================================
+ =================================
   FILE NAME: zone.html
-  SUMMARY: หน้ากาก UI แสดงรายชื่อโซนหรือห้องพัก รับข้อมูลผ่าน postMessage
-  ========================================================================
+ =================================
 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
+    <!-- [Start Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
+    <!-- การตั้งค่าเริ่มต้น เมตาแท็ก และโหลดไลบรารีภายนอก -->
     <script src="appInit.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,34 +17,61 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
+    <!-- [End Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
 
+    <!-- [Start Block 1.2] GLOBAL STYLES -->
+    <!-- การกำหนดสไตล์ CSS พื้นฐานของหน้าเลือกโซนและห้องพัก -->
     <style>
         html, body { width: 100%; min-height: 100%; background-color: transparent; color: #1e293b; font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none; display: flex; flex-direction: column; }
+        
+        input, select, textarea, button {
+            font-size: 16px;
+        }
+
         .zone-wrap { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; width: 100%; box-sizing: border-box; }
         .zone-btn {
             position: relative; background-color: #ffffff; border: 1.5px solid #3b82f642; color: #1e293b;
             font-size: 1rem; font-weight: 700; padding: 0.75rem 0.5rem; border-radius: 0.85rem; text-align: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.15s ease; display: flex; align-items: center;
-            justify-content: center; gap: 0.35rem; min-height: 60px; cursor: pointer;
+            justify-content: center; gap: 0.5rem; min-height: 60px; cursor: pointer;
         }
         .zone-btn:active { background-color: #3b82f6; color: #ffffff; border-color: #2563eb; transform: scale(0.96); }
     </style>
+    <!-- [End Block 1.2] GLOBAL STYLES -->
 </head>
 <body class="bg-slate-50 text-slate-800 flex flex-col items-center justify-start p-2">
 
     <div class="w-full max-w-xl mx-auto flex flex-col space-y-3">
-        <!-- ช่องสำหรับเพิ่มโซน/ห้องพักใหม่ -->
+        <!-- ==========================================================
+             [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
+             ส่วนติดต่อผู้ใช้ ช่องเพิ่มโซน/ห้องพักใหม่ และตารางแสดงรายการโซน
+             ========================================================== -->
+
+        <!-- [Start Block 2.1] ADD NEW ZONE FORM -->
+        <!-- ช่องสำหรับกรอกและเพิ่มโซนหรือห้องพักใหม่ -->
         <div id="addZoneSection" class="bg-blue-50 p-2.5 rounded-2xl border border-blue-200 flex gap-2 shadow-2xs">
             <input type="text" id="newZoneInput" placeholder="➕ เพิ่มโซน/ห้องพักใหม่..." class="flex-1 h-10 px-3 text-xs rounded-xl border border-blue-300 bg-white outline-none font-semibold text-slate-800">
             <button type="button" onclick="requestAddNewZone()" class="h-10 px-4 bg-blue-500 hover:bg-blue-600 active:scale-95 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-sm shrink-0">+ เพิ่ม</button>
         </div>
+        <!-- [End Block 2.1] ADD NEW ZONE FORM -->
 
+        <!-- [Start Block 2.2] ZONE GRID CONTAINER -->
+        <!-- พื้นที่แสดงปุ่มเลือกโซนหรือห้องพักทั้งหมด -->
         <div id="zoneGridContainer" class="zone-wrap">
             <div class="col-span-2 text-center py-6 text-slate-400 font-bold text-base">⏳ กำลังรอข้อมูลโซน/ห้องพัก...</div>
         </div>
+        <!-- [End Block 2.2] ZONE GRID CONTAINER -->
+
+        <!-- [End Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
     </div>
 
+    <!-- ==========================================================
+         [Start Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
+         การทำงานส่วนตรรกะ การรับ-ส่งข้อความผ่าน postMessage และการเรนเดอร์ปุ่มโซน
+         ========================================================== -->
     <script>
+        /* --- [Start Block 3.1] STATE VARIABLES & MESSAGE LISTENER --- */
+        /* ตัวแปรเก็บสถานะและการดักฟัง postMessage จากหน้าต่างหลัก */
         let cachedZones = [];
         let currentLocationId = null;
 
@@ -56,7 +84,10 @@
                 renderZones(cachedZones);
             }
         });
+        /* --- [End Block 3.1] STATE VARIABLES & MESSAGE LISTENER --- */
 
+        /* --- [Start Block 3.2] ZONE ACTIONS & RENDERING --- */
+        /* ฟังก์ชันส่งคำขอเพิ่มโซนใหม่ และฟังก์ชันเรนเดอร์ปุ่มโซน/ห้องพักลงในตาราง */
         function requestAddNewZone() {
             const input = document.getElementById('newZoneInput');
             const name = input.value.trim();
@@ -70,6 +101,26 @@
                 }, window.location.origin);
             }
             input.value = '';
+        }
+
+        // ฟังก์ชันเลือกไอคอนให้หลากหลายและเข้ากับชื่อโซนหรือห้องพักอัตโนมัติ
+        function getZoneIcon(name) {
+            const n = name.toLowerCase();
+            if (n.includes('room') || n.includes('ห้อง') || n.includes('พัก')) return '🛏️';
+            if (n.includes('table') || n.includes('โต๊ะ') || n.includes('1') || n.includes('2') || n.includes('3')) return '🪑';
+            if (n.includes('zone') || n.includes('โซน') || n.includes('area')) return '📍';
+            if (n.includes('garden') || n.includes('สวน') || n.includes('ธรรมชาติ')) return '🌿';
+            if (n.includes('vip') || n.includes('พิเศษ')) return '⭐';
+            if (n.includes('floor') || n.includes('ชั้น') || n.includes('ตึก')) return '🏢';
+            if (n.includes('hall') || n.includes('10') || n.includes('ห้องโถง')) return '🏛️';
+            
+            // รายการไอคอนสำรองแบบกระจายตัวเลือกหลากหลาย ป้องกันซ้ำซาก
+            const diverseIcons = ['🏡', '🛋️', '⛺', '🎯', '🌺', '🎪', '🍀', '🚪', '🛎️', '⭐'];
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) {
+                hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return diverseIcons[Math.abs(hash) % diverseIcons.length];
         }
 
         function renderZones(zones) {
@@ -89,7 +140,8 @@
                 const isLastAndOdd = (index === zones.length - 1) && (zones.length % 2 !== 0);
                 btn.className = `zone-btn ${isLastAndOdd ? 'col-span-2' : ''}`;
                 
-                btn.innerHTML = `<span>🚪</span> <span class="truncate">${zone.zone_name}</span>`;
+                const icon = getZoneIcon(zone.zone_name);
+                btn.innerHTML = `<span class="text-lg">${icon}</span> <span class="truncate">${zone.zone_name}</span>`;
 
                 btn.onclick = () => {
                     if (window.self !== window.top) {
@@ -107,6 +159,8 @@
                 window.parent.postMessage({ type: 'RESIZE_POPUP', height: totalHeight }, window.location.origin);
             }
         }
+        /* --- [End Block 3.2] ZONE ACTIONS & RENDERING --- */
     </script>
+    <!-- [End Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS -->
 </body>
 </html>

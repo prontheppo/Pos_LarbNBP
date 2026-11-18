@@ -1,12 +1,13 @@
 <!--
-  ========================================================================
-  FILE NAME: foodmenu.html
-  SUMMARY: หน้าแสดงรายการอาหารในแต่ละหมวดหมู่ พร้อมระบบกรองสินค้า, ปุ่มเพิ่มเมนู, ป้ายนับจำนวนในตะกร้า และโครงสร้าง Block สากล 100%
-  ========================================================================
+ =================================
+  File Name : foodmenu.html
+ =================================
 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
+    <!-- [Start Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
+    <!-- การตั้งค่าเริ่มต้น เมตาแท็ก และโหลดไลบรารีภายนอก -->
     <script src="appInit.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
@@ -16,16 +17,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
+    <!-- [End Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
 
-    <!-- ==========================================================
-         [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
-         ========================================================== -->
+    <!-- [Start Block 1.2] GLOBAL STYLES -->
+    <!-- การกำหนดสไตล์ CSS พื้นฐานของหน้ารายการอาหาร -->
     <style>
         html, body {
             width: 100%; height: auto; background-color: #ffffff; color: #1e293b;
             font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none;
             display: flex; flex-direction: column; overflow-y: auto; border-radius: 1.5rem;
         }
+
+        input, select, textarea, button {
+            font-size: 16px;
+        }
+
         .food-btn { position: relative; border: 1.5px solid #ef4444; color: #166534; background-color: #ffffff; transition: all 0.2s ease; }
         .food-btn:active { transform: scale(0.96); background-color: #fef2f2; }
         .item-badge {
@@ -44,12 +50,13 @@
         .popup-container { background: transparent !important; width: 100% !important; max-width: 24rem !important; box-shadow: none !important; border: none !important; padding: 0 !important; overflow: visible !important; position: relative; }
         #popupIframe { width: 100%; height: auto; min-height: 200px; max-height: 85vh; border: 0; display: block; }
     </style>
-    <!-- [End Block 1] -->
+    <!-- [End Block 1.2] GLOBAL STYLES -->
 </head>
 <body>
 
     <!-- ==========================================================
          [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
+         ส่วนติดต่อผู้ใช้และองค์ประกอบหน้าจอแสดงรายการอาหาร
          ========================================================== -->
     <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
         <span id="groupTitleName" class="font-extrabold text-sm text-slate-700 truncate px-2">📌 หมวดหมู่เมนู</span>
@@ -67,22 +74,26 @@
             <div class="col-span-2 text-center text-slate-400 py-8 text-xs font-bold">⏳ กำลังโหลดข้อมูล...</div>
         </div>
     </div>
-    <!-- [End Block 2] -->
+    <!-- [End Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
 
     <!-- ==========================================================
          [Start Block 3] POPUP MODALS & OVERLAYS
+         หน้าต่างป๊อปอัปและไอเฟรมย่อย
          ========================================================== -->
     <div id="dynamicPopupOverlay" class="custom-modal-overlay">
         <div class="popup-container">
             <iframe id="popupIframe" src="" onload="autoResizeIframe(this)"></iframe>
         </div>
     </div>
-    <!-- [End Block 3] -->
+    <!-- [End Block 3] POPUP MODALS & OVERLAYS -->
 
     <!-- ==========================================================
-         [Start Block 4] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
+         [Start Block 4] JAVASCRIPT CORE LOGIC & FUNCTIONS
+         การทำงานส่วนตรรกะ การดึงข้อมูลอาหาร และการจัดการอีเวนต์
          ========================================================== -->
     <script>
+        /* --- [Start Block 4.1] INITIALIZATION & URL PARAMS --- */
+        /* การตั้งค่าเริ่มต้นและการดึงพารามิเตอร์หมวดหมู่จาก URL */
         function autoResizeIframe(frame) {
             if (!frame) return;
             try {
@@ -102,7 +113,6 @@
         currentGroupId = urlParams.get('group_id');
         groupName = urlParams.get('name') ? decodeURIComponent(urlParams.get('name')) : 'เมนูอาหาร';
 
-        /* --- [Start Block 4.1] INITIALIZATION & DATA FETCHING --- */
         window.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('groupTitleName').textContent = `📌 ${groupName}`;
             try { const storedCart = JSON.parse(localStorage.getItem('cart') || '[]'); currentCart = Array.isArray(storedCart) ? storedCart : []; } catch (error) { currentCart = []; console.error('Invalid cart data:', error); }
@@ -121,9 +131,10 @@
                 renderFoodButtons();
             }
         });
-        /* --- [End Block 4.1] --- */
+        /* --- [End Block 4.1] INITIALIZATION & URL PARAMS --- */
 
-        /* --- [Start Block 4.2] RESIZE & RENDERING --- */
+        /* --- [Start Block 4.2] AUTO-RESIZE & RENDERING LOGIC --- */
+        /* ฟังก์ชันปรับความสูง iframe อัตโนมัติและเรนเดอร์ปุ่มรายการอาหาร */
         let lastReportedHeight = 0;
         let resizeTimer = null;
         function updateParentHeight() {
@@ -137,6 +148,51 @@
                     }
                 }
             }, 60);
+        }
+
+        // ฟังก์ชันเลือกไอคอนอาหารให้หลากหลายตามชื่อเมนูแบบเจาะจงแต่ละเมนู
+        function getFoodIcon(name) {
+            const n = name.toLowerCase();
+            
+            // หมวดส้มตำ / ยำ / ตำต่างๆ
+            if (n.includes('ปูปลาร้า') || n.includes('ปู')) return '🦀';
+            if (n.includes('ไทยไข่เค็ม') || n.includes('ไข่เค็ม')) return '🥚';
+            if (n.includes('ไทยปู') || n.includes('ไทย')) return '🥜';
+            if (n.includes('ถั่ว')) return '🟢';
+            if (n.includes('ป่า')) return '🌿';
+            if (n.includes('แตง')) return '🥒';
+            if (n.includes('หอยดอง')) return '🦪';
+            if (n.includes('กุ้งสด')) return '🦐';
+            if (n.includes('ทะเลรวม') || n.includes('ทะเล')) return '🦑';
+            if (n.includes('ซั่ว')) return '🍜';
+            if (n.includes('ลาว')) return '🌶️';
+            if (n.includes('ตำ')) return '🥗';
+
+            // หมวดต้ม / แกง / ต้มแซ่บ
+            if (n.includes('กระดูกอ่อน')) return '🍖';
+            if (n.includes('เนื้อ')) return '🥩';
+            if (n.includes('ขม')) return '🥣';
+            if (n.includes('อ่อมหมู')) return '🥘';
+            if (n.includes('อ่อมเนื้อ')) return '🍲';
+            if (n.includes('จืด')) return '🥚';
+            if (n.includes('ต้มแซ่บ') || n.includes('ต้ม')) return '🔥';
+            if (n.includes('แกง')) return '🍛';
+
+            // หมวดอื่นๆ ทั่วไป
+            if (n.includes('ลาบ') || n.includes('ก้อย')) return '🥩';
+            if (n.includes('ยำ')) return '🍋';
+            if (n.includes('ย่าง') || n.includes('ปิ้ง')) return '🔥';
+            if (n.includes('ทอด') || n.includes('ไก่')) return '🍗';
+            if (n.includes('ปลา')) return '🐟';
+            if (n.includes('น้ำ') || n.includes('โซดา') || n.includes('เบียร์')) return '🥤';
+            
+            // รายการไอคอนสำรองแบบสุ่มกระจายความหลากหลาย
+            const diverseFoodIcons = ['⭐', '🍴', '🍳', '😋', '🌟', '✨', '🎯', '🌿'];
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) {
+                hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return diverseFoodIcons[Math.abs(hash) % diverseFoodIcons.length];
         }
 
         function renderFoodButtons() {
@@ -158,11 +214,13 @@
 
                     const btn = document.createElement('button');
                     btn.type = 'button';
-                    btn.className = 'food-btn p-3 rounded-2xl flex flex-col items-center justify-center text-center font-bold text-sm h-18 shadow-sm cursor-pointer relative';
+                    btn.className = 'food-btn p-3 rounded-2xl flex items-center justify-start text-left font-bold text-sm h-18 shadow-sm cursor-pointer relative gap-2.5';
                     btn.onclick = () => selectFood(food);
 
                     let badgeHtml = totalQty > 0 ? `<span class="item-badge">${totalQty}</span>` : '';
-                    btn.innerHTML = `${badgeHtml}<span class="line-clamp-2 leading-tight">${food.food_name}</span>`;
+                    const icon = getFoodIcon(food.food_name);
+                    
+                    btn.innerHTML = `${badgeHtml}<span class="text-xl shrink-0">${icon}</span><span class="line-clamp-2 leading-tight flex-1">${food.food_name}</span>`;
                     grid.appendChild(btn);
                 });
             }
@@ -180,9 +238,10 @@
             }
             updateParentHeight();
         }
-        /* --- [End Block 4.2] --- */
+        /* --- [End Block 4.2] AUTO-RESIZE & RENDERING LOGIC --- */
 
-        /* --- [Start Block 4.3] ACTIONS & POPUPS --- */
+        /* --- [Start Block 4.3] ACTIONS & POSTMESSAGE HANDLERS --- */
+        /* ฟังก์ชันเลือกอาหาร เปิดหน้าเพิ่มเมนู และปิดป๊อปอัป */
         function selectFood(food) {
             if (window.self !== window.top) {
                 window.parent.postMessage({ type: 'OPEN_FOOD_SELECT', food: food, catId: currentGroupId }, window.location.origin);
@@ -198,8 +257,8 @@
                 window.parent.postMessage({ type: 'CLOSE_POPUP' }, window.location.origin);
             }
         }
-        /* --- [End Block 4.3] --- */
+        /* --- [End Block 4.3] ACTIONS & POSTMESSAGE HANDLERS --- */
     </script>
-    <!-- [End Block 4] -->
+    <!-- [End Block 4] JAVASCRIPT CORE LOGIC & FUNCTIONS -->
 </body>
 </html>

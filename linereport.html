@@ -1,12 +1,13 @@
 <!--
-  ========================================================================
-  FILE NAME: linereport.html
-  SUMMARY: รายงานยอดขายประจำวัน พร้อมระบบจัดกลุ่มบิล, คำนวณค่าคอมมิชชัน, แสดงสีตามวันในสัปดาห์ และโครงสร้าง Block สากล 100%
-  ========================================================================
+ =================================
+  File Name : linereport.html
+ =================================
 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
+    <!-- [Start Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
+    <!-- การตั้งค่าเริ่มต้น เมตาแท็ก และโหลดไลบรารีภายนอก -->
     <script src="appInit.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
@@ -14,23 +15,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>รายงานยอดขายประจำวัน</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- [End Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
 
-    <!-- ==========================================================
-         [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
-         ========================================================== -->
+    <!-- [Start Block 1.2] GLOBAL STYLES -->
+    <!-- การกำหนดสไตล์ CSS พื้นฐานของหน้ารายงานยอดขาย Line Report -->
     <style>
         html, body { height: 100%; margin: 0; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; user-select: none; touch-action: manipulation; }
+
+        input, select, textarea, button {
+            font-size: 16px;
+        }
     </style>
-    <!-- [End Block 1] -->
+    <!-- [End Block 1.2] GLOBAL STYLES -->
 </head>
 <body class="bg-gray-100 text-gray-800">
 
 <div class="flex flex-col h-screen max-w-2xl mx-auto bg-white shadow-md">
     <!-- ==========================================================
          [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
+         ส่วนติดต่อผู้ใช้และองค์ประกอบหน้าจอรายงานยอดขาย
          ========================================================== -->
 
     <!-- [Start Block 2.1] HEADER -->
+    <!-- ส่วนหัวแสดงวันที่ปัจจุบันและปุ่มโหลดข้อมูลใหม่ -->
     <div class="p-4 border-b flex justify-between items-center shrink-0 bg-white">
         <div>
             <h2 class="text-base font-bold text-gray-800 m-0">รายงานยอดขายประจำวัน</h2>
@@ -43,28 +50,33 @@
         <span id="systemStatus" class="hidden"></span>
         <span id="previewLabel" class="hidden"></span>
     </div>
-    <!-- [End Block 2.1] -->
+    <!-- [End Block 2.1] HEADER -->
 
     <!-- [Start Block 2.2] REPORT CONTENT AREA -->
+    <!-- พื้นที่แสดงข้อความสรุปรายงานประจำวัน -->
     <div class="flex-1 p-3 overflow-hidden">
         <textarea id="reportSummary" readonly class="w-full h-full p-3 border rounded-lg bg-gray-50 text-gray-800 font-mono text-xs leading-relaxed resize-none outline-none overflow-y-auto">⏳ กำลังโหลดข้อมูลวันปัจจุบัน...</textarea>
     </div>
-    <!-- [End Block 2.2] -->
+    <!-- [End Block 2.2] REPORT CONTENT AREA -->
 
     <!-- [Start Block 2.3] FOOTER ACTION BUTTONS -->
+    <!-- ส่วนปุ่มกดด้านล่างสำหรับกลับหน้าหลักและส่งรายงานเข้า LINE -->
     <div class="p-3 border-t flex gap-2.5 shrink-0">
         <button onclick="location.href='index.html'" title="กลับหน้าหลัก" class="bg-gray-600 hover:bg-gray-700 text-white font-bold px-4 py-3 rounded-lg text-lg cursor-pointer">🏠</button>
         <button id="sendBtn" onclick="sendReportToLine()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-bold py-3 rounded-lg text-base transition-all cursor-pointer">📲 ส่งรายงานเข้า LINE</button>
     </div>
-    <!-- [End Block 2.3] -->
+    <!-- [End Block 2.3] FOOTER ACTION BUTTONS -->
 
-    <!-- [End Block 2] -->
+    <!-- [End Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
 </div>
 
 <!-- ==========================================================
-     [Start Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
+     [Start Block 3] JAVASCRIPT CORE LOGIC & FUNCTIONS
+     การทำงานส่วนตรรกะ การดึงข้อมูลยอดขาย คำนวณคอมมิชชัน และส่ง LINE
      ========================================================== -->
 <script>
+    /* --- [Start Block 3.1] GLOBAL VARIABLES & CONFIGURATION --- */
+    /* การประกาศตัวแปรส่วนกลางและการตั้งค่าเขตเวลา */
     const REPORT_TIME_ZONE = 'Asia/Bangkok';
     const REQUEST_TIMEOUT_MS = 20000;
     const thaiMonths = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
@@ -75,8 +87,10 @@
     let reportIsReady = false;
     let isLoadingReport = false;
     let isSendingReport = false;
+    /* --- [End Block 3.1] GLOBAL VARIABLES & CONFIGURATION --- */
 
-    /* --- [Start Block 3.1] DAY THEME & DATE HELPERS --- */
+    /* --- [Start Block 3.2] DAY THEME & DATE HELPERS --- */
+    /* ฟังก์ชันจัดการธีมสีตามวันในสัปดาห์และคำนวณช่วงเวลาประเทศไทย */
     function getDayTheme() {
         const d = new Date();
         const dayOfWeek = d.getDay();
@@ -155,9 +169,10 @@
         if (error.code) message += ` | Code: ${error.code}`;
         return message;
     }
-    /* --- [End Block 3.1] --- */
+    /* --- [End Block 3.2] DAY THEME & DATE HELPERS --- */
 
-    /* --- [Start Block 3.2] PAGE INITIALIZATION --- */
+    /* --- [Start Block 3.3] PAGE INITIALIZATION --- */
+    /* การเริ่มต้นการทำงานเมื่อโหลดหน้าเว็บเสร็จสมบูรณ์ */
     window.addEventListener('DOMContentLoaded', () => {
         const dateDisp = document.getElementById('currentDateDisplay');
         if (dateDisp) dateDisp.innerText = DISPLAY_THAI_DATE;
@@ -166,9 +181,10 @@
 
         fetchTodaySalesData();
     });
-    /* --- [End Block 3.2] --- */
+    /* --- [End Block 3.3] PAGE INITIALIZATION --- */
 
-    /* --- [Start Block 3.3] ORDER ITEM PARSING & CALCULATION --- */
+    /* --- [Start Block 3.4] ORDER ITEM PARSING & CALCULATION --- */
+    /* ฟังก์ชันแยกวิเคราะห์รายการอาหาร คำนวณยอดเงิน และค่าคอมมิชชัน */
     function parseOrderItems(order) {
         let rawItems = [];
 
@@ -262,9 +278,10 @@
             subLocationName
         };
     }
-    /* --- [End Block 3.3] --- */
+    /* --- [End Block 3.4] ORDER ITEM PARSING & CALCULATION --- */
 
-    /* --- [Start Block 3.4] LINE FLEX BUBBLE GENERATION --- */
+    /* --- [Start Block 3.5] LINE FLEX BUBBLE GENERATION --- */
+    /* ฟังก์ชันสร้าง Flex Message Bubble สำหรับส่งเข้า LINE API */
     function createGroupFlexBubble(groupName, groupOrders, subTotal, groupCommission) {
         const theme = getDayTheme();
         let commText = groupCommission > 0 ? ` (คอมรวม ฿${groupCommission.toLocaleString()})` : '';
@@ -321,9 +338,10 @@
 
         return { type: 'bubble', body: { type: 'box', layout: 'vertical', contents } };
     }
-    /* --- [End Block 3.4] --- */
+    /* --- [End Block 3.5] LINE FLEX BUBBLE GENERATION --- */
 
-    /* --- [Start Block 3.5] SUPABASE DATA FETCHING --- */
+    /* --- [Start Block 3.6] SUPABASE DATA FETCHING --- */
+    /* ฟังก์ชันดึงข้อมูลยอดขายประจำวันจากตาราง Supabase และประมวลผลสรุปผล */
     async function fetchTodaySalesData() {
         if (isLoadingReport) return;
         isLoadingReport = true;
@@ -438,9 +456,10 @@
             isLoadingReport = false;
         }
     }
-    /* --- [End Block 3.5] --- */
+    /* --- [End Block 3.6] SUPABASE DATA FETCHING --- */
 
-    /* --- [Start Block 3.6] SUBMIT REPORT TO LINE --- */
+    /* --- [Start Block 3.7] SUBMIT REPORT TO LINE --- */
+    /* ฟังก์ชันส่งรายงานยอดขายผ่าน Supabase Edge Function เข้าสู่ LINE Official Account */
     async function sendReportToLine() {
         if (isSendingReport) return;
         if (!reportIsReady || !currentTextSummaries.length) {
@@ -519,8 +538,8 @@
             isSendingReport = false;
         }
     }
-    /* --- [End Block 3.6] --- */
+    /* --- [End Block 3.7] SUBMIT REPORT TO LINE --- */
 </script>
-<!-- [End Block 3] -->
+<!-- [End Block 3] JAVASCRIPT CORE LOGIC & FUNCTIONS -->
 </body>
 </html>

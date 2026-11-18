@@ -1,12 +1,13 @@
 <!--
-  ========================================================================
-  FILE NAME: index.html
-  SUMMARY: หน้าหลักเมนูร้านอาหาร ลาบหนองบัวลำภู @เขื่อนขุนด่านปราการชล จัดระเบียบโครงสร้าง Block สากล 100%
-  ========================================================================
+ =================================
+  File Name : index.html
+ =================================
 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
+    <!-- [Start Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
+    <!-- การตั้งค่าเริ่มต้น เมตาแท็ก และโหลดไลบรารีภายนอก -->
     <script src="appInit.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
@@ -16,10 +17,10 @@
     <title>ลาบหนองบัวลำภู @เขื่อนขุนด่านปราการชล</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- [End Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
 
-    <!-- ==========================================================
-         [Start Block 1] SETUP, CONFIG & GLOBAL VARIABLES
-         ========================================================== -->
+    <!-- [Start Block 1.2] GLOBAL STYLES -->
+    <!-- การกำหนดสไตล์ CSS พื้นฐานของหน้าหลักเมนูร้านอาหาร -->
     <style>
         html, body {
             height: 100%;
@@ -126,7 +127,7 @@
         .btn-slate { background-color: #334155; }
         .btn-rose { background-color: #e11d48; }
     </style>
-    <!-- [End Block 1] -->
+    <!-- [End Block 1.2] GLOBAL STYLES -->
 </head>
 
 <body>
@@ -134,10 +135,12 @@
 
     <!-- ==========================================================
          [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
+         ส่วนติดต่อผู้ใช้และองค์ประกอบหน้าหลักเมนูร้านอาหาร
          ========================================================== -->
     <div id="homeView" class="main-card">
 
         <!-- [Start Block 2.1] HEADER AND RESTAURANT NAME -->
+        <!-- ส่วนหัวแสดงชื่อร้านและรายละเอียดระบบ -->
         <div class="header-section">
             <h1 class="font-extrabold text-lg text-slate-800 leading-snug">
                 ลาบหนองบัวลำภู
@@ -149,9 +152,10 @@
                 ระบบจัดการร้านอาหารและสั่งอาหาร
             </p>
         </div>
-        <!-- [End Block 2.1] -->
+        <!-- [End Block 2.1] HEADER AND RESTAURANT NAME -->
 
         <!-- [Start Block 2.2] ALL MENU BUTTONS -->
+        <!-- รายการปุ่มเมนูหลักทั้งหมดของระบบ -->
         <div class="menu-list">
 
             <!-- แถวที่ 1: แสดง 2 คอลัมน์ (1. หน้าสั่งอาหาร | 2. บันทึกรายจ่าย) -->
@@ -163,7 +167,7 @@
                 </button>
 
                 <button type="button"
-                    onclick="goToPage('expense.html')"
+                    onclick="goToPage('expenses.html')"
                     class="menu-btn btn-rose">
                     <span>💸 บันทึกรายจ่าย</span>
                 </button>
@@ -197,7 +201,7 @@
                 <span>🚚 ตั้งค่าการจัดส่ง</span>
             </button>
 
-            <!-- จัดการรายการอาหาร & ราคา (เปลี่ยนไปใช้ management.html) -->
+            <!-- จัดการรายการอาหาร & ราคา -->
             <button type="button"
                 onclick="goToPage('management.html')"
                 class="menu-btn btn-amber-600">
@@ -212,18 +216,20 @@
             </button>
 
         </div>
-        <!-- [End Block 2.2] -->
+        <!-- [End Block 2.2] ALL MENU BUTTONS -->
 
     </div>
-    <!-- [End Block 2] -->
+    <!-- [End Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
 
 </div>
 
 <!-- ==========================================================
-     [Start Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
+     [Start Block 3] JAVASCRIPT CORE LOGIC & FUNCTIONS
+     การทำงานส่วนตรรกะ การป้องกันการซูมหน้าจอ และการนำทาง
      ========================================================== -->
 <script>
     /* --- [Start Block 3.1] PREVENT GESTURE-BASED ZOOM --- */
+    /* ฟังก์ชันป้องกันการซูมหน้าจอด้วยนิ้วมือ (Gesture) บนอุปกรณ์พกพา */
     document.addEventListener('gesturestart', function (e) {
         e.preventDefault();
     }, { passive: false });
@@ -235,11 +241,12 @@
     document.addEventListener('gestureend', function (e) {
         e.preventDefault();
     }, { passive: false });
-    /* --- [End Block 3.1] --- */
+    /* --- [End Block 3.1] PREVENT GESTURE-BASED ZOOM --- */
 
     let lastTouchEnd = 0;
 
     /* --- [Start Block 3.2] PREVENT DOUBLE-TAP ZOOM AND MULTI-TOUCH --- */
+    /* ฟังก์ชันป้องกัน Double-Tap Zoom และการสัมผัสหลายนิ้วพร้อมกัน */
     document.addEventListener('touchend', function (event) {
         const now = new Date().getTime();
 
@@ -255,14 +262,15 @@
             event.preventDefault();
         }
     }, { passive: false });
-    /* --- [End Block 3.2] --- */
+    /* --- [End Block 3.2] PREVENT DOUBLE-TAP ZOOM AND MULTI-TOUCH --- */
 
-    /* --- [Start Block 3.3] NAVIGATE TO THE SPECIFIED PAGE --- */
+    /* --- [Start Block 3.3] NAVIGATION FUNCTION --- */
+    /* ฟังก์ชันสำหรับเปลี่ยนหน้าไปยัง URL ที่กำหนด */
     function goToPage(url) {
         window.location.href = url;
     }
-    /* --- [End Block 3.3] --- */
+    /* --- [End Block 3.3] NAVIGATION FUNCTION --- */
 </script>
-<!-- [End Block 3] -->
+<!-- [End Block 3] JAVASCRIPT CORE LOGIC & FUNCTIONS -->
 </body>
 </html>
