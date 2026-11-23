@@ -7,7 +7,6 @@
 <html lang="th">
 <head>
     <!-- [Start Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
-    <!-- การตั้งค่าเริ่มต้น เมตาแท็ก และโหลดไลบรารีภายนอก -->
     <script src="appInit.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
@@ -20,10 +19,17 @@
     <!-- [End Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
 
     <!-- [Start Block 1.2] GLOBAL STYLES -->
-    <!-- การกำหนดสไตล์ CSS และการตั้งค่าสำหรับการพิมพ์ใบเสร็จ -->
     <style>
+        html, body {
+            height: auto !important;
+            min-height: 100vh !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+        }
+
         body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 0; }
         input, select, textarea, button { font-size: 16px; }
+
         @media print {
             body * { visibility: hidden; }
             #printArea, #printArea * { visibility: visible; }
@@ -37,10 +43,7 @@
 
     <!-- ==========================================================
          [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
-         ส่วนแสดงผลใบเสร็จรายการอาหาร สรุปยอดรวม และปุ่มควบคุมการบันทึก/พิมพ์
          ========================================================== -->
-
-    <!-- [Start Block 2.1] RECEIPT AND ITEM DISPLAY AREA -->
     <div id="printArea" class="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col mb-4">
         <div class="text-center mb-2 pb-1 flex-shrink-0">
             <h2 class="font-extrabold text-slate-800 text-base leading-tight">ลาบหนองบัวลำภู @เขื่อนขุนด่าน</h2>
@@ -56,8 +59,6 @@
                 </div>
             </div>
 
-            <!-- [Start Block 2.2] ORDER TOTAL AND QUANTITY SUMMARY -->
-            <!-- ส่วนสรุปจำนวนรายการและราคารวมทั้งหมด -->
             <div class="flex items-center justify-between border-b-2 border-dashed border-slate-200 pb-2 mb-2 flex-shrink-0">
                 <div class="border border-slate-800 rounded-lg px-2 py-0.5">
                     <span id="summaryQty" class="font-extrabold text-xs text-slate-800">0 รายการ - 0 ชิ้น</span>
@@ -66,7 +67,6 @@
                     <span class="font-extrabold text-sm text-slate-900">รวม <span id="summaryTotal">0</span> บาท</span>
                 </div>
             </div>
-            <!-- [End Block 2.2] ORDER TOTAL AND QUANTITY SUMMARY -->
 
             <div id="touristOnlySection" class="hidden text-center flex-shrink-0 my-0.5">
                 <p class="text-[11px] font-bold text-slate-700">⭐ ขอบพระคุณที่อุดหนุนค่ะ ⭐</p>
@@ -76,28 +76,29 @@
             </div>
         </div>
 
-        <!-- [Start Block 2.3] USER ACTION BUTTONS -->
-        <!-- ปุ่มควบคุมย้อนกลับ บันทึกออร์เดอร์ และบันทึกพร้อมพิมพ์ -->
         <div class="pt-2 border-t border-slate-100 flex gap-2 flex-shrink-0 no-print mt-3">
             <button type="button" onclick="window.location.href='ordersystem.html?tab=2'" class="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-extrabold text-xs rounded-xl transition cursor-pointer">⬅ กลับไปแก้ไข</button>
             <button type="button" onclick="handleSaveOrder(false)" id="saveOnlyBtn" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow transition cursor-pointer">💾 บันทึก</button>
             <button type="button" onclick="handleSaveOrder(true)" id="saveAndPrintBtn" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl shadow transition cursor-pointer">🖨️ บันทึก / พิมพ์</button>
         </div>
-        <!-- [End Block 2.3] USER ACTION BUTTONS -->
-
     </div>
-    <!-- [End Block 2.1] RECEIPT AND ITEM DISPLAY AREA -->
-
-    <!-- [End Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
 
     <!-- ==========================================================
          [Start Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
-         การทำงานส่วนตรรกะ การดึงข้อมูลจาก Session Storage การเรนเดอร์ใบเสร็จ และบันทึกลง Supabase
          ========================================================== -->
     <script>
         /* --- [Start Block 3.1] STATE VARIABLES & INITIALIZATION --- */
-        /* การประกาศตัวแปรส่วนกลางและการโหลดข้อมูลออร์เดอร์จาก Session Storage เมื่อเปิดหน้าเว็บ */
         let orderData = null;
+        let isProcessing = false;
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
             const rawData = sessionStorage.getItem('printOrderData');
@@ -112,6 +113,9 @@
                 if (!orderData || !orderData.locationData || !orderData.orderSummary || !Array.isArray(orderData.orderSummary.processedCart)) {
                     throw new Error('โครงสร้างข้อมูลออร์เดอร์ไม่ถูกต้อง');
                 }
+                if (!orderData.orderSessionId) {
+                    orderData.orderSessionId = `ord_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+                }
                 renderPrintPreview();
             } catch (error) {
                 console.error('Invalid printOrderData:', error);
@@ -124,7 +128,6 @@
         /* --- [End Block 3.1] STATE VARIABLES & INITIALIZATION --- */
 
         /* --- [Start Block 3.2] RENDER RECEIPT & PREVIEW --- */
-        /* ฟังก์ชันเรนเดอร์รายละเอียดรายการอาหารในใบเสร็จสำหรับตรวจสอบก่อนบันทึก/พิมพ์ */
         function renderPrintPreview() {
             const { locationData, customerDisplayName, orderSummary } = orderData;
             const container = document.getElementById('itemListContainer');
@@ -156,7 +159,7 @@
 
                 let details = [];
                 const hasCustomPrice = item.isCustomPrice || item.is_custom_price || item.is_custom || item.isCustom || item.custom_price !== undefined;
-                if (hasCustomPrice && item.price > 0) details.push(`⭐ ราคาพิเศษ ${item.price}.-`);
+                if (hasCustomPrice && item.price > 0) details.push(`⭐ ราคาพิเศษ ${escapeHtml(item.price)}.-`);
 
                 const daoQty = Number(item.friedEggQty || item.khaiDaoQty || 0);
                 if (daoQty > 0) details.push(`ไข่ดาว ${daoQty}`);
@@ -166,18 +169,20 @@
 
                 if (item.note) {
                     let cleanNote = String(item.note).replace(/สินค้าฝากซื้อ/g, '').replace(/[()]/g, '').trim();
-                    if (cleanNote) details.push(cleanNote);
+                    if (cleanNote) details.push(escapeHtml(cleanNote));
                 }
 
                 let detailStr = details.length > 0 ? ` <span class="text-amber-700 font-normal">(${details.join(', ')})</span>` : '';
+                const safeQty = Math.max(1, Number(item.qty) || 1);
+                const safeTotalPrice = escapeHtml(item.total_price ?? 0);
 
                 html += `
                     <div class="flex justify-between items-start text-xs font-bold text-slate-800 py-1 border-b border-slate-100 last:border-none">
                         <div class="flex-1 pr-1 flex items-start gap-1">
-                            <span class="text-slate-600 shrink-0">x${item.qty}</span>
-                            <div><span>${cleanName}</span>${detailStr}</div>
+                            <span class="text-slate-600 shrink-0">x${safeQty}</span>
+                            <div><span>${escapeHtml(cleanName)}</span>${detailStr}</div>
                         </div>
-                        <span class="font-extrabold text-slate-900 ml-2 shrink-0">${item.total_price}.-</span>
+                        <span class="font-extrabold text-slate-900 ml-2 shrink-0">${safeTotalPrice}.-</span>
                     </div>
                 `;
             });
@@ -186,26 +191,118 @@
                 html += `
                     <div class="flex justify-between items-center text-xs font-bold text-slate-700 pt-1.5 border-t border-slate-200 mt-1">
                         <span>🛵 ค่าบริการจัดส่ง</span>
-                        <span>${orderSummary.deliveryFee}.-</span>
+                        <span>${escapeHtml(orderSummary.deliveryFee)}.-</span>
                     </div>
                 `;
             }
 
             container.innerHTML = html;
             document.getElementById('summaryQty').textContent = `${orderSummary.itemsCount} รายการ - ${orderSummary.totalQty} ชิ้น`;
-            document.getElementById('summaryTotal').textContent = orderSummary.grandTotal.toLocaleString();
+            document.getElementById('summaryTotal').textContent = Number(orderSummary.grandTotal || 0).toLocaleString();
         }
         /* --- [End Block 3.2] RENDER RECEIPT & PREVIEW --- */
 
-        /* --- [Start Block 3.3] SAVE ORDER & PRINT HANDLER --- */
-        /* ฟังก์ชันบันทึกข้อมูลออร์เดอร์ลงฐานข้อมูล Supabase และสั่งพิมพ์ใบเสร็จ (ถ้าต้องการ) */
-        async function handleSaveOrder(shouldPrint = false) {
-            try {
-                const saveBtn1 = document.getElementById('saveOnlyBtn');
-                const saveBtn2 = document.getElementById('saveAndPrintBtn');
-                if (saveBtn1) saveBtn1.disabled = true;
-                if (saveBtn2) saveBtn2.disabled = true;
+        /* --- [Start Block 3.3] STOCK DEDUCTION ON SAVE / PRINT --- */
+        async function deductStockOnce(payload) {
+            const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+            if (!payload || !client) return;
 
+            const sessionKey = payload.orderSessionId
+                ? `stock_deducted_${payload.orderSessionId}`
+                : null;
+
+            if (payload.stockDeducted || (sessionKey && sessionStorage.getItem(sessionKey) === '1')) {
+                return;
+            }
+
+            const items = payload.orderSummary?.processedCart || [];
+            if (!Array.isArray(items) || items.length === 0) return;
+
+            const qtyByFoodId = {};
+            for (const item of items) {
+                const foodId = Number(item.food_id || item.id);
+                const orderQty = Math.max(1, Number(item.qty) || 1);
+                if (!Number.isFinite(foodId)) continue;
+                qtyByFoodId[foodId] = (qtyByFoodId[foodId] || 0) + orderQty;
+            }
+
+            const foodIds = Object.keys(qtyByFoodId).map(Number);
+            if (foodIds.length === 0) return;
+
+            const { data: relations, error: relError } = await client
+                .from('menu_food_stock')
+                .select('food_id, food_stock_id')
+                .in('food_id', foodIds);
+
+            if (relError) {
+                throw new Error(relError.message || 'ไม่สามารถดึงข้อมูลความสัมพันธ์สต็อกได้');
+            }
+
+            const usageByStockId = {};
+            for (const rel of (relations || [])) {
+                const foodId = Number(rel.food_id);
+                const stockId = Number(rel.food_stock_id);
+                if (!Number.isFinite(foodId) || !Number.isFinite(stockId)) continue;
+                usageByStockId[stockId] = (usageByStockId[stockId] || 0) + (qtyByFoodId[foodId] || 0);
+            }
+
+            const stockIds = Object.keys(usageByStockId).map(Number);
+            if (stockIds.length === 0) {
+                payload.stockDeducted = true;
+                sessionStorage.setItem('printOrderData', JSON.stringify(payload));
+                if (sessionKey) sessionStorage.setItem(sessionKey, '1');
+                return;
+            }
+
+            const { data: stockRows, error: fetchError } = await client
+                .from('food_stock')
+                .select('food_stock_id, quantity')
+                .in('food_stock_id', stockIds);
+
+            if (fetchError || !stockRows) {
+                throw new Error(fetchError?.message || 'ไม่สามารถดึงข้อมูลสต็อกได้');
+            }
+
+            for (const row of stockRows) {
+                const stockId = Number(row.food_stock_id);
+                const currentQty = Number(row.quantity) || 0;
+                const usedQty = Number(usageByStockId[stockId]) || 0;
+                const nextQty = Math.max(0, currentQty - usedQty);
+
+                const { error: updateError } = await client
+                    .from('food_stock')
+                    .update({ quantity: nextQty })
+                    .eq('food_stock_id', stockId);
+
+                if (updateError) {
+                    throw new Error(`ตัดสต็อก food_stock_id=${stockId} ไม่สำเร็จ: ${updateError.message}`);
+                }
+            }
+
+            payload.stockDeducted = true;
+            sessionStorage.setItem('printOrderData', JSON.stringify(payload));
+            if (sessionKey) sessionStorage.setItem(sessionKey, '1');
+        }
+        /* --- [End Block 3.3] STOCK DEDUCTION ON SAVE / PRINT --- */
+
+        /* --- [Start Block 3.4] SAVE ORDER & PRINT HANDLER --- */
+        async function handleSaveOrder(shouldPrint = false) {
+            if (isProcessing) return;
+
+            const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+            if (!client) {
+                Swal.fire('เกิดข้อผิดพลาด', 'ไม่พบการเชื่อมต่อฐานข้อมูล', 'error');
+                return;
+            }
+
+            isProcessing = true;
+
+            const saveBtn1 = document.getElementById('saveOnlyBtn');
+            const saveBtn2 = document.getElementById('saveAndPrintBtn');
+            if (saveBtn1) saveBtn1.disabled = true;
+            if (saveBtn2) saveBtn2.disabled = true;
+
+            try {
                 const { locationData, customerDisplayName, customerId, orderSummary } = orderData;
 
                 let finalNickname = customerDisplayName;
@@ -218,7 +315,8 @@
 
                 const createdAt = new Date().toISOString();
 
-                const { error } = await supabaseClient.from('orders').insert([{
+                // 1️⃣ บันทึกข้อมูลออเดอร์ลงตาราง orders ก่อน
+                const { error } = await client.from('orders').insert([{
                     created_at: createdAt,
                     customer_type_id: Number(locationData.groupId),
                     customer_name: finalNickname,
@@ -234,6 +332,10 @@
                 }]).select();
 
                 if (error) throw error;
+
+                // 2️⃣ เมื่อบันทึกสำเร็จค่อยหักสต็อก
+                await deductStockOnce(orderData);
+
                 if (shouldPrint) window.print();
 
                 localStorage.removeItem('cart');
@@ -241,14 +343,14 @@
                 window.location.href = 'ordersystem.html?tab=1';
 
             } catch (err) {
-                Swal.fire('เกิดข้อผิดพลาด', err.message, 'error');
-                const saveBtn1 = document.getElementById('saveOnlyBtn');
-                const saveBtn2 = document.getElementById('saveAndPrintBtn');
+                console.error('Save order error:', err);
+                Swal.fire('เกิดข้อผิดพลาด', err.message || 'ไม่สามารถบันทึกออเดอร์ได้', 'error');
+                isProcessing = false;
                 if (saveBtn1) saveBtn1.disabled = false;
                 if (saveBtn2) saveBtn2.disabled = false;
             }
         }
-        /* --- [End Block 3.3] SAVE ORDER & PRINT HANDLER --- */
+        /* --- [End Block 3.4] SAVE ORDER & PRINT HANDLER --- */
     </script>
     <!-- [End Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS -->
 </body>

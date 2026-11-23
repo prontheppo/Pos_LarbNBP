@@ -7,7 +7,6 @@
 <html lang="th">
 <head>
     <!-- [Start Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
-    <!-- การตั้งค่าเริ่มต้น เมตาแท็ก และโหลดไลบรารีภายนอก -->
     <script src="appInit.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
@@ -19,7 +18,6 @@
     <!-- [End Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
 
     <!-- [Start Block 1.2] GLOBAL STYLES -->
-    <!-- การกำหนดสไตล์ CSS พื้นฐานของระบบและปุ่มเครื่องคิดเลข -->
     <style>
         :root { --bg-color: #f1f5f9; }
         html, body {
@@ -44,7 +42,6 @@
             border-color: #ef4444;
         }
 
-        /* ดีไซน์ปุ่มเครื่องคิดเลข */
         .calc-btn {
             background-color: #ffffff;
             border: 1px solid #e2e8f0;
@@ -73,33 +70,24 @@
 </head>
 <body>
 
-    <!-- ==========================================================
-         [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
-         ส่วนติดต่อผู้ใช้และองค์ประกอบหน้าจอ
-         ========================================================== -->
     <div class="page-container">
-        <!-- [Start Block 2.1] HEADER -->
-        <!-- ส่วนหัวของหน้าเว็บและปุ่มย้อนกลับหน้าหลัก -->
+        <!-- HEADER -->
         <div class="p-3 bg-white border-b border-slate-200 shrink-0">
             <div class="flex items-center justify-between">
                 <h1 class="font-extrabold text-sm text-slate-800">💸 บันทึกรายจ่ายของร้าน</h1>
                 <a href="index.html" class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-bold no-underline">🏠 หน้าหลัก</a>
             </div>
         </div>
-        <!-- [End Block 2.1] HEADER -->
 
-        <!-- [Start Block 2.2] MAIN EXPENSE FORM CONTAINER -->
-        <!-- ฟอร์มกรอกรายการรายจ่ายและสรุปยอดวันนี้ -->
+        <!-- MAIN EXPENSE FORM CONTAINER -->
         <div class="flex-1 p-3 space-y-3 overflow-y-auto">
-            <!-- ฟอร์มกรอกรายจ่าย -->
+            <!-- ฟอร์มกรอกรายจ่าย (หน้าหลัก) -->
             <div class="bg-white border-2 border-red-500/30 rounded-2xl p-4 shadow-sm space-y-3">
-                
-                <!-- จัดเรียง 2 คอลัมน์ (ความกว้าง 50% เท่ากัน) -->
                 <div class="grid grid-cols-2 gap-3">
                     <!-- รายการที่ซื้อ -->
                     <div>
                         <label class="font-bold text-xs text-slate-600 block mb-1">📝 รายการที่ซื้อ</label>
-                        <button type="button" onclick="openPopup('item')" class="w-full h-11 px-2.5 border-2 border-slate-300 hover:border-red-400 rounded-xl text-xs bg-slate-50 flex items-center justify-between text-left cursor-pointer transition">
+                        <button type="button" onclick="openPopup('item', 'main')" class="w-full h-11 px-2.5 border-2 border-slate-300 hover:border-red-400 rounded-xl text-xs bg-slate-50 flex items-center justify-between text-left cursor-pointer transition">
                             <span id="itemDisplay" class="font-bold text-slate-400 truncate">👆 เลือกรายการ...</span>
                             <span class="bg-slate-200 text-slate-600 text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0">เลือก</span>
                         </button>
@@ -109,7 +97,7 @@
                     <!-- หมายเหตุ / ร้านค้า -->
                     <div>
                         <label class="font-bold text-xs text-slate-600 block mb-1">📌 หมายเหตุ / ร้านค้า</label>
-                        <button type="button" onclick="openPopup('note')" class="w-full h-11 px-2.5 border border-slate-300 hover:border-red-400 rounded-xl text-xs bg-slate-50 flex items-center justify-between text-left cursor-pointer transition">
+                        <button type="button" onclick="openPopup('note', 'main')" class="w-full h-11 px-2.5 border border-slate-300 hover:border-red-400 rounded-xl text-xs bg-slate-50 flex items-center justify-between text-left cursor-pointer transition">
                             <span id="noteDisplay" class="font-bold text-slate-400 truncate">👆 เลือกหมายเหตุ...</span>
                             <span class="bg-slate-200 text-slate-600 text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0">เลือก</span>
                         </button>
@@ -117,19 +105,17 @@
                     </div>
                 </div>
 
-                <!-- จำนวนเงิน (คลิกเพื่อเปิดป๊อปอัปเครื่องคิดเลข) -->
+                <!-- จำนวนเงิน -->
                 <div>
                     <label class="font-extrabold text-xs text-slate-700 block mb-1">💰 จำนวนเงิน (บาท)</label>
                     <div class="relative flex items-center">
-                        <!-- คลิกที่ช่องนี้เพื่อเปิดป๊อปอัปเครื่องคิดเลข -->
-                        <input type="text" id="expenseAmountInput" placeholder="0" readonly onclick="openCalculatorPopup()" class="w-full h-12 pl-3 pr-10 text-xl font-black text-red-600 border-2 border-red-300 rounded-xl outline-none focus:ring-2 focus:ring-red-500 bg-red-50/20 cursor-pointer">
+                        <input type="text" id="expenseAmountInput" placeholder="0" readonly onclick="openCalculatorPopup('main')" class="w-full h-12 pl-3 pr-10 text-xl font-black text-red-600 border-2 border-red-300 rounded-xl outline-none focus:ring-2 focus:ring-red-500 bg-red-50/20 cursor-pointer">
                         <span class="absolute right-3 font-bold text-slate-400 text-sm pointer-events-none">บาท</span>
                     </div>
                 </div>
-
             </div>
 
-            <!-- แสดงรายการรายจ่ายวันนี้ & สรุปรวมยอด -->
+            <!-- รายการรายจ่ายวันนี้ -->
             <div class="bg-white border border-amber-300/80 rounded-2xl p-3 shadow-sm flex flex-col space-y-2">
                 <div class="flex items-center justify-between border-b border-amber-100 pb-2">
                     <span class="font-bold text-xs text-amber-800 flex items-center gap-1">
@@ -140,34 +126,79 @@
                     </span>
                 </div>
 
-                <!-- ตาราง/รายการรายจ่ายประจำวัน -->
                 <div id="todayExpenseList" class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
                     <div class="text-center text-xs text-slate-400 py-4">⏳ กำลังโหลดรายการวันนี้...</div>
                 </div>
             </div>
-
         </div>
-        <!-- [End Block 2.2] MAIN EXPENSE FORM CONTAINER -->
 
-        <!-- [Start Block 2.3] FOOTER SUBMIT BUTTON -->
-        <!-- ปุ่มกดบันทึกรายจ่ายด้านล่าง -->
+        <!-- FOOTER SUBMIT BUTTON -->
         <div class="p-3 bg-white border-t border-slate-200 shrink-0">
             <button type="button" onclick="submitExpenseOrder()" id="btnSubmitExpense" class="w-full bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold py-3.5 rounded-xl text-sm shadow transition flex items-center justify-center gap-1.5 cursor-pointer">
                 <span>💾</span> <span>บันทึกรายจ่ายนี้</span>
             </button>
         </div>
-        <!-- [End Block 2.3] FOOTER SUBMIT BUTTON -->
     </div>
-    <!-- [End Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
 
-    <!-- ==========================================================
-         [Start Block 3] MODALS & POPUP OVERLAYS
-         หน้าต่างป๊อปอัปเลือกรายการ เครื่องคิดเลข และยืนยันการลบ
-         ========================================================== -->
-    <!-- POPUP MODAL (เลือกรายการ / หมายเหตุ) -->
+    <!-- MODAL แก้ไขรายการรายจ่าย (z-40 อยู่ด้านล่างป๊อปอัปเลือกและเครื่องคิดเลข) -->
+    <div id="editExpenseModal" class="fixed inset-0 bg-black/60 z-40 hidden flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-white w-full max-w-md rounded-2xl p-4 shadow-2xl flex flex-col space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                <h3 class="font-extrabold text-sm text-slate-800">✏️ แก้ไขรายการรายจ่าย</h3>
+                <button type="button" onclick="closeEditModal()" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center cursor-pointer">✕</button>
+            </div>
+
+            <input type="hidden" id="editExpenseId">
+
+            <!-- การ์ดฟอร์มเหมือนหน้าหลัก -->
+            <div class="bg-white border-2 border-red-500/30 rounded-2xl p-3.5 shadow-xs space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- รายการที่ซื้อ -->
+                    <div>
+                        <label class="font-bold text-xs text-slate-600 block mb-1">📝 รายการที่ซื้อ</label>
+                        <button type="button" onclick="openPopup('item', 'edit')" class="w-full h-11 px-2.5 border-2 border-slate-300 hover:border-red-400 rounded-xl text-xs bg-slate-50 flex items-center justify-between text-left cursor-pointer transition">
+                            <span id="editItemDisplay" class="font-bold text-slate-400 truncate">👆 เลือกรายการ...</span>
+                            <span class="bg-slate-200 text-slate-600 text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0">เลือก</span>
+                        </button>
+                        <input type="hidden" id="editItemName">
+                    </div>
+
+                    <!-- หมายเหตุ / ร้านค้า -->
+                    <div>
+                        <label class="font-bold text-xs text-slate-600 block mb-1">📌 หมายเหตุ / ร้านค้า</label>
+                        <button type="button" onclick="openPopup('note', 'edit')" class="w-full h-11 px-2.5 border border-slate-300 hover:border-red-400 rounded-xl text-xs bg-slate-50 flex items-center justify-between text-left cursor-pointer transition">
+                            <span id="editNoteDisplay" class="font-bold text-slate-400 truncate">👆 เลือกหมายเหตุ...</span>
+                            <span class="bg-slate-200 text-slate-600 text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0">เลือก</span>
+                        </button>
+                        <input type="hidden" id="editNote">
+                    </div>
+                </div>
+
+                <!-- จำนวนเงิน -->
+                <div>
+                    <label class="font-extrabold text-xs text-slate-700 block mb-1">💰 จำนวนเงิน (บาท)</label>
+                    <div class="relative flex items-center">
+                        <input type="text" id="editAmount" placeholder="0" readonly onclick="openCalculatorPopup('edit')" class="w-full h-12 pl-3 pr-10 text-xl font-black text-red-600 border-2 border-red-300 rounded-xl outline-none focus:ring-2 focus:ring-red-500 bg-red-50/20 cursor-pointer">
+                        <span class="absolute right-3 font-bold text-slate-400 text-sm pointer-events-none">บาท</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ปุ่มลบ และ บันทึกการแก้ไข -->
+            <div class="pt-1 flex gap-2">
+                <button type="button" onclick="confirmDeleteFromEdit()" class="bg-red-100 hover:bg-red-200 text-red-600 font-bold py-3 px-3.5 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-1 shrink-0">
+                    🗑️ ลบ
+                </button>
+                <button type="button" onclick="updateExpense()" id="btnSaveEdit" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl text-xs transition shadow-sm cursor-pointer">
+                    💾 บันทึกการแก้ไข
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP MODAL (เลือกรายการ / หมายเหตุ - z-50 อยู่ด้านหน้าสุด) -->
     <div id="selectionModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-xs">
         <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-4 shadow-2xl flex flex-col max-h-[85vh]">
-            
             <div class="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
                 <h2 id="modalTitle" class="font-extrabold text-base text-slate-800">เลือกรายการ</h2>
                 <button type="button" onclick="closePopup()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center cursor-pointer">✕</button>
@@ -184,25 +215,21 @@
                     <button type="button" onclick="confirmCustomInput()" class="bg-red-600 text-white font-bold px-4 rounded-xl text-sm shadow-sm active:scale-95 cursor-pointer">ตกลง</button>
                 </div>
             </div>
-
         </div>
     </div>
 
-    <!-- POPUP MODAL (เครื่องคิดเลขแบบลอย) -->
+    <!-- POPUP MODAL (เครื่องคิดเลขแบบลอย - z-50 อยู่ด้านหน้าสุด) -->
     <div id="calculatorModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-xs" onclick="handleCalculatorOutsideClick(event)">
         <div class="bg-white w-full max-w-xs rounded-3xl p-4 shadow-2xl flex flex-col space-y-3 animate-scale">
-            
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
                 <h3 class="font-extrabold text-sm text-slate-800">🧮 คำนวณจำนวนเงิน</h3>
                 <button type="button" onclick="closeCalculatorPopup()" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center cursor-pointer">✕</button>
             </div>
 
-            <!-- หน้าจอแสดงผลในเครื่องคิดเลข -->
             <div class="bg-slate-50 border-2 border-slate-200 rounded-xl p-3 flex flex-col justify-end items-end h-20 shadow-inner">
                 <div id="calcScreen" class="text-2xl font-black text-red-600 tracking-wider truncate w-full text-right">0</div>
             </div>
 
-            <!-- แผงปุ่มกดเครื่องคิดเลข -->
             <div class="grid grid-cols-4 gap-2">
                 <button type="button" onclick="calcClear()" class="calc-btn h-12 rounded-xl font-extrabold text-red-500 text-sm cursor-pointer">AC</button>
                 <button type="button" onclick="calcAppend('(')" class="calc-btn calc-btn-op h-12 rounded-xl text-base cursor-pointer">(</button>
@@ -228,12 +255,11 @@
                 <button type="button" onclick="calcAppend('0')" class="calc-btn h-12 rounded-xl font-bold text-base cursor-pointer">0</button>
                 <button type="button" onclick="calcCalculateResult()" class="calc-btn calc-btn-equal col-span-2 h-12 rounded-xl text-xl cursor-pointer shadow-sm">=</button>
             </div>
-
         </div>
     </div>
 
-    <!-- CUSTOM DELETE CONFIRM MODAL (หน้าต่างยืนยันลบ) -->
-    <div id="deleteConfirmModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-xs">
+    <!-- CUSTOM DELETE CONFIRM MODAL (z-[60] อยู่ด้านหน้าสุดเมื่อยืนยันลบ) -->
+    <div id="deleteConfirmModal" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-xs">
         <div class="bg-white w-full max-w-xs rounded-2xl p-5 shadow-2xl flex flex-col items-center text-center space-y-4 animate-scale">
             <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-2xl text-red-600">
                 🗑️
@@ -248,28 +274,41 @@
             </div>
         </div>
     </div>
-    <!-- [End Block 3] MODALS & POPUP OVERLAYS -->
 
-    <!-- ==========================================================
-         [Start Block 4] JAVASCRIPT CORE LOGIC & FUNCTIONS
-         การทำงานส่วนตรรกะ ฟังก์ชันคำนวณ และการจัดการฐานข้อมูล Supabase
-         ========================================================== -->
+    <!-- JAVASCRIPT CORE LOGIC -->
     <script>
-        /* --- [Start Block 4.1] GLOBAL VARIABLES & INITIALIZATION --- */
-        /* การประกาศตัวแปรส่วนกลางและการโหลดรายการวันนี้เมื่อเปิดหน้าเว็บ */
         let currentPopupType = '';
+        let currentPopupContext = 'main'; // 'main' หรือ 'edit'
         let pendingDeleteId = null;
         let calcInput = '0';
+        let calcTargetInputId = 'expenseAmountInput';
+
+        let todayExpensesMap = {};
+
+        function getThaiTodayStr() {
+            const now = new Date();
+            const thaiDate = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+            const year = thaiDate.getUTCFullYear();
+            const month = String(thaiDate.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(thaiDate.getUTCDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getThaiDayRangeISO() {
+            const todayStr = getThaiTodayStr();
+            const startOfDay = new Date(`${todayStr}T00:00:00+07:00`).toISOString();
+            const endOfDay = new Date(`${todayStr}T23:59:59.999+07:00`).toISOString();
+            return { startOfDay, endOfDay };
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             loadTodayExpenses();
         });
-        /* --- [End Block 4.1] GLOBAL VARIABLES & INITIALIZATION --- */
 
-        /* --- [Start Block 4.2] CALCULATOR POPUP LOGIC --- */
-        /* ฟังก์ชันการทำงานของหน้าต่างเครื่องคิดเลขและการคำนวณตัวเลข */
-        function openCalculatorPopup() {
-            const currentVal = document.getElementById('expenseAmountInput').value.trim();
+        /* --- CALCULATOR LOGIC --- */
+        function openCalculatorPopup(target = 'main') {
+            calcTargetInputId = (target === 'edit') ? 'editAmount' : 'expenseAmountInput';
+            const currentVal = document.getElementById(calcTargetInputId).value.trim();
             calcInput = (currentVal && currentVal !== '0') ? currentVal : '0';
             document.getElementById('calcScreen').innerText = calcInput;
             document.getElementById('calculatorModal').classList.remove('hidden');
@@ -321,8 +360,7 @@
                     calcInput = String(result);
                 }
 
-                // นำผลลัพธ์ไปใส่ในช่องกรอกหลัก และปิดหน้าต่างเครื่องคิดเลขทันที
-                document.getElementById('expenseAmountInput').value = calcInput;
+                document.getElementById(calcTargetInputId).value = calcInput;
                 closeCalculatorPopup();
             } catch (err) {
                 calcInput = 'Error';
@@ -330,10 +368,8 @@
                 setTimeout(calcClear, 1200);
             }
         }
-        /* --- [End Block 4.2] CALCULATOR POPUP LOGIC --- */
 
-        /* --- [Start Block 4.3] EXPENSES DATA OPERATIONS (LOAD & DELETE) --- */
-        /* ฟังก์ชันโหลดรายการรายจ่ายประจำวันจาก Supabase และการลบรายการ */
+        /* --- EXPENSES DATA OPERATIONS --- */
         async function loadTodayExpenses() {
             const listContainer = document.getElementById('todayExpenseList');
             const totalContainer = document.getElementById('todayTotalAmount');
@@ -342,13 +378,13 @@
                 const db = window.supabaseClient || supabaseClient;
                 if (!db) return;
 
-                const now = new Date();
-                const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+                const { startOfDay, endOfDay } = getThaiDayRangeISO();
 
                 const { data, error } = await db
                     .from('expenses')
                     .select('expense_id, created_at, category, item_name, amount, note')
                     .gte('created_at', startOfDay)
+                    .lte('created_at', endOfDay)
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
@@ -356,28 +392,36 @@
                 if (!data || data.length === 0) {
                     listContainer.innerHTML = '<div class="text-center text-xs text-slate-400 py-3">⏳ ไม่มีรายการรายจ่าย</div>';
                     totalContainer.innerText = '0';
+                    todayExpensesMap = {};
                     return;
                 }
 
                 let total = 0;
                 listContainer.innerHTML = '';
+                todayExpensesMap = {};
 
                 data.forEach(item => {
                     total += Number(item.amount || 0);
+                    todayExpensesMap[item.expense_id] = item;
+
                     const itemEl = document.createElement('div');
-                    itemEl.className = 'flex items-center justify-between bg-slate-50 p-2 rounded-lg text-xs border border-slate-100';
+                    itemEl.className = 'flex items-center justify-between bg-slate-50 p-2.5 rounded-xl text-xs border border-slate-200 cursor-pointer hover:bg-amber-50/60 transition active:scale-[0.99]';
+                    itemEl.onclick = () => openEditModal(item.expense_id);
                     
                     itemEl.innerHTML = `
                         <div class="flex items-center gap-2 overflow-hidden">
-                            <button type="button" onclick="openDeleteModal('${item.expense_id}')" class="bg-red-100 hover:bg-red-200 text-red-600 w-6 h-6 rounded-lg font-bold flex items-center justify-center shrink-0 cursor-pointer transition active:scale-95" title="ลบรายการนี้">
+                            <button type="button" onclick="event.stopPropagation(); openDeleteModal('${item.expense_id}')" class="bg-red-100 hover:bg-red-200 text-red-600 w-7 h-7 rounded-lg font-bold flex items-center justify-center shrink-0 cursor-pointer transition active:scale-95" title="ลบรายการนี้">
                                 🗑️
                             </button>
                             <div class="flex flex-col truncate">
-                                <span class="font-bold text-slate-700 truncate">${item.item_name}</span>
-                                ${item.note ? `<span class="text-[10px] text-slate-400 truncate">📌 ${item.note}</span>` : ''}
+                                <span class="font-bold text-slate-800 truncate">${item.item_name}</span>
+                                ${item.note ? `<span class="text-[10px] text-slate-500 truncate">📌 ${item.note}</span>` : ''}
                             </div>
                         </div>
-                        <span class="font-extrabold text-red-600 shrink-0">-${Number(item.amount).toLocaleString()} ฿</span>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <span class="font-extrabold text-red-600">-${Number(item.amount).toLocaleString()} ฿</span>
+                            <span class="text-slate-400 text-xs font-bold pl-1">✏️</span>
+                        </div>
                     `;
                     listContainer.appendChild(itemEl);
                 });
@@ -390,6 +434,98 @@
             }
         }
 
+        /* --- EDIT EXPENSE MODAL LOGIC --- */
+        function setFieldDisplay(context, type, value) {
+            const isEdit = (context === 'edit');
+            const inputId = isEdit
+                ? (type === 'item' ? 'editItemName' : 'editNote')
+                : (type === 'item' ? 'itemNameInput' : 'expenseNoteInput');
+            const displayId = isEdit
+                ? (type === 'item' ? 'editItemDisplay' : 'editNoteDisplay')
+                : (type === 'item' ? 'itemDisplay' : 'noteDisplay');
+            const placeholder = (type === 'item') ? '👆 เลือกรายการ...' : '👆 เลือกหมายเหตุ...';
+
+            document.getElementById(inputId).value = value || '';
+            const display = document.getElementById(displayId);
+            if (value) {
+                display.innerText = value;
+                display.classList.remove('text-slate-400');
+                display.classList.add('text-slate-800');
+            } else {
+                display.innerText = placeholder;
+                display.classList.add('text-slate-400');
+                display.classList.remove('text-slate-800');
+            }
+        }
+
+        function openEditModal(expenseId) {
+            const item = todayExpensesMap[expenseId];
+            if (!item) return;
+
+            document.getElementById('editExpenseId').value = item.expense_id;
+            setFieldDisplay('edit', 'item', item.item_name || '');
+            setFieldDisplay('edit', 'note', item.note || '');
+            document.getElementById('editAmount').value = item.amount || 0;
+
+            document.getElementById('editExpenseModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editExpenseModal').classList.add('hidden');
+        }
+
+        async function updateExpense() {
+            const expenseId = document.getElementById('editExpenseId').value;
+            const itemName = document.getElementById('editItemName').value.trim();
+            const note = document.getElementById('editNote').value.trim();
+            const amount = Number(document.getElementById('editAmount').value);
+
+            if (!itemName) {
+                alert('กรุณาเลือกรายการที่ซื้อ');
+                return;
+            }
+            if (!amount || amount <= 0 || isNaN(amount)) {
+                alert('กรุณากรอกจำนวนเงินให้ถูกต้อง');
+                return;
+            }
+
+            const btn = document.getElementById('btnSaveEdit');
+            btn.disabled = true;
+            btn.innerText = '⏳ กำลังบันทึก...';
+
+            try {
+                const db = window.supabaseClient || supabaseClient;
+                if (!db) throw new Error("ไม่พบการเชื่อมต่อฐานข้อมูล Supabase");
+
+                const { error } = await db
+                    .from('expenses')
+                    .update({
+                        item_name: itemName,
+                        note: note,
+                        amount: amount
+                    })
+                    .eq('expense_id', expenseId);
+
+                if (error) throw error;
+
+                closeEditModal();
+                loadTodayExpenses();
+            } catch (err) {
+                console.error('Error updating expense:', err);
+                alert('เกิดข้อผิดพลาดในการแก้ไข: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '💾 บันทึกการแก้ไข';
+            }
+        }
+
+        function confirmDeleteFromEdit() {
+            const expenseId = document.getElementById('editExpenseId').value;
+            closeEditModal();
+            openDeleteModal(expenseId);
+        }
+
+        /* --- DELETE LOGIC --- */
         function openDeleteModal(expenseId) {
             pendingDeleteId = expenseId;
             document.getElementById('deleteConfirmModal').classList.remove('hidden');
@@ -422,12 +558,11 @@
                 closeDeleteModal();
             }
         };
-        /* --- [End Block 4.3] EXPENSES DATA OPERATIONS (LOAD & DELETE) --- */
 
-        /* --- [Start Block 4.4] SELECTION POPUP & SUBMIT HANDLERS --- */
-        /* ฟังก์ชันการเลือกรายการจากประวัติ พิมพ์ข้อความเอง และบันทึกข้อมูลลงฐานข้อมูล */
-        async function openPopup(type) {
+        /* --- SELECTION POPUP & SUBMIT HANDLERS --- */
+        async function openPopup(type, context = 'main') {
             currentPopupType = type;
+            currentPopupContext = context;
             const modal = document.getElementById('selectionModal');
             const title = document.getElementById('modalTitle');
             const grid = document.getElementById('iconGrid');
@@ -499,31 +634,7 @@
         }
 
         function selectValue(actualValue, displayText) {
-            if (currentPopupType === 'item') {
-                document.getElementById('itemNameInput').value = actualValue;
-                const display = document.getElementById('itemDisplay');
-                if (actualValue) {
-                    display.innerText = displayText;
-                    display.classList.remove('text-slate-400');
-                    display.classList.add('text-slate-800');
-                } else {
-                    display.innerText = '👆 เลือกรายการ...';
-                    display.classList.add('text-slate-400');
-                    display.classList.remove('text-slate-800');
-                }
-            } else if (currentPopupType === 'note') {
-                document.getElementById('expenseNoteInput').value = actualValue;
-                const display = document.getElementById('noteDisplay');
-                if (actualValue) {
-                    display.innerText = displayText;
-                    display.classList.remove('text-slate-400');
-                    display.classList.add('text-slate-800');
-                } else {
-                    display.innerText = '👆 เลือกหมายเหตุ...';
-                    display.classList.add('text-slate-400');
-                    display.classList.remove('text-slate-800');
-                }
-            }
+            setFieldDisplay(currentPopupContext, currentPopupType, actualValue || displayText);
             closePopup();
         }
 
@@ -535,12 +646,12 @@
 
             if (!itemName) {
                 alert('กรุณาเลือกรายการที่ซื้อ');
-                openPopup('item');
+                openPopup('item', 'main');
                 return;
             }
             if (!amount || amount <= 0 || isNaN(amount)) {
                 alert('กรุณากรอกหรือคำนวณจำนวนเงินให้ถูกต้อง');
-                openCalculatorPopup();
+                openCalculatorPopup('main');
                 return;
             }
 
@@ -552,11 +663,10 @@
                 const db = window.supabaseClient || supabaseClient;
                 if (!db) throw new Error("ไม่พบการเชื่อมต่อฐานข้อมูล Supabase");
 
-                const now = new Date();
-                const thaiTime = new Date(now.getTime() + (7 * 60 * 60 * 1000)).toISOString().replace('Z', '+07:00');
+                const createdAtISO = new Date().toISOString();
 
                 const { error } = await db.from('expenses').insert([{
-                    created_at: thaiTime,
+                    created_at: createdAtISO,
                     category: 'ทั่วไป',
                     item_name: itemName,
                     amount: amount,
@@ -565,12 +675,8 @@
 
                 if (error) throw error;
 
-                currentPopupType = 'item';
-                selectValue('', '');
-
-                currentPopupType = 'note';
-                selectValue('', '');
-
+                setFieldDisplay('main', 'item', '');
+                setFieldDisplay('main', 'note', '');
                 document.getElementById('expenseAmountInput').value = '';
 
                 loadTodayExpenses();
@@ -585,8 +691,6 @@
                 btn.innerHTML = '<span>💾</span> <span>บันทึกรายจ่ายนี้</span>';
             }
         }
-        /* --- [End Block 4.4] SELECTION POPUP & SUBMIT HANDLERS --- */
     </script>
-    <!-- [End Block 4] JAVASCRIPT CORE LOGIC & FUNCTIONS -->
 </body>
 </html>

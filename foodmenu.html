@@ -58,10 +58,9 @@
          [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
          ส่วนติดต่อผู้ใช้และองค์ประกอบหน้าจอแสดงรายการอาหาร
          ========================================================== -->
-    <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
+    <div class="sticky top-0 z-50 flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0 shadow-sm">
         <span id="groupTitleName" class="font-extrabold text-sm text-slate-700 truncate px-2">📌 หมวดหมู่เมนู</span>
         <div class="flex items-center gap-1.5">
-            <!-- ปุ่มเพิ่มเมนู (ตำแหน่งตามที่วงกลมสีแดงในรูป) -->
             <button type="button" onclick="openAddMenuModal()" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1 shadow transition cursor-pointer">
                 <span>➕</span> เมนู
             </button>
@@ -108,25 +107,62 @@
         let groupName = 'เมนูอาหาร';
         let allFoods = [];
         let currentCart = [];
+        let hasParentCart = false;
+
+        function getTargetOrigin() {
+            return window.location.origin && window.location.origin !== 'null' ? window.location.origin : '*';
+        }
 
         const urlParams = new URLSearchParams(window.location.search);
         currentGroupId = urlParams.get('group_id');
-        groupName = urlParams.get('name') ? decodeURIComponent(urlParams.get('name')) : 'เมนูอาหาร';
+        groupName = urlParams.get('name') || 'เมนูอาหาร';
 
         window.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('groupTitleName').textContent = `📌 ${groupName}`;
-            try { const storedCart = JSON.parse(localStorage.getItem('cart') || '[]'); currentCart = Array.isArray(storedCart) ? storedCart : []; } catch (error) { currentCart = []; console.error('Invalid cart data:', error); }
-            
-            if (currentGroupId && typeof supabaseClient !== 'undefined') {
-                const { data } = await supabaseClient.from('foods').select('*').eq('food_group_id', currentGroupId).order('food_id', { ascending: true });
-                if (data) { allFoods = data; renderFoodButtons(); }
+            if (!hasParentCart) {
+                try {
+                    const storedCart = JSON.parse(localStorage.getItem('cart') || '[]');
+                    currentCart = Array.isArray(storedCart) ? storedCart : [];
+                } catch (error) {
+                    currentCart = [];
+                    console.error('Invalid cart data:', error);
+                }
             }
+
+            if (currentGroupId && typeof supabaseClient !== 'undefined') {
+                try {
+                    const { data, error } = await supabaseClient.from('foods').select('*').eq('food_group_id', currentGroupId);
+                    if (error) throw error;
+                    if (data) {
+                        allFoods = data;
+                        renderFoodButtons();
+                    } else {
+                        renderFoodButtons();
+                    }
+                } catch (err) {
+                    console.error("Error fetching foods:", err);
+                    renderFoodButtons();
+                }
+            } else {
+                renderFoodButtons();
+            }
+
+            updateParentHeight();
         });
 
+        window.addEventListener('load', updateParentHeight);
+
         window.addEventListener('message', (event) => {
-            if (event.source !== window.parent || event.origin !== window.location.origin) return;
-            const { type, cart } = event.data || {};
-            if (type === 'UPDATE_CART_STATE' && Array.isArray(cart)) {
+            if (event.source !== window.parent) return;
+            const targetOrigin = getTargetOrigin();
+            if (targetOrigin !== '*' && event.origin !== targetOrigin) return;
+
+            const { type, cart, foods } = event.data || {};
+            if (Array.isArray(foods)) {
+                allFoods = foods;
+            }
+            if ((type === 'UPDATE_CART_STATE' || type === 'RENDER_CATEGORIES') && Array.isArray(cart)) {
+                hasParentCart = true;
                 currentCart = cart;
                 renderFoodButtons();
             }
@@ -144,17 +180,14 @@
                     const totalHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
                     if (Math.abs(totalHeight - lastReportedHeight) >= 2) {
                         lastReportedHeight = totalHeight;
-                        window.parent.postMessage({ type: 'RESIZE_POPUP', height: totalHeight }, window.location.origin);
+                        window.parent.postMessage({ type: 'RESIZE_POPUP', height: totalHeight }, getTargetOrigin());
                     }
                 }
             }, 60);
         }
 
-        // ฟังก์ชันเลือกไอคอนอาหารให้หลากหลายตามชื่อเมนูแบบเจาะจงแต่ละเมนู
         function getFoodIcon(name) {
             const n = name.toLowerCase();
-            
-            // หมวดส้มตำ / ยำ / ตำต่างๆ
             if (n.includes('ปูปลาร้า') || n.includes('ปู')) return '🦀';
             if (n.includes('ไทยไข่เค็ม') || n.includes('ไข่เค็ม')) return '🥚';
             if (n.includes('ไทยปู') || n.includes('ไทย')) return '🥜';
@@ -168,7 +201,6 @@
             if (n.includes('ลาว')) return '🌶️';
             if (n.includes('ตำ')) return '🥗';
 
-            // หมวดต้ม / แกง / ต้มแซ่บ
             if (n.includes('กระดูกอ่อน')) return '🍖';
             if (n.includes('เนื้อ')) return '🥩';
             if (n.includes('ขม')) return '🥣';
@@ -178,7 +210,6 @@
             if (n.includes('ต้มแซ่บ') || n.includes('ต้ม')) return '🔥';
             if (n.includes('แกง')) return '🍛';
 
-            // หมวดอื่นๆ ทั่วไป
             if (n.includes('ลาบ') || n.includes('ก้อย')) return '🥩';
             if (n.includes('ยำ')) return '🍋';
             if (n.includes('ย่าง') || n.includes('ปิ้ง')) return '🔥';
@@ -186,7 +217,6 @@
             if (n.includes('ปลา')) return '🐟';
             if (n.includes('น้ำ') || n.includes('โซดา') || n.includes('เบียร์')) return '🥤';
             
-            // รายการไอคอนสำรองแบบสุ่มกระจายความหลากหลาย
             const diverseFoodIcons = ['⭐', '🍴', '🍳', '😋', '🌟', '✨', '🎯', '🌿'];
             let hash = 0;
             for (let i = 0; i < name.length; i++) {
@@ -200,7 +230,9 @@
             if (!grid) return;
             grid.innerHTML = '';
 
-            const filteredFoods = allFoods.filter(f => String(f.food_group_id) === String(currentGroupId));
+            const filteredFoods = allFoods
+                .filter(f => String(f.food_group_id) === String(currentGroupId))
+                .sort((a, b) => (a.food_name || '').localeCompare(b.food_name || '', 'th'));
 
             if (filteredFoods.length === 0) {
                 grid.innerHTML = '<div class="col-span-2 text-center text-slate-400 py-8 text-xs font-bold">ไม่พบรายการอาหารในหมวดหมู่นี้</div>';
@@ -208,9 +240,9 @@
                 filteredFoods.forEach(food => {
                     const matchedItems = currentCart.filter(item => 
                         String(item.food_id) === String(food.food_id) || 
-                        String(item.name).trim() === String(food.food_name).trim()
+                        String(item.name || item.food_name || '').trim() === String(food.food_name || '').trim()
                     );
-                    const totalQty = matchedItems.reduce((sum, item) => sum + (Number(item.qty) || 1), 0);
+                    const totalQty = matchedItems.reduce((sum, item) => sum + (Number(item.qty || item.quantity) || 1), 0);
 
                     const btn = document.createElement('button');
                     btn.type = 'button';
@@ -225,17 +257,6 @@
                 });
             }
 
-            if (String(currentGroupId) === '99') {
-                const addWrapper = document.createElement('div');
-                addWrapper.className = 'col-span-2 mt-1';
-                const addBtn = document.createElement('button');
-                addBtn.type = 'button';
-                addBtn.className = 'add-item-bottom-btn';
-                addBtn.innerHTML = '+ เพิ่ม';
-                addBtn.onclick = openAddMenuModal;
-                addWrapper.appendChild(addBtn);
-                grid.appendChild(addWrapper);
-            }
             updateParentHeight();
         }
         /* --- [End Block 4.2] AUTO-RESIZE & RENDERING LOGIC --- */
@@ -244,17 +265,24 @@
         /* ฟังก์ชันเลือกอาหาร เปิดหน้าเพิ่มเมนู และปิดป๊อปอัป */
         function selectFood(food) {
             if (window.self !== window.top) {
-                window.parent.postMessage({ type: 'OPEN_FOOD_SELECT', food: food, catId: currentGroupId }, window.location.origin);
+                window.parent.postMessage({
+                    type: 'OPEN_FOOD_SELECT',
+                    food: food,
+                    catId: currentGroupId,
+                    cart: currentCart
+                }, getTargetOrigin());
             }
         }
 
         function openAddMenuModal() {
-            window.parent.postMessage({ type: 'OPEN_ADD_MENU', group_id: currentGroupId, group_name: groupName }, window.location.origin);
+            if (window.self !== window.top) {
+                window.parent.postMessage({ type: 'OPEN_ADD_MENU', group_id: currentGroupId, group_name: groupName }, getTargetOrigin());
+            }
         }
 
         function closePopup() {
             if (window.self !== window.top) {
-                window.parent.postMessage({ type: 'CLOSE_POPUP' }, window.location.origin);
+                window.parent.postMessage({ type: 'CLOSE_POPUP' }, getTargetOrigin());
             }
         }
         /* --- [End Block 4.3] ACTIONS & POSTMESSAGE HANDLERS --- */

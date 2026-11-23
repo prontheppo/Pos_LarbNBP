@@ -256,6 +256,15 @@
         return text.trim();
     }
 
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     let locationData = {
         groupId: 1,
         groupName: 'ชาวบ้าน',
@@ -352,7 +361,7 @@
         matches.forEach(cust => {
             const item = document.createElement('div');
             item.className = 'customer-dropdown-item';
-            item.innerHTML = `<span class="font-semibold">${removeDuplicateWords(cust.customer_name)}</span>`;
+            item.innerHTML = `<span class="font-semibold">${escapeHtml(removeDuplicateWords(cust.customer_name))}</span>`;
             item.onclick = () => {
                 selectedCustomerObj = cust;
                 document.querySelectorAll('.customer-input-field').forEach(inp => inp.value = removeDuplicateWords(cust.customer_name));
@@ -386,6 +395,8 @@
             locationData.zoneId = null;
             locationData.locationName = '';
             locationData.zoneName = '';
+            const txtEl = document.getElementById('locationBtnText-locationSelectorWrapper');
+            if (txtEl) txtEl.innerText = 'เลือกสถานที่';
         }
     }
 
@@ -419,7 +430,7 @@
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'py-3 px-3 bg-amber-50/60 hover:bg-amber-100 border border-amber-200/80 rounded-2xl text-center font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm truncate';
-            btn.innerHTML = `<div class="truncate">${loc.location_name}</div>`;
+            btn.innerHTML = `<div class="truncate">${escapeHtml(loc.location_name)}</div>`;
             btn.onclick = () => {
                 selectedLocationForZone = loc;
                 renderZonesView(loc);
@@ -429,7 +440,7 @@
     }
 
     function renderZonesView(loc) {
-        document.getElementById('popupTitle').innerHTML = `🛋️ เลือกโซน <span class="text-amber-600 font-semibold text-xs block mt-0.5">สถานที่: ${loc.location_name}</span>`;
+        document.getElementById('popupTitle').innerHTML = `🛋️ เลือกโซน <span class="text-amber-600 font-semibold text-xs block mt-0.5">สถานที่: ${escapeHtml(loc.location_name)}</span>`;
         document.getElementById('addLocationSection').classList.add('hidden');
         document.getElementById('addZoneSection').classList.remove('hidden');
 
@@ -454,7 +465,7 @@
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'py-3 px-3 bg-blue-50/60 hover:bg-blue-100 border border-blue-200/80 rounded-2xl text-center font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm truncate';
-            btn.innerHTML = `<div class="truncate">${z.zone_name}</div>`;
+            btn.innerHTML = `<div class="truncate">${escapeHtml(z.zone_name)}</div>`;
             btn.onclick = () => selectLocationAndZone(loc.location_id, loc.location_name, z.zone_id, z.zone_name);
             grid.appendChild(btn);
         });
@@ -575,14 +586,14 @@
                 note: userNote
             }];
 
-            const now = new Date();
-            const thaiTime = new Date(now.getTime() + (7 * 60 * 60 * 1000)).toISOString().replace('Z', '+07:00');
+            // ✅ แก้ Timezone: ใช้ ISO UTC ตรงๆ เหมือน printorder.html
+            const createdAt = new Date().toISOString();
 
             if (typeof supabaseClient !== 'undefined') {
                 const { error } = await supabaseClient
                     .from('orders')
                     .insert([{
-                        created_at: thaiTime,
+                        created_at: createdAt,
                         total_price: totalAmount,
                         total_qty: 1,
                         items: quickItems,
@@ -593,7 +604,7 @@
                         zone_id: locationData.zoneId ? Number(locationData.zoneId) : null,
                         delivery_fee: 0,
                         subtotal: totalAmount,
-                        customer_id: customerObj ? String(customerObj.customer_id || '') : null
+                        customer_id: customerObj?.customer_id ? String(customerObj.customer_id) : null
                     }]);
 
                 if (error) throw error;

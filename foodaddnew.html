@@ -7,7 +7,6 @@
 <html lang="th">
 <head>
     <!-- [Start Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
-    <!-- การตั้งค่าเริ่มต้น เมตาแท็ก และโหลดไลบรารีภายนอก -->
     <script src="appInit.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no">
@@ -20,7 +19,6 @@
     <!-- [End Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
 
     <!-- [Start Block 1.2] GLOBAL STYLES -->
-    <!-- การกำหนดสไตล์ CSS พื้นฐานของหน้าฟอร์มเพิ่มเมนูอาหาร -->
     <style>
         html, body { 
             width: 100%; min-height: 100%;
@@ -30,9 +28,7 @@
             border-radius: 0 !important; 
         }
 
-        input, select, textarea, button {
-            font-size: 16px;
-        }
+        input, select, textarea, button { font-size: 16px; }
 
         .custom-label { font-size: 15px !important; font-weight: 700; }
         input[type="number"], input[type="text"] { font-size: 16px !important; padding-top: 0.45rem !important; padding-bottom: 0.45rem !important; line-height: 1.4 !important; }
@@ -44,14 +40,13 @@
 
     <!-- ==========================================================
          [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
-         ส่วนติดต่อผู้ใช้และองค์ประกอบหน้าจอฟอร์มเพิ่มเมนูอาหาร
          ========================================================== -->
     <div class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
         <div class="flex items-center gap-1.5">
             <span class="text-base text-blue-600 font-extrabold flex items-center justify-center">➕</span>
             <span id="foodTitleHeader" class="font-extrabold text-sm text-slate-700 truncate px-1">เพิ่มเมนูอาหารใหม่</span>
         </div>
-        <button type="button" onclick="closeModal()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
+        <button type="button" id="btnCloseModalTop" onclick="closeModal()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
     </div>
 
     <form id="addMenuForm" onsubmit="saveNewMenuData(event)" class="p-3.5 space-y-3 bg-white w-full">
@@ -92,7 +87,7 @@
         </div>
 
         <div class="pt-2 grid grid-cols-2 gap-2">
-            <button type="button" onclick="closeModal()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl text-base transition cursor-pointer">
+            <button type="button" id="btnCancelAddMenu" onclick="closeModal()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl text-base transition cursor-pointer">
                 ยกเลิก
             </button>
             <button type="submit" id="btnSubmitAddMenu" class="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-extrabold py-2.5 rounded-xl text-base flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md">
@@ -100,35 +95,74 @@
             </button>
         </div>
     </form>
-    <!-- [End Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
 
     <!-- ==========================================================
          [Start Block 3] JAVASCRIPT CORE LOGIC & FUNCTIONS
-         การทำงานส่วนตรรกะ ฟังก์ชันการบันทึกข้อมูล และการปรับขนาด iframe
          ========================================================== -->
     <script>
         /* --- [Start Block 3.1] INITIALIZATION & SETUP --- */
-        /* การกำหนดค่าเริ่มต้นและการรับค่าพารามิเตอร์หมวดหมู่ */
-        let db;
-        let currentGroupId = null;
+        let db = null;
+        let currentGroupId = 99;
+        let isSaving = false;
+
+        function resolveGroupId(rawGroupId) {
+            if (rawGroupId === null || rawGroupId === undefined || String(rawGroupId).trim() === '') {
+                return 99;
+            }
+            const parsed = Number(rawGroupId);
+            if (!Number.isInteger(parsed) || parsed < 0) {
+                return 99;
+            }
+            return parsed;
+        }
+
+        function resolveSupabaseClient() {
+            if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient) {
+                return window.supabaseClient;
+            }
+            if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+                return supabaseClient;
+            }
+            return null;
+        }
+
+        function setFormBusyState(busy) {
+            isSaving = busy;
+            const btnSubmit = document.getElementById('btnSubmitAddMenu');
+            const btnCancel = document.getElementById('btnCancelAddMenu');
+            const btnCloseTop = document.getElementById('btnCloseModalTop');
+
+            if (btnSubmit) btnSubmit.disabled = busy;
+            if (btnCancel) btnCancel.disabled = busy;
+            if (btnCloseTop) btnCloseTop.disabled = busy;
+        }
+
+        function getTargetOrigin() {
+            return window.location.origin && window.location.origin !== 'null' ? window.location.origin : '*';
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
-            db = typeof window.supabaseClient !== 'undefined' ? window.supabaseClient : supabaseClient;
+            db = resolveSupabaseClient();
 
             const urlParams = new URLSearchParams(window.location.search);
-            currentGroupId = urlParams.get('group_id');
+            currentGroupId = resolveGroupId(urlParams.get('group_id'));
             const groupName = urlParams.get('group_name');
 
-            if (groupName) {
-                document.getElementById('addCategoryDisplay').value = decodeURIComponent(groupName);
+            const categoryInput = document.getElementById('addCategoryDisplay');
+            if (categoryInput) {
+                if (groupName && groupName.trim() !== '') {
+                    categoryInput.value = groupName.trim();
+                } else {
+                    categoryInput.value = currentGroupId === 99 ? 'ทั่วไป (99)' : `หมวดหมู่ #${currentGroupId}`;
+                }
             }
-            
+
+            resizeObserver.observe(document.body);
             updateParentHeight();
         });
         /* --- [End Block 3.1] INITIALIZATION & SETUP --- */
 
         /* --- [Start Block 3.2] RESIZE & POPUP HANDLERS --- */
-        /* ฟังก์ชันปรับความสูงอัตโนมัติของ iframe และการปิดหน้าต่าง */
         let lastReportedHeight = 0;
         let resizeTimer = null;
         function updateParentHeight() {
@@ -141,7 +175,7 @@
                         window.parent.postMessage({
                             type: 'RESIZE_POPUP',
                             height: totalHeight
-                        }, window.location.origin);
+                        }, getTargetOrigin());
                     }
                 }, 60);
             }
@@ -151,54 +185,91 @@
             updateParentHeight();
         });
 
-        window.addEventListener('DOMContentLoaded', () => {
-            resizeObserver.observe(document.body);
-            updateParentHeight();
-        });
-
         window.addEventListener('load', updateParentHeight);
 
         function closeModal() {
+            if (isSaving) return;
             if (window.parent && window.parent !== window) {
-                window.parent.postMessage({ type: 'CLOSE_ADD_MENU' }, window.location.origin);
+                window.parent.postMessage({ type: 'CLOSE_ADD_MENU' }, getTargetOrigin());
             }
         }
         /* --- [End Block 3.2] RESIZE & POPUP HANDLERS --- */
 
         /* --- [Start Block 3.3] DATABASE SAVE OPERATIONS --- */
-        /* ฟังก์ชันบันทึกข้อมูลเมนูอาหารใหม่ลงฐานข้อมูล Supabase */
+        function parseNonNegativePrice(inputId) {
+            const el = document.getElementById(inputId);
+            const raw = el ? parseFloat(el.value) : 0;
+            if (!Number.isFinite(raw) || raw < 0) return 0;
+            return raw;
+        }
+
         async function saveNewMenuData(e) {
             if (e) e.preventDefault();
+            if (isSaving) return;
 
-            const foodName = document.getElementById('addFoodNameInput').value.trim();
-            const priceLocal = parseFloat(document.getElementById('addPrice1Input').value) || 0;
-            const priceTourist = parseFloat(document.getElementById('addPrice2Input').value) || 0;
-            const priceSabaidee = parseFloat(document.getElementById('addPrice3Input').value) || 0;
+            const foodNameInput = document.getElementById('addFoodNameInput');
+            const foodName = foodNameInput ? foodNameInput.value.trim() : '';
+            const priceLocal = parseNonNegativePrice('addPrice1Input');
+            const priceTourist = parseNonNegativePrice('addPrice2Input');
+            const priceSabaidee = parseNonNegativePrice('addPrice3Input');
 
             if (!foodName) {
                 alert('กรุณากรอกชื่อเมนูอาหาร');
+                if (foodNameInput) foodNameInput.focus();
                 return;
             }
 
-            const btnSubmit = document.getElementById('btnSubmitAddMenu');
-            if (btnSubmit) btnSubmit.disabled = true;
+            db = db || resolveSupabaseClient();
+            if (!db || typeof db.from !== 'function') {
+                alert('ไม่พบการเชื่อมต่อฐานข้อมูล (Supabase Client)');
+                return;
+            }
+
+            setFormBusyState(true);
 
             try {
-                const { error } = await db.from('foods').insert([{
+                const payload = {
                     food_name: foodName,
-                    food_group_id: currentGroupId ? Number(currentGroupId) : 99,
+                    food_group_id: currentGroupId,
                     price_1: priceLocal,
                     price_2: priceTourist,
                     price_3: priceSabaidee
-                }]);
+                };
+
+                const { data, error } = await db.from('foods').insert([payload]).select().single();
 
                 if (error) throw error;
+
+                if (data && window.parent && window.parent !== window) {
+                    const resolvedGroupId = data.food_group_id ?? currentGroupId;
+                    window.parent.postMessage({
+                        type: 'ADD_TO_CART',
+                        cartItem: {
+                            item_id: Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+                            food_id: data.food_id,
+                            name: data.food_name,
+                            price: data.price_1 ?? priceLocal,
+                            base_price: data.price_1 ?? priceLocal,
+                            price_1: data.price_1 ?? priceLocal,
+                            price_2: data.price_2 ?? priceTourist,
+                            price_3: data.price_3 ?? priceSabaidee,
+                            cost_price: 0,
+                            friedEggQty: 0,
+                            omeletQty: 0,
+                            qty: 1,
+                            note: '',
+                            food_group_id: resolvedGroupId
+                        }
+                    }, getTargetOrigin());
+                }
+
+                isSaving = false;
                 closeModal();
             } catch (err) {
                 console.error('Error saving menu:', err);
-                alert('เกิดข้อผิดพลาดในการบันทึก: ' + err.message);
+                alert('เกิดข้อผิดพลาดในการบันทึก: ' + (err && err.message ? err.message : err));
             } finally {
-                if (btnSubmit) btnSubmit.disabled = false;
+                setFormBusyState(false);
             }
         }
         /* --- [End Block 3.3] DATABASE SAVE OPERATIONS --- */

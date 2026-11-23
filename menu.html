@@ -1,0 +1,276 @@
+<!--
+ =================================
+  File Name : index.html
+ =================================
+-->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <!-- [Start Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
+    <!-- การตั้งค่าเริ่มต้น เมตาแท็ก และโหลดไลบรารีภายนอก -->
+    <script src="appInit.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
+
+    <title>ลาบหนองบัวลำภู @เขื่อนขุนด่านปราการชล</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- [End Block 1.1] HEAD CONFIGURATION & DEPENDENCIES -->
+
+    <!-- [Start Block 1.2] GLOBAL STYLES -->
+    <!-- การกำหนดสไตล์ CSS พื้นฐานของหน้าหลักเมนูร้านอาหาร -->
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: auto;
+            font-family: 'Sarabun', system-ui, -apple-system,
+                BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f3f4f6;
+            touch-action: pan-y;
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .app-layout {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            min-height: 100dvh;
+            width: 100vw;
+            box-sizing: border-box;
+            padding: 15px 12px 10px 12px;
+        }
+
+        .main-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 20px;
+            padding: 16px 14px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .header-section {
+            position: sticky;
+            top: 0;
+            background: #ffffff;
+            z-index: 10;
+            width: 100%;
+            flex-shrink: 0;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .menu-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            flex: 1;
+            padding: 2px 0;
+            box-sizing: border-box;
+        }
+
+        /* คลาสสำหรับแถวแรกที่ต้องการแบ่งเป็น 2 คอลัมน์เท่ากัน */
+        .menu-row-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .menu-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            height: 52px;
+            font-size: 15px;
+            font-weight: bold;
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+            transition: transform 0.1s ease;
+            box-sizing: border-box;
+            width: 100%;
+            border: none;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-decoration: none;
+            padding: 0 8px;
+        }
+
+        .menu-btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-blue { background-color: #2563eb; }
+        .btn-emerald { background-color: #059669; }
+        .btn-amber-600 { background-color: #d97706; }
+        .btn-teal { background-color: #0d9488; }
+        .btn-cyan { background-color: #0891b2; }
+        .btn-indigo { background-color: #4f46e5; }
+        .btn-purple { background-color: #7c3aed; }
+        .btn-slate { background-color: #334155; }
+        .btn-rose { background-color: #e11d48; }
+    </style>
+    <!-- [End Block 1.2] GLOBAL STYLES -->
+</head>
+
+<body>
+<div class="app-layout">
+
+    <!-- ==========================================================
+         [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
+         ส่วนติดต่อผู้ใช้และองค์ประกอบหน้าหลักเมนูร้านอาหาร
+         ========================================================== -->
+    <div id="homeView" class="main-card">
+
+        <!-- [Start Block 2.1] HEADER AND RESTAURANT NAME -->
+        <!-- ส่วนหัวแสดงชื่อร้านและรายละเอียดระบบ -->
+        <div class="header-section">
+            <h1 class="font-extrabold text-lg text-slate-800 leading-snug">
+                ลาบหนองบัวลำภู
+            </h1>
+            <h2 class="font-bold text-sm text-slate-600 mt-0.5">
+                @เขื่อนขุนด่านปราการชล
+            </h2>
+            <p class="text-[11px] text-gray-400 mt-0.5">
+                ระบบจัดการร้านอาหารและสั่งอาหาร
+            </p>
+        </div>
+        <!-- [End Block 2.1] HEADER AND RESTAURANT NAME -->
+
+        <!-- [Start Block 2.2] ALL MENU BUTTONS -->
+        <!-- รายการปุ่มเมนูหลักทั้งหมดของระบบ -->
+        <div class="menu-list">
+
+            <!-- แถวที่ 1: แสดง 2 คอลัมน์ (1. หน้าสั่งอาหาร | 2. บันทึกรายจ่าย) -->
+            <div class="menu-row-2col">
+                <button type="button"
+                    onclick="goToPage('ordersystem.html?tab=1')"
+                    class="menu-btn btn-blue">
+                    <span>📝 หน้าสั่งอาหาร</span>
+                </button>
+
+                <button type="button"
+                    onclick="goToPage('expense.html')"
+                    class="menu-btn btn-rose">
+                    <span>💸 บันทึกรายจ่าย</span>
+                </button>
+            </div>
+
+            <!-- สั่งด่วน -->
+            <button type="button"
+                onclick="goToPage('quickorder.html')"
+                class="menu-btn btn-emerald">
+                <span>⚡ สั่งด่วน</span>
+            </button>
+
+            <!-- รายงานการขาย -->
+            <button type="button"
+                onclick="goToPage('salereport.html')"
+                class="menu-btn btn-amber-600">
+                <span>📊 รายงานการขาย</span>
+            </button>
+
+            <!-- Line Report -->
+            <button type="button"
+                onclick="goToPage('linereport.html')"
+                class="menu-btn btn-teal">
+                <span>💬 Line Report</span>
+            </button>
+
+            <!-- ตั้งค่าการจัดส่ง -->
+            <button type="button"
+                onclick="goToPage('settings_delivery.html')"
+                class="menu-btn btn-cyan">
+                <span>🚚 ตั้งค่าการจัดส่ง</span>
+            </button>
+
+            <!-- จัดการรายการอาหาร & ราคา -->
+            <button type="button"
+                onclick="goToPage('management.html')"
+                class="menu-btn btn-amber-600">
+                <span>📋 จัดการรายการอาหาร & ราคา</span>
+            </button>
+
+            <!-- จัดการสต็อกวัตถุดิบ -->
+            <button type="button"
+                onclick="goToPage('stock_dashboard.html')"
+                class="menu-btn btn-purple">
+                <span>📦 จัดการสต็อกวัตถุดิบ</span>
+            </button>
+
+        </div>
+        <!-- [End Block 2.2] ALL MENU BUTTONS -->
+
+    </div>
+    <!-- [End Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
+
+</div>
+
+<!-- ==========================================================
+     [Start Block 3] JAVASCRIPT CORE LOGIC & FUNCTIONS
+     การทำงานส่วนตรรกะ การป้องกันการซูมหน้าจอ และการนำทาง
+     ========================================================== -->
+<script>
+    /* --- [Start Block 3.1] PREVENT GESTURE-BASED ZOOM --- */
+    /* ฟังก์ชันป้องกันการซูมหน้าจอด้วยนิ้วมือ (Gesture) บนอุปกรณ์พกพา */
+    document.addEventListener('gesturestart', function (e) {
+        e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('gesturechange', function (e) {
+        e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('gestureend', function (e) {
+        e.preventDefault();
+    }, { passive: false });
+    /* --- [End Block 3.1] PREVENT GESTURE-BASED ZOOM --- */
+
+    let lastTouchEnd = 0;
+
+    /* --- [Start Block 3.2] PREVENT DOUBLE-TAP ZOOM AND MULTI-TOUCH --- */
+    /* ฟังก์ชันป้องกัน Double-Tap Zoom และการสัมผัสหลายนิ้วพร้อมกัน */
+    document.addEventListener('touchend', function (event) {
+        const now = new Date().getTime();
+
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+        }
+
+        lastTouchEnd = now;
+    }, { passive: false });
+
+    document.addEventListener('touchstart', function (event) {
+        if (event.touches.length > 1) {
+            event.preventDefault();
+        }
+    }, { passive: false });
+    /* --- [End Block 3.2] PREVENT DOUBLE-TAP ZOOM AND MULTI-TOUCH --- */
+
+    /* --- [Start Block 3.3] NAVIGATION FUNCTION --- */
+    /* ฟังก์ชันสำหรับเปลี่ยนหน้าไปยัง URL ที่กำหนด */
+    function goToPage(url) {
+        window.location.href = url;
+    }
+    /* --- [End Block 3.3] NAVIGATION FUNCTION --- */
+</script>
+<!-- [End Block 3] JAVASCRIPT CORE LOGIC & FUNCTIONS -->
+</body>
+</html>

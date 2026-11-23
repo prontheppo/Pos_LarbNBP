@@ -208,18 +208,29 @@
     let currentSelectedDate = '';
     let globalGroupData = {};
 
-    function getTodayString() {
-        const d = new Date();
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
+    const THAI_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+    // แปลงเวลา ISO / Date ให้เป็นวันที่ตามโซนเวลาไทย (+07:00) ในรูปแบบ YYYY-MM-DD
+    function toThaiDateStr(rawDate) {
+        if (!rawDate) return '';
+        const d = new Date(rawDate);
+        if (isNaN(d.getTime())) {
+            return String(rawDate).split('T')[0].split(' ')[0];
+        }
+        const thaiTime = new Date(d.getTime() + THAI_OFFSET_MS);
+        const year = thaiTime.getUTCFullYear();
+        const month = String(thaiTime.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(thaiTime.getUTCDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
+    }
+
+    function getTodayString() {
+        return toThaiDateStr(new Date());
     }
 
     function getOrderDateStr(order) {
         const rawDate = order.created_at || order.order_date || order.date || '';
-        if (!rawDate) return '';
-        return String(rawDate).split('T')[0].split(' ')[0];
+        return toThaiDateStr(rawDate);
     }
 
     function formatDateThai(dateString) {
@@ -405,9 +416,10 @@
     async function fetchInitialData() {
         if (!db) return;
         
-        const pastDate = new Date();
-        pastDate.setDate(pastDate.getDate() - 15);
-        const pastDateStr = pastDate.toISOString().split('T')[0] + 'T00:00:00';
+        const todayThaiStr = getTodayString();
+        const pastThaiDate = new Date(new Date(`${todayThaiStr}T00:00:00+07:00`).getTime() - (15 * 24 * 60 * 60 * 1000));
+        const pastThaiDateStr = toThaiDateStr(pastThaiDate);
+        const pastDateStr = new Date(`${pastThaiDateStr}T00:00:00+07:00`).toISOString();
         
         const ordRes = await db.from('orders')
             .select('*')
@@ -428,7 +440,7 @@
         if (!expRes.error && expRes.data) {
             allExpensesCache = expRes.data.map(e => ({
                 ...e,
-                dateStr: String(e.created_at).split('T')[0].split(' ')[0],
+                dateStr: toThaiDateStr(e.created_at),
                 amount: Number(e.amount || 0)
             }));
             allExpensesCache.forEach(e => { if (e.dateStr) fetchedDatesSet.add(e.dateStr); });
@@ -446,8 +458,8 @@
             document.getElementById('groupSummaryContainer').innerHTML = `<div class="text-center text-slate-400 py-10 text-xs font-medium">⏳ กำลังค้นหาข้อมูลของวันที่ ${formatDateThai(targetDateStr)}...</div>`;
         }
 
-        const startStr = `${targetDateStr}T00:00:00`;
-        const endStr = `${targetDateStr}T23:59:59.999`;
+        const startStr = new Date(`${targetDateStr}T00:00:00+07:00`).toISOString();
+        const endStr = new Date(`${targetDateStr}T23:59:59.999+07:00`).toISOString();
 
         const ordRes = await db.from('orders')
             .select('*')
@@ -474,7 +486,7 @@
         if (!expRes.error && expRes.data) {
             const newExps = expRes.data.map(e => ({
                 ...e,
-                dateStr: String(e.created_at).split('T')[0].split(' ')[0],
+                dateStr: toThaiDateStr(e.created_at),
                 amount: Number(e.amount || 0)
             }));
             newExps.forEach(ne => {

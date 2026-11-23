@@ -89,7 +89,7 @@
 
         <button onclick="truncateOrdersTable()" class="bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 px-1.5 rounded-xl text-xs transition active:scale-95 shadow flex flex-col items-center justify-center text-center leading-tight cursor-pointer">
           <span>🗑️</span>
-          <span>ล้างตาราง Orders</span>
+          <span>ล้าง Orders & Expenses</span>
         </button>
       </div>
 
@@ -126,6 +126,7 @@
       'foods': 'food_id',
       'locations': 'location_id',
       'orders': 'order_id',
+      'expenses': 'expense_id',
       'zones': 'zone_id'
     };
 
@@ -481,17 +482,21 @@
     }
 
     async function truncateOrdersTable() {
-      const isConfirmed = confirm("⚠️ คำเตือน: คุณต้องการลบข้อมูลทั้งหมดในตาราง 'orders' และรีเซ็ต ID ให้เริ่มต้นใหม่ใช่หรือไม่?");
+      const isConfirmed = confirm("⚠️ คำเตือน: คุณต้องการลบข้อมูลทั้งหมดและรีเซ็ต ID ของตาราง 'orders' และ 'expenses' ให้เริ่มต้นใหม่ใช่หรือไม่?");
       if (!isConfirmed) return;
 
       const status = document.getElementById('statusText');
-      status.innerHTML = "⏳ กำลังลบข้อมูลและรีเซ็ต ID ของตาราง orders...";
+      status.innerHTML = "⏳ กำลังลบข้อมูลและรีเซ็ต ID ของตาราง orders และ expenses...";
 
       try {
-        const { error } = await supabaseClient.rpc('truncate_table', { target_table: 'orders' });
-        if (error) throw error;
+        const targetTables = ['orders', 'expenses'];
 
-        status.innerHTML = `<span class="text-emerald-300">✅ ลบข้อมูลและรีเซ็ต ID ของตาราง orders สำเร็จแล้ว (ID เริ่มต้นที่ 1)</span>`;
+        for (const tableName of targetTables) {
+          const { error } = await supabaseClient.rpc('truncate_table', { target_table: tableName });
+          if (error) throw new Error(`${tableName}: ${error.message}`);
+        }
+
+        status.innerHTML = `<span class="text-emerald-300">✅ ลบข้อมูลและรีเซ็ต ID ของตาราง orders และ expenses สำเร็จแล้ว (ID เริ่มต้นที่ 1)</span>`;
 
         setTimeout(() => {
           if (typeof fetchAllTablesData === 'function' && document.getElementById('tablesContainer').innerHTML.trim() !== '') {
@@ -499,8 +504,8 @@
           }
         }, 1000);
       } catch (err) {
-        console.error("Truncate orders error:", err);
-        status.innerHTML = `<span class="text-rose-400">❌ เกิดข้อผิดพลาดในการลบตาราง orders: ${err.message}</span>`;
+        console.error("Truncate orders & expenses error:", err);
+        status.innerHTML = `<span class="text-rose-400">❌ เกิดข้อผิดพลาดในการลบตาราง: ${err.message}</span>`;
       }
     }
     /* --- [End Block 3.4] SQL EXPORTER FUNCTIONS --- */

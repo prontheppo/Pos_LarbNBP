@@ -94,6 +94,10 @@
         let cachedFoods = [];
         let currentCart = [];
 
+        function getTargetOrigin() {
+            return window.location.origin && window.location.origin !== 'null' ? window.location.origin : '*';
+        }
+
         window.addEventListener('DOMContentLoaded', async () => {
             if (window.self === window.top) {
                 await fetchStandaloneData();
@@ -141,11 +145,18 @@
                 if (foodRes.data) cachedFoods = foodRes.data;
                 try { const storedCart = JSON.parse(localStorage.getItem('cart') || '[]'); currentCart = Array.isArray(storedCart) ? storedCart : []; } catch (error) { currentCart = []; console.error('Invalid cart data:', error); }
                 renderCategories(cachedCategories, cachedFoods, currentCart);
-            } catch (err) { console.error("Load error:", err); }
+            } catch (err) { 
+                console.error("Load error:", err);
+                document.getElementById('quickNavContainer').innerHTML = '<div class="col-span-2 text-center text-rose-500 text-xs py-4">เกิดข้อผิดพลาดในการโหลดข้อมูล</div>';
+                updateParentHeight();
+            }
         }
 
         window.addEventListener('message', (event) => {
-            if (event.source !== window.parent || event.origin !== window.location.origin) return;
+            if (event.source !== window.parent) return;
+            const targetOrigin = getTargetOrigin();
+            if (targetOrigin !== '*' && event.origin !== targetOrigin) return;
+
             const { type, categories, foods, cart } = event.data || {};
             if (type === 'RENDER_CATEGORIES') {
                 cachedCategories = categories || cachedCategories;
@@ -161,7 +172,7 @@
         function updateParentHeight() {
             if (window.parent !== window) {
                 const totalHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
-                window.parent.postMessage({ type: 'RESIZE_POPUP', height: totalHeight + 20 }, window.location.origin);
+                window.parent.postMessage({ type: 'RESIZE_POPUP', height: totalHeight + 20 }, getTargetOrigin());
             }
         }
 
@@ -203,20 +214,23 @@
                     catTotalQty = (cart || []).reduce((sum, item) => {
                         const itemGroupId = Number(item.food_group_id || item.group_id || 0);
                         const is98 = itemGroupId === 98 || item.is_special === true || item.isSpecialMenu === true || (item.name && item.name.includes('เมนูพิเศษ'));
-                        return is98 ? sum + (Number(item.qty) || 1) : sum;
+                        const itemQty = item.qty !== undefined && item.qty !== null ? Number(item.qty) : 1;
+                        return is98 ? sum + (isNaN(itemQty) ? 0 : itemQty) : sum;
                     }, 0);
                 } else if (catId === 99 || catName.includes('ลูกค้าฝากซื้อ')) {
                     catTotalQty = (cart || []).reduce((sum, item) => {
                         const itemGroupId = Number(item.food_group_id || item.group_id || 0);
                         const is99 = itemGroupId === 99 || item.is_buying_resell === true || (item.name && item.name.includes('สินค้าฝากซื้อ'));
-                        return is99 ? sum + (Number(item.qty) || 1) : sum;
+                        const itemQty = item.qty !== undefined && item.qty !== null ? Number(item.qty) : 1;
+                        return is99 ? sum + (isNaN(itemQty) ? 0 : itemQty) : sum;
                     }, 0);
                 } else {
                     const catFoodIds = (foods || []).filter(f => Number(f.food_group_id) === catId).map(f => Number(f.food_id));
                     catTotalQty = (cart || []).reduce((sum, item) => {
                         const matchById = item.food_id && catFoodIds.includes(Number(item.food_id));
                         const matchByGroup = item.food_group_id && Number(item.food_group_id) === catId;
-                        return (matchById || matchByGroup) ? sum + (Number(item.qty) || 1) : sum;
+                        const itemQty = item.qty !== undefined && item.qty !== null ? Number(item.qty) : 1;
+                        return (matchById || matchByGroup) ? sum + (isNaN(itemQty) ? 0 : itemQty) : sum;
                     }, 0);
                 }
 
@@ -227,11 +241,12 @@
 
                 btn.onclick = () => {
                     if (window.self !== window.top) {
-                        if (catId === 99 || catId === 98 || catName.includes('ลูกค้าฝากซื้อ') || catName.includes('เมนูพิเศษ')) {
-                            window.parent.postMessage({ type: 'OPEN_CONSIGNMENT_LIST', catId: cat.food_group_id, catName: catName }, window.location.origin);
-                        } else {
-                            window.parent.postMessage({ type: 'SELECT_CATEGORY', catId: cat.food_group_id, catName: `${icon} ${catName}`, isSpecial: false }, window.location.origin);
-                        }
+                        window.parent.postMessage({
+                            type: 'SELECT_CATEGORY',
+                            catId: cat.food_group_id,
+                            catName: `${icon} ${catName}`,
+                            isSpecial: false
+                        }, getTargetOrigin());
                     } else {
                         showCustomModal(`เลือกหมวดหมู่: ${catName} (ID: ${cat.food_group_id})`);
                     }

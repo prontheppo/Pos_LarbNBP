@@ -25,7 +25,7 @@
         html, body {
             width: 100%; height: auto; background-color: #ffffff; color: #1e293b;
             font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none;
-            display: flex; flex-direction: column; overflow: hidden; border-radius: 1.5rem;
+            display: flex; flex-direction: column; overflow-y: auto; border-radius: 1.5rem;
         }
 
         input, select, textarea, button {
@@ -35,6 +35,20 @@
         .custom-label { font-size: 15px !important; font-weight: 700; }
         input[type="number"], input[type="text"] { font-size: 16px !important; padding-top: 0.45rem !important; padding-bottom: 0.45rem !important; line-height: 1.4 !important; }
         .back-btn { background-color: #f1f5f9; border: 1.5px solid #cbd5e1; color: #334155; font-weight: 700; font-size: 13px !important; padding: 0.25rem 0.5rem; border-radius: 0.6rem; cursor: pointer; }
+
+        .note-autocomplete-wrapper { position: relative; width: 100%; }
+        .note-dropdown {
+            position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #ffffff;
+            border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12);
+            max-height: 160px; overflow-y: auto; z-index: 50; display: none;
+        }
+        .note-dropdown.active { display: block; }
+        .note-dropdown-item {
+            padding: 9px 12px; font-size: 14px; color: #334155; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9;
+        }
+        .note-dropdown-item:last-child { border-bottom: none; }
+        .note-dropdown-item:hover { background-color: #fef3c7; }
     </style>
     <!-- [End Block 1.2] GLOBAL STYLES -->
 </head>
@@ -50,7 +64,7 @@
         <button type="button" onclick="closePopup()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 flex items-center justify-center font-bold text-xs transition cursor-pointer">✕</button>
     </div>
 
-    <div class="p-3.5 space-y-3 bg-white w-full">
+    <div class="p-3.5 space-y-3 bg-white w-full pb-6">
         <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200">
             <span id="foodTitleName" class="font-extrabold text-slate-900 text-base truncate pr-2">📌 รายการสินค้า</span>
             <button type="button" onclick="saveToCart()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-base shadow-md active:scale-95 transition cursor-pointer flex items-center gap-1 shrink-0">
@@ -69,11 +83,11 @@
         <div id="priceAndQtyGrid" class="grid grid-cols-2 gap-2.5 items-center">
             <div id="costPriceBox" class="hidden">
                 <label id="costLabel" class="block custom-label text-slate-700 mb-1">ต้นทุน (บาท)</label>
-                <input type="number" id="foodCostPrice" placeholder="ระบุต้นทุน" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-800 text-center text-base outline-none focus:border-emerald-500">
+                <input type="number" id="foodCostPrice" min="0" placeholder="ระบุต้นทุน" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-800 text-center text-base outline-none focus:border-emerald-500">
             </div>
             <div id="sellPriceBox">
                 <label id="priceLabel" class="block custom-label text-slate-700 mb-1">ราคาขาย</label>
-                <input type="number" id="foodPrice" placeholder="ระบุราคาขาย" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-800 text-center text-base outline-none focus:border-emerald-500">
+                <input type="number" id="foodPrice" min="0" placeholder="ระบุราคาขาย" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-800 text-center text-base outline-none focus:border-emerald-500">
             </div>
             <div id="qtyBox">
                 <label class="block custom-label text-slate-700 mb-1">จำนวน</label>
@@ -106,29 +120,131 @@
 
         <div>
             <label class="block custom-label text-slate-700 mb-1">หมายเหตุ</label>
-            <input type="text" id="foodNote" placeholder="(เช่น เผ็ดน้อย, ไม่ใส่ผัก)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-base outline-none focus:border-emerald-500">
+            <div class="note-autocomplete-wrapper">
+                <input type="text" id="foodNote" placeholder="(เช่น เผ็ดน้อย, ไม่ใส่ผัก)" autocomplete="off" oninput="handleNoteInput(this.value)" onfocus="handleNoteInput(this.value)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-base outline-none focus:border-emerald-500">
+                <div id="noteDropdown" class="note-dropdown"></div>
+            </div>
         </div>
     </div>
     <!-- [End Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
 
     <!-- ==========================================================
          [Start Block 3] JAVASCRIPT CORE LOGIC & FUNCTIONS
-         การทำงานส่วนตรรกะ ฟังก์ชันจัดการตะกร้า และการปรับขนาด iframe
          ========================================================== -->
     <script>
         /* --- [Start Block 3.1] INITIALIZATION & LISTENERS --- */
-        /* การตั้งค่าเริ่มต้นและการรับส่งข้อความผ่าน postMessage */
         let currentFood = null;
         let currentCatId = null;
         let currentQty = 1;
         let friedEgg = 0;
         let omelet = 0;
         let currentCartState = [];
-        const EGG_CATEGORY_IDS = ['1', '2', '3'];
+        const EGG_CATEGORY_IDS = ['1', '2', '3', '98'];
+        const NOTE_HISTORY_KEY = 'savedFoodNotes';
+        const DEFAULT_NOTES = [
+            'เผ็ดน้อย', 'ไม่เผ็ด', 'เผ็ดมาก', 'ไม่ใส่ผัก', 'ไม่ใส่ผงชูรส',
+            'ไม่ใส่ปลาร้า', 'แยกน้ำ', 'หวานน้อย', 'ไม่ใส่ต้นหอมผักชี'
+        ];
+
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function getTargetOrigin() {
+            return window.location.origin && window.location.origin !== 'null' ? window.location.origin : '*';
+        }
 
         const urlParams = new URLSearchParams(window.location.search);
         const urlFoodId = urlParams.get('food_id');
         const urlGroupId = urlParams.get('group_id');
+
+        function readSavedNotes() {
+            let customNotes = [];
+            try {
+                const parsed = JSON.parse(localStorage.getItem(NOTE_HISTORY_KEY) || '[]');
+                if (Array.isArray(parsed)) customNotes = parsed;
+            } catch (error) {
+                console.error('Invalid saved notes:', error);
+            }
+            const merged = [...DEFAULT_NOTES, ...customNotes]
+                .map(n => String(n || '').trim())
+                .filter(Boolean);
+            return [...new Set(merged)];
+        }
+
+        function saveNoteToHistory(noteText) {
+            const cleanNote = String(noteText || '').trim();
+            if (!cleanNote) return;
+            const currentNotes = readSavedNotes();
+            if (!currentNotes.some(n => n.toLowerCase() === cleanNote.toLowerCase())) {
+                let customNotes = [];
+                try {
+                    const parsed = JSON.parse(localStorage.getItem(NOTE_HISTORY_KEY) || '[]');
+                    if (Array.isArray(parsed)) customNotes = parsed;
+                } catch (error) {
+                    customNotes = [];
+                }
+                customNotes.push(cleanNote);
+                localStorage.setItem(NOTE_HISTORY_KEY, JSON.stringify([...new Set(customNotes)]));
+            }
+        }
+
+        function handleNoteInput(val) {
+            const dropdown = document.getElementById('noteDropdown');
+            if (!dropdown) return;
+            const query = String(val || '').trim().toLowerCase();
+            const allNotes = readSavedNotes();
+            const matches = query
+                ? allNotes.filter(n => n.toLowerCase().includes(query))
+                : allNotes;
+
+            dropdown.innerHTML = '';
+            if (matches.length === 0) {
+                dropdown.classList.remove('active');
+                updateParentHeight();
+                return;
+            }
+
+            matches.forEach(note => {
+                const item = document.createElement('div');
+                item.className = 'note-dropdown-item';
+                item.innerHTML = `<span class="font-semibold">${escapeHtml(note)}</span>`;
+                item.onclick = () => {
+                    const noteInputEl = document.getElementById('foodNote');
+                    if (noteInputEl) noteInputEl.value = note;
+                    dropdown.classList.remove('active');
+                    updateParentHeight();
+                };
+                dropdown.appendChild(item);
+            });
+
+            dropdown.classList.add('active');
+            updateParentHeight();
+        }
+
+        document.addEventListener('click', (e) => {
+            const noteInputEl = document.getElementById('foodNote');
+            const dropdown = document.getElementById('noteDropdown');
+            if (!noteInputEl || !dropdown) return;
+            if (!noteInputEl.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('active');
+                updateParentHeight();
+            }
+        });
+
+        function requestStockCheck(foodId) {
+            if (window.parent !== window && foodId != null && String(foodId).trim() !== '') {
+                window.parent.postMessage(
+                    { type: 'FOOD_SELECTED_CHECK_STOCK', foodId: foodId },
+                    getTargetOrigin()
+                );
+            }
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
             try {
@@ -138,16 +254,23 @@
                 console.error('Invalid cart data:', error);
                 currentCartState = [];
             }
+            updateParentHeight();
         });
 
         window.addEventListener('message', (event) => {
-            if (event.source !== window.parent || event.origin !== window.location.origin) return;
+            if (event.source !== window.parent) return;
+            const targetOrigin = getTargetOrigin();
+            if (targetOrigin !== '*' && event.origin !== targetOrigin) return;
+
             const { type, food, catId, cart } = event.data || {};
             if (type === 'INIT_FOOD_SELECT') {
                 currentFood = food;
-                currentCatId = catId;
+                currentCatId = catId || urlGroupId;
                 initDetail();
-            } else if (type === 'UPDATE_CART_STATE' && cart) {
+                if (currentFood && currentFood.food_id != null) {
+                    requestStockCheck(currentFood.food_id);
+                }
+            } else if (type === 'UPDATE_CART_STATE' && Array.isArray(cart)) {
                 currentCartState = cart;
                 renderSelectedCartList();
             }
@@ -155,21 +278,30 @@
         /* --- [End Block 3.1] INITIALIZATION & LISTENERS --- */
 
         /* --- [Start Block 3.2] AUTO-RESIZE & RENDERING LOGIC --- */
-        /* ฟังก์ชันปรับความสูง iframe อัตโนมัติและเรนเดอร์รายละเอียดเมนู */
         let lastReportedHeight = 0;
         let resizeTimer = null;
+        
         function updateParentHeight() {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
                 if (window.parent !== window) {
-                    const totalHeight = document.body.scrollHeight;
+                    const totalHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
                     if (Math.abs(totalHeight - lastReportedHeight) >= 2) {
                         lastReportedHeight = totalHeight;
-                        window.parent.postMessage({ type: 'RESIZE_POPUP', height: totalHeight }, window.location.origin);
+                        window.parent.postMessage({ type: 'RESIZE_POPUP', height: totalHeight }, getTargetOrigin());
                     }
                 }
             }, 60);
         }
+
+        const resizeObserver = new ResizeObserver(() => {
+            updateParentHeight();
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            resizeObserver.observe(document.body);
+            updateParentHeight();
+        });
 
         function initDetail() {
             if (!currentFood) return;
@@ -177,25 +309,21 @@
             friedEgg = 0;
             omelet = 0;
             
-            const isConsignment99 = (String(currentCatId) === '99');
-            const isSpecialMenu98 = (String(currentCatId) === '98');
-
             const costPriceBox = document.getElementById('costPriceBox');
             const sellPriceBox = document.getElementById('sellPriceBox');
             const priceLabel = document.getElementById('priceLabel');
             const eggSection = document.getElementById('eggSection');
 
-            let defaultCost = '';
-            let defaultPrice = '';
+            // ✅ ตรวจสอบว่าเป็นสินค้าฝากซื้อเฉพาะจาก group_id = 99 เท่านั้น
+            const isSpecial99 =
+                String(currentCatId) === '99' ||
+                String(currentFood.food_group_id) === '99';
 
-            if (isConsignment99 || isSpecialMenu98) {
+            if (isSpecial99) {
                 if (costPriceBox) costPriceBox.classList.remove('hidden');
                 if (sellPriceBox) sellPriceBox.classList.remove('hidden');
                 if (priceLabel) priceLabel.textContent = 'ราคาขาย';
                 document.getElementById('foodPrice').placeholder = 'ระบุราคาขาย';
-                let storageKey = isConsignment99 ? 'lastCostPrices_99' : 'lastCostPrices_98';
-                let lastCostPrices = JSON.parse(localStorage.getItem(storageKey) || '{}');
-                defaultCost = lastCostPrices[currentFood.food_name] !== undefined ? lastCostPrices[currentFood.food_name] : '';
             } else {
                 if (costPriceBox) costPriceBox.classList.add('hidden');
                 if (sellPriceBox) sellPriceBox.classList.remove('hidden');
@@ -203,29 +331,27 @@
                 document.getElementById('foodPrice').placeholder = 'ระบุราคา';
             }
 
-            document.getElementById('foodCostPrice').value = defaultCost;
-            document.getElementById('foodPrice').value = defaultPrice;
+            document.getElementById('foodCostPrice').value = '';
+            document.getElementById('foodPrice').value = '';
             document.getElementById('foodNote').value = '';
+            const noteDropdown = document.getElementById('noteDropdown');
+            if (noteDropdown) noteDropdown.classList.remove('active');
             document.getElementById('foodQty').textContent = currentQty;
             document.getElementById('friedEggQty').textContent = friedEgg;
             document.getElementById('omeletQty').textContent = omelet;
-            document.getElementById('foodTitleHeader').textContent = currentFood.food_name;
-            document.getElementById('foodTitleName').textContent = `📌 ${currentFood.food_name}`;
+            document.getElementById('foodTitleHeader').textContent = currentFood.food_name || '';
+            document.getElementById('foodTitleName').textContent = `📌 ${currentFood.food_name || ''}`;
 
             if (eggSection) {
-                if (EGG_CATEGORY_IDS.includes(String(currentCatId)) || isSpecialMenu98) {
+                if (EGG_CATEGORY_IDS.includes(String(currentCatId))) {
                     eggSection.classList.remove('hidden');
                 } else {
                     eggSection.classList.add('hidden');
                 }
             }
 
-            if (!isConsignment99 && !isSpecialMenu98) {
-                renderSelectedCartList();
-            } else {
-                document.getElementById('selectedCartItemsBox').classList.add('hidden');
-            }
-            updateParentHeight();
+            renderSelectedCartList();
+            setTimeout(updateParentHeight, 100);
         }
 
         function adjustQty(val) {
@@ -244,10 +370,6 @@
         }
 
         function renderSelectedCartList() {
-            const isConsignment99 = (String(currentCatId) === '99');
-            const isSpecialMenu98 = (String(currentCatId) === '98');
-            if (isConsignment99 || isSpecialMenu98) return;
-
             const boxContainer = document.getElementById('selectedCartItemsBox');
             const listContainer = document.getElementById('selectedCartList');
             const badge = document.getElementById('selectedCartCountBadge');
@@ -255,7 +377,7 @@
 
             let rawFilteredItems = currentCartState.filter(item => 
                 (currentFood && String(item.food_id) === String(currentFood.food_id)) || 
-                (currentFood && String(item.name).trim() === String(currentFood.food_name).trim())
+                (currentFood && String(item.name || '').trim() === String(currentFood.food_name || '').trim())
             );
 
             if (rawFilteredItems.length === 0) {
@@ -275,10 +397,10 @@
                 div.className = 'flex justify-between items-center bg-white p-1.5 rounded-lg border border-slate-200';
                 div.innerHTML = `
                     <div class="font-bold text-slate-700 truncate pr-1">
-                        <span class="text-emerald-600">${item.qty}x</span> ${item.name} ${item.base_price ? `(${item.base_price}฿)` : ''}${eggText}
-                        ${item.note ? `<br><span class="text-slate-400 font-normal text-[13px]">(${item.note})</span>` : ''}
+                        <span class="text-emerald-600">${escapeHtml(item.qty)}x</span> ${escapeHtml(item.name)} ${item.base_price ? `(${escapeHtml(item.base_price)}฿)` : ''}${escapeHtml(eggText)}
+                        ${item.note ? `<br><span class="text-slate-400 font-normal text-[13px]">(${escapeHtml(item.note)})</span>` : ''}
                     </div>
-                    <button type="button" onclick="deleteCartItemMatch('${item.item_id}')" class="text-rose-500 font-bold px-2 py-1 text-sm cursor-pointer">✕</button>
+                    <button type="button" onclick="deleteCartItemMatch('${escapeHtml(item.item_id)}')" class="text-rose-500 font-bold px-2 py-1 text-sm cursor-pointer">✕</button>
                 `;
                 listContainer.appendChild(div);
             });
@@ -287,34 +409,29 @@
 
         function deleteCartItemMatch(itemId) {
             if (window.self !== window.top) {
-                window.parent.postMessage({ type: 'DELETE_CART_ITEM_BY_ID', itemId: itemId }, window.location.origin);
+                window.parent.postMessage({ type: 'DELETE_CART_ITEM_BY_ID', itemId: itemId }, getTargetOrigin());
             }
         }
         /* --- [End Block 3.2] AUTO-RESIZE & RENDERING LOGIC --- */
 
         /* --- [Start Block 3.3] ACTIONS & CART OPERATIONS --- */
-        /* ฟังก์ชันบันทึกรายการลงตะกร้าและนำทางกลับหมวดหมู่ */
         function saveToCart() {
             if (!currentFood) {
                 alert('ไม่พบข้อมูลสินค้า กรุณาลองใหม่อีกครั้ง');
                 return;
             }
 
-            const isConsignment99 = (String(currentCatId) === '99');
-            const isSpecialMenu98 = (String(currentCatId) === '98');
             const costInput = document.getElementById('foodCostPrice').value;
             const priceInput = document.getElementById('foodPrice').value.trim();
             const noteInput = document.getElementById('foodNote').value.trim();
 
-            const cost = ((isConsignment99 || isSpecialMenu98) && costInput !== "" && !isNaN(costInput)) ? parseFloat(costInput) : 0;
-            const price = (priceInput !== "" && !isNaN(priceInput) && parseFloat(priceInput) > 0) ? parseFloat(priceInput) : null;
-
-            if (isConsignment99 || isSpecialMenu98) {
-                let storageKey = isConsignment99 ? 'lastCostPrices_99' : 'lastCostPrices_98';
-                let lastCostPrices = JSON.parse(localStorage.getItem(storageKey) || '{}');
-                lastCostPrices[currentFood.food_name] = cost;
-                localStorage.setItem(storageKey, JSON.stringify(lastCostPrices));
+            if (noteInput) {
+                saveNoteToHistory(noteInput);
             }
+
+            const parsedCost = parseFloat(costInput);
+            const cost = (!isNaN(parsedCost) && parsedCost >= 0) ? parsedCost : 0;
+            const price = (priceInput !== "" && !isNaN(priceInput) && parseFloat(priceInput) > 0) ? parseFloat(priceInput) : null;
 
             const newItem = {
                 item_id: Date.now() + '_' + Math.random().toString(36).substring(2, 6),
@@ -327,27 +444,21 @@
                 omeletQty: omelet,
                 qty: currentQty,
                 note: noteInput,
-                food_group_id: currentCatId,
-                is_buying_resell: isConsignment99,
-                isSpecialMenu: isSpecialMenu98
+                food_group_id: currentCatId
             };
 
             if (window.self !== window.top) {
-                window.parent.postMessage({ type: 'ADD_TO_CART', cartItem: newItem }, window.location.origin);
-                if (isConsignment99 || isSpecialMenu98) {
-                    window.parent.postMessage({ type: 'BACK_TO_CATEGORY' }, window.location.origin);
-                } else {
-                    window.parent.postMessage({ type: 'CLOSE_POPUP' }, window.location.origin);
-                }
+                window.parent.postMessage({ type: 'ADD_TO_CART', cartItem: newItem }, getTargetOrigin());
+                window.parent.postMessage({ type: 'BACK_TO_CATEGORY' }, getTargetOrigin());
             }
         }
 
         function goBackToCategory() {
-            if (window.self !== window.top) window.parent.postMessage({ type: 'BACK_TO_CATEGORY' }, window.location.origin);
+            if (window.self !== window.top) window.parent.postMessage({ type: 'BACK_TO_CATEGORY' }, getTargetOrigin());
         }
 
         function closePopup() {
-            if (window.self !== window.top) window.parent.postMessage({ type: 'CLOSE_POPUP' }, window.location.origin);
+            if (window.self !== window.top) window.parent.postMessage({ type: 'CLOSE_POPUP' }, getTargetOrigin());
         }
         /* --- [End Block 3.3] ACTIONS & CART OPERATIONS --- */
     </script>

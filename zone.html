@@ -44,19 +44,16 @@
     <div class="w-full max-w-xl mx-auto flex flex-col space-y-3">
         <!-- ==========================================================
              [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
-             ส่วนติดต่อผู้ใช้ ช่องเพิ่มโซน/ห้องพักใหม่ และตารางแสดงรายการโซน
              ========================================================== -->
 
         <!-- [Start Block 2.1] ADD NEW ZONE FORM -->
-        <!-- ช่องสำหรับกรอกและเพิ่มโซนหรือห้องพักใหม่ -->
         <div id="addZoneSection" class="bg-blue-50 p-2.5 rounded-2xl border border-blue-200 flex gap-2 shadow-2xs">
             <input type="text" id="newZoneInput" placeholder="➕ เพิ่มโซน/ห้องพักใหม่..." class="flex-1 h-10 px-3 text-xs rounded-xl border border-blue-300 bg-white outline-none font-semibold text-slate-800">
-            <button type="button" onclick="requestAddNewZone()" class="h-10 px-4 bg-blue-500 hover:bg-blue-600 active:scale-95 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-sm shrink-0">+ เพิ่ม</button>
+            <button type="button" id="btnAddZone" onclick="requestAddNewZone()" class="h-10 px-4 bg-blue-500 hover:bg-blue-600 active:scale-95 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-sm shrink-0">+ เพิ่ม</button>
         </div>
         <!-- [End Block 2.1] ADD NEW ZONE FORM -->
 
         <!-- [Start Block 2.2] ZONE GRID CONTAINER -->
-        <!-- พื้นที่แสดงปุ่มเลือกโซนหรือห้องพักทั้งหมด -->
         <div id="zoneGridContainer" class="zone-wrap">
             <div class="col-span-2 text-center py-6 text-slate-400 font-bold text-base">⏳ กำลังรอข้อมูลโซน/ห้องพัก...</div>
         </div>
@@ -67,19 +64,33 @@
 
     <!-- ==========================================================
          [Start Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
-         การทำงานส่วนตรรกะ การรับ-ส่งข้อความผ่าน postMessage และการเรนเดอร์ปุ่มโซน
          ========================================================== -->
     <script>
         /* --- [Start Block 3.1] STATE VARIABLES & MESSAGE LISTENER --- */
-        /* ตัวแปรเก็บสถานะและการดักฟัง postMessage จากหน้าต่างหลัก */
         let cachedZones = [];
         let currentLocationId = null;
 
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function getTargetOrigin() {
+            return window.location.origin && window.location.origin !== 'null' ? window.location.origin : '*';
+        }
+
         window.addEventListener('message', (event) => {
-            if (event.source !== window.parent || event.origin !== window.location.origin) return;
+            if (event.source !== window.parent) return;
+            const targetOrigin = getTargetOrigin();
+            if (targetOrigin !== '*' && event.origin !== targetOrigin) return;
+
             const { type, zones, locationId } = event.data || {};
             if (type === 'RENDER_ZONES') {
-                cachedZones = zones || [];
+                cachedZones = Array.isArray(zones) ? zones : [];
                 if (locationId) currentLocationId = locationId;
                 renderZones(cachedZones);
             }
@@ -87,34 +98,36 @@
         /* --- [End Block 3.1] STATE VARIABLES & MESSAGE LISTENER --- */
 
         /* --- [Start Block 3.2] ZONE ACTIONS & RENDERING --- */
-        /* ฟังก์ชันส่งคำขอเพิ่มโซนใหม่ และฟังก์ชันเรนเดอร์ปุ่มโซน/ห้องพักลงในตาราง */
         function requestAddNewZone() {
             const input = document.getElementById('newZoneInput');
             const name = input.value.trim();
             if (!name) return;
+
+            if (!currentLocationId) {
+                alert('ไม่พบรหัสสถานที่ กรุณาเลือกสถานที่ใหม่อีกครั้ง');
+                return;
+            }
 
             if (window.self !== window.top) {
                 window.parent.postMessage({ 
                     type: 'ADD_NEW_ZONE', 
                     zoneName: name, 
                     locationId: currentLocationId 
-                }, window.location.origin);
+                }, getTargetOrigin());
+                input.value = '';
             }
-            input.value = '';
         }
 
-        // ฟังก์ชันเลือกไอคอนให้หลากหลายและเข้ากับชื่อโซนหรือห้องพักอัตโนมัติ
         function getZoneIcon(name) {
             const n = name.toLowerCase();
             if (n.includes('room') || n.includes('ห้อง') || n.includes('พัก')) return '🛏️';
-            if (n.includes('table') || n.includes('โต๊ะ') || n.includes('1') || n.includes('2') || n.includes('3')) return '🪑';
+            if (n.includes('table') || n.includes('โต๊ะ')) return '🪑';
             if (n.includes('zone') || n.includes('โซน') || n.includes('area')) return '📍';
             if (n.includes('garden') || n.includes('สวน') || n.includes('ธรรมชาติ')) return '🌿';
             if (n.includes('vip') || n.includes('พิเศษ')) return '⭐';
             if (n.includes('floor') || n.includes('ชั้น') || n.includes('ตึก')) return '🏢';
-            if (n.includes('hall') || n.includes('10') || n.includes('ห้องโถง')) return '🏛️';
+            if (n.includes('hall') || n.includes('ห้องโถง')) return '🏛️';
             
-            // รายการไอคอนสำรองแบบกระจายตัวเลือกหลากหลาย ป้องกันซ้ำซาก
             const diverseIcons = ['🏡', '🛋️', '⛺', '🎯', '🌺', '🎪', '🍀', '🚪', '🛎️', '⭐'];
             let hash = 0;
             for (let i = 0; i < name.length; i++) {
@@ -141,11 +154,11 @@
                 btn.className = `zone-btn ${isLastAndOdd ? 'col-span-2' : ''}`;
                 
                 const icon = getZoneIcon(zone.zone_name);
-                btn.innerHTML = `<span class="text-lg">${icon}</span> <span class="truncate">${zone.zone_name}</span>`;
+                btn.innerHTML = `<span class="text-lg">${icon}</span> <span class="truncate">${escapeHtml(zone.zone_name)}</span>`;
 
                 btn.onclick = () => {
                     if (window.self !== window.top) {
-                        window.parent.postMessage({ type: 'SELECT_ZONE', zoneObj: zone }, window.location.origin);
+                        window.parent.postMessage({ type: 'SELECT_ZONE', zoneObj: zone }, getTargetOrigin());
                     }
                 };
                 container.appendChild(btn);
@@ -156,7 +169,7 @@
         function updateParentHeight() {
             if (window.parent !== window) {
                 const totalHeight = document.body.scrollHeight + 15;
-                window.parent.postMessage({ type: 'RESIZE_POPUP', height: totalHeight }, window.location.origin);
+                window.parent.postMessage({ type: 'RESIZE_POPUP', height: totalHeight }, getTargetOrigin());
             }
         }
         /* --- [End Block 3.2] ZONE ACTIONS & RENDERING --- */

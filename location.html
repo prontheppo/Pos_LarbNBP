@@ -54,7 +54,7 @@
         <!-- ช่องสำหรับเพิ่มสถานที่ใหม่ -->
         <div id="addLocationSection" class="bg-amber-50 p-2.5 rounded-2xl border border-amber-200 flex gap-2 shadow-2xs">
             <input type="text" id="newLocationInput" placeholder="➕ เพิ่มสถานที่ใหม่..." class="flex-1 h-10 px-3 text-xs rounded-xl border border-amber-300 bg-white outline-none font-semibold text-slate-800">
-            <button type="button" onclick="addNewLocation()" class="h-10 px-4 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-sm shrink-0">+ เพิ่ม</button>
+            <button type="button" id="btnAddLocation" onclick="addNewLocation()" class="h-10 px-4 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-sm shrink-0">+ เพิ่ม</button>
         </div>
 
         <div id="locationGridContainer" class="location-wrap">
@@ -69,9 +69,21 @@
          ========================================================== -->
     <script>
         /* --- [Start Block 3.1] GLOBAL VARIABLES & INITIALIZATION --- */
-        /* การประกาศตัวแปรส่วนกลางและการดึงข้อมูลสถานที่เมื่อโหลดหน้าเว็บ */
         let cachedLocations = [];
         let activeOrdersCount = {};
+
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function getTargetOrigin() {
+            return window.location.origin && window.location.origin !== 'null' ? window.location.origin : '*';
+        }
 
         window.addEventListener('DOMContentLoaded', async () => {
             await fetchStandaloneLocations();
@@ -79,7 +91,6 @@
         /* --- [End Block 3.1] GLOBAL VARIABLES & INITIALIZATION --- */
 
         /* --- [Start Block 3.2] DATA FETCHING & POSTMESSAGE HANDLERS --- */
-        /* ฟังก์ชันดึงข้อมูลสถานที่จาก Supabase และรับข้อความจากหน้าแม่ผ่าน postMessage */
         async function fetchStandaloneLocations() {
             const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
             if (!client) {
@@ -87,14 +98,21 @@
                 return;
             }
             try {
-                const { data } = await client.from('locations').select('*').order('location_name', { ascending: true });
+                const { data, error } = await client.from('locations').select('*').order('location_name', { ascending: true });
+                if (error) throw error;
                 if (data) cachedLocations = data;
                 renderLocations(cachedLocations);
-            } catch (err) { console.error("Load error:", err); }
+            } catch (err) { 
+                console.error("Load error:", err);
+                document.getElementById('locationGridContainer').innerHTML = '<div class="col-span-2 text-center text-rose-500 text-xs py-4">เกิดข้อผิดพลาดในการโหลดสถานที่</div>';
+            }
         }
 
         window.addEventListener('message', (event) => {
-            if (event.source !== window.parent || event.origin !== window.location.origin) return;
+            if (event.source !== window.parent) return;
+            const targetOrigin = getTargetOrigin();
+            if (targetOrigin !== '*' && event.origin !== targetOrigin) return;
+
             const { type, locations, counts } = event.data || {};
             if (type === 'RENDER_LOCATIONS') {
                 cachedLocations = locations || cachedLocations;
@@ -105,26 +123,38 @@
         /* --- [End Block 3.2] DATA FETCHING & POSTMESSAGE HANDLERS --- */
 
         /* --- [Start Block 3.3] LOCATION ACTIONS & RENDERING --- */
-        /* ฟังก์ชันเพิ่มสถานที่ใหม่ เรนเดอร์ปุ่มสถานที่ และปรับขนาดความสูง iframe อัตโนมัติ */
         async function addNewLocation() {
             const input = document.getElementById('newLocationInput');
+            const btnAdd = document.getElementById('btnAddLocation');
             const name = input.value.trim();
             if (!name) return;
+
             const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
             if (!client) return;
+
+            if (btnAdd) btnAdd.disabled = true;
+
             try {
                 const { data, error } = await client.from('locations').insert([{ location_name: name }]).select().single();
                 if (error) throw error;
-                if (data) cachedLocations.push(data);
-                input.value = '';
-                renderLocations(cachedLocations);
+                if (data) {
+                    cachedLocations.push(data);
+                    cachedLocations.sort((a, b) => (a.location_name || '').localeCompare(b.location_name || '', 'th'));
+                    input.value = '';
+                    renderLocations(cachedLocations);
+
+                    if (window.self !== window.top) {
+                        window.parent.postMessage({ type: 'LOCATION_ADDED', newLocation: data }, getTargetOrigin());
+                    }
+                }
             } catch (err) {
                 console.error("Add location error:", err);
-                alert("ไม่สามารถเพิ่มสถานที่ได้");
+                alert("ไม่สามารถเพิ่มสถานที่ได้: " + (err.message || err));
+            } finally {
+                if (btnAdd) btnAdd.disabled = false;
             }
         }
 
-        // ฟังก์ชันเลือกไอคอนหลากหลายรูปแบบตามชื่อสถานที่
         function getLocationIcon(name) {
             const n = name.toLowerCase();
             if (n.includes('home') || n.includes('บ้าน') || n.includes('โฟกัส')) return '🏠';
@@ -136,7 +166,6 @@
             if (n.includes('บาหลี') || n.includes('ไทย')) return '🌴';
             if (n.includes('ร้าน') || n.includes('หน้า')) return '🛎️';
             
-            // รายการไอคอนสำรองแบบกระจายตัวเลือกหลากหลาย (ไม่ซ้ำซาก)
             const diverseIcons = ['🏡', '⭐', '⛺', '🎯', '🛋️', '🌺', '🏰', '🎪', '🍀', '🚀'];
             let hash = 0;
             for (let i = 0; i < name.length; i++) {
@@ -165,11 +194,11 @@
                 const badgeHTML = count > 0 ? `<span class="badge-main">${count}</span>` : '';
                 
                 const icon = getLocationIcon(loc.location_name);
-                btn.innerHTML = `<span class="text-lg">${icon}</span> <span class="truncate">${loc.location_name}</span>${badgeHTML}`;
+                btn.innerHTML = `<span class="text-lg">${icon}</span> <span class="truncate">${escapeHtml(loc.location_name)}</span>${badgeHTML}`;
 
                 btn.onclick = () => {
                     if (window.self !== window.top) {
-                        window.parent.postMessage({ type: 'SELECT_LOCATION', locationObj: loc }, window.location.origin);
+                        window.parent.postMessage({ type: 'SELECT_LOCATION', locationObj: loc }, getTargetOrigin());
                     }
                 };
                 container.appendChild(btn);
@@ -180,7 +209,7 @@
         function updateParentHeight() {
             if (window.parent !== window) {
                 const totalHeight = document.body.scrollHeight + 15;
-                window.parent.postMessage({ type: 'RESIZE_POPUP', height: totalHeight }, window.location.origin);
+                window.parent.postMessage({ type: 'RESIZE_POPUP', height: totalHeight }, getTargetOrigin());
             }
         }
         /* --- [End Block 3.3] LOCATION ACTIONS & RENDERING --- */

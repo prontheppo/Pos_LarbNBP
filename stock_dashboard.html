@@ -412,7 +412,7 @@
 
                 const { error } = await db
                     .from('food_stock')
-                    .update({ quantity: newQty, updated_at: new Date() })
+                    .update({ quantity: newQty, updated_at: new Date().toISOString() })
                     .eq('food_stock_id', stockId);
 
                 if (error) {
@@ -537,7 +537,7 @@
             try {
                 const { error } = await db
                     .from('food_stock')
-                    .update({ quantity: newTotalQty, updated_at: new Date() })
+                    .update({ quantity: newTotalQty, updated_at: new Date().toISOString() })
                     .eq('food_stock_id', stockId);
 
                 if (error) throw error;
@@ -669,7 +669,7 @@
 
                     const { error: updateError } = await db
                         .from('food_stock')
-                        .update({ quantity: newQty, updated_at: new Date() })
+                        .update({ quantity: newQty, updated_at: new Date().toISOString() })
                         .eq('food_stock_id', stockId);
 
                     if (updateError) {

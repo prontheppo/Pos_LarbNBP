@@ -436,6 +436,12 @@
         /* ฟังก์ชันการรับส่งข้อความผ่าน postMessage และการจัดการเปิดปิดหน้าต่างโมดอล */
         window.addEventListener('message', (event) => {
             const data = event.data || {};
+            
+            
+            if (event.origin !== window.location.origin) return;
+
+
+
             const type = data.type;
             const catName = data.catName || data.categoryName || data.name;
 
@@ -494,13 +500,17 @@
                         foods: menus,
                         cart: []
                     }, window.location.origin);
+                    
+                    
+                
                 } else {
                     frame.contentWindow.postMessage({
                         type: 'RENDER_CATEGORIES',
                         categories: cachedCategories.filter(c => c.food_group_name !== 'importmain'),
                         foods: cachedFoods,
                         cart: []
-                    }, '*');
+                    }, window.location.origin);
+
                 }
             }
         }
@@ -724,10 +734,18 @@
                     .update({ food_name: newName, food_group_id: selectedGroupIdForEdit })
                     .eq('food_id', editingFoodId);
                 if (error) throw error;
+                
+                
+                
+                
                 closeEditModal();
             } catch (err) {
                 showAlertModal('อัปเดตไม่สำเร็จ: ' + err.message, 'error');
             }
+            
+            
+            
+            
         }
 
         function deleteFoodData() {
@@ -736,17 +754,30 @@
                 try {
                     const { error } = await db.from('foods').delete().eq('food_id', editingFoodId);
                     if (error) throw error;
+           
+           
+           
+           
+           
                     closeEditModal();
                 } catch (err) {
                     showAlertModal('ลบรายการไม่สำเร็จ: ' + err.message, 'error');
                 }
             });
         }
+        
+        
 
-        function closeEditModal() {
+           function closeEditModal() {
             closeModal('editModalWrapper');
             loadCategoryFoods();
+            loadAllData();
         }
+
+        
+        
+        
+        
 
         function openAddMenuModal() {
             const iframe = document.getElementById('addMenuIframe');
@@ -843,25 +874,57 @@
 
         /* --- [Start Block 3.8] TAB SPECIAL: LOCATION & CUSTOM PRICE --- */
         /* ฟังก์ชันจัดการราคาพิเศษตามสถานที่ (เลือกสถานที่และบันทึกราคาพิเศษ) */
-        function openLocationModal() {
+  
+  
+                async function openLocationModal() {
             const iframe = document.getElementById('locationZoneIframe');
-            if (iframe) {
-                iframe.src = 'location.html'; // โหลดเฉพาะหน้า location.html เข้ามาใน Iframe
-            }
+            if (!iframe) return;
+
             openModal('locationModal');
+            let locs = [];
+            try {
+                const { data } = await db.from('locations').select('*').order('location_name');
+                locs = data || [];
+            } catch (err) {
+                console.error('Error loading locations:', err);
+            }
+
+            iframe.onload = () => {
+                iframe.contentWindow?.postMessage({
+                    type: 'RENDER_LOCATIONS',
+                    locations: locs,
+                    counts: {}
+                }, window.location.origin);
+            };
+            iframe.src = 'location.html';
         }
+
+
+
 
         async function loadCustomPricesForLocation(locationId) {
             try {
                 const { data, error } = await db
                     .from('location_food_prices').select('food_id, custom_price').eq('location_id', locationId);
                 if (error) throw error;
-                currentCustomPrices = {};
-                (data || []).reverse().forEach(p => { currentCustomPrices[p.food_id] = p.custom_price; });
+   
+   
+   
+                                currentCustomPrices = {};
+                (data || []).forEach(p => { currentCustomPrices[p.food_id] = p.custom_price; });
+
+                
+                
+                
+                
             } catch (err) {
                 console.error('Error loading custom prices:', err);
             }
         }
+
+
+
+
 
         async function openSpecialPriceModal(groupName) {
             currentSpecialGroupName = groupName;

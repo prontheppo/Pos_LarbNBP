@@ -58,13 +58,13 @@
 
       .popup-container {
           background: #ffffff !important; width: 100% !important; max-width: 28rem !important;
-          height: auto !important; max-height: 92vh !important; border-radius: 1.5rem !important; 
+          height: auto !important; max-height: 92vh !important; border-radius: 1.5rem !important;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
           display: flex; flex-direction: column; overflow: hidden !important; position: relative;
           animation: popupFadeIn 0.2s ease-out;
       }
       @keyframes popupFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-      
+
       .popup-content-wrapper { width: 100%; background: #ffffff; display: flex; flex-direction: column; overflow-y: auto; border-radius: 1.5rem !important; }
       #popupIframe { width: 100%; height: auto; border: 0; display: block; background: transparent; }
 
@@ -189,27 +189,48 @@
     /* --- [Start Block 4.1] GLOBAL VARIABLES & INITIALIZATION --- */
     /* การประกาศตัวแปรส่วนกลางและการโหลดข้อมูลออร์เดอร์เริ่มต้น */
     let db = null, targetOrderId = null, currentEditingOrder = null;
-    let currentEditingOrderItems = [], locationsCache = [], zonesCache = [], foodsCache = [], categoriesCache = [], customersList = [];
+    let currentEditingOrderItems = [], originalOrderItems = [], locationsCache = [], zonesCache = [], foodsCache = [], categoriesCache = [], customersList = [];
     let selectedCustomerObj = null;
     let locationFoodPricesMap = {}, isDeliveryFeeWaived = false;
     let selectedOrderDate = '', curH = '00', curM = '00';
     const ITEM_HEIGHT = 36;
     let popupHistory = [];
     let pendingFoodSelectInit = null;
+    
+    
+    let currentSelectedLocationName = '';
+
 
     function getAppOrigin() { return window.location.origin; }
+
+    function escapeHtml(str) {
+        return String(str ?? '').replace(/[&<>"']/g, (m) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[m]));
+    }
 
     window.onload = async function() {
         const urlParams = new URLSearchParams(window.location.search);
         targetOrderId = urlParams.get('order_id');
         if (!targetOrderId) { window.location.href = 'salereport.html'; return; }
-        db = window.supabaseClient || supabaseClient;
+        db = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
         renderEditLocationComponent('editLocationSelectorWrapper');
         await fetchMasterDataAndOrder();
     };
 
     function goBackToReport() { window.location.href = 'salereport.html'; }
     /* --- [End Block 4.1] GLOBAL VARIABLES & INITIALIZATION --- */
+
+
+
+
+
+
+
 
     /* --- [Start Block 4.2] DATA FETCHING & STATE MANAGEMENT --- */
     /* ฟังก์ชันดึงข้อมูลหลักจาก Supabase และเตรียมข้อมูลบิลออเดอร์เดิม */
@@ -220,8 +241,21 @@
         return `${parseInt(d)} ${thaiMonthsShort[parseInt(m)-1]} ${parseInt(y)+543}`;
     }
 
+    function parseOrderItems(rawItems) {
+        try {
+            const parsed = typeof rawItems === 'string' ? JSON.parse(rawItems) : (rawItems || []);
+            return Array.isArray(parsed) ? parsed.map(normalizeOrderItem) : [];
+        } catch (e) {
+            console.warn('parseOrderItems fallback:', e);
+            return [];
+        }
+    }
+
     async function fetchMasterDataAndOrder() {
-        if (!db) return;
+        if (!db) {
+            showAlert('ข้อผิดพลาด', 'ไม่พบการเชื่อมต่อฐานข้อมูล Supabase', '❌', goBackToReport);
+            return;
+        }
         try {
             const [locRes, zoneRes, foodRes, catRes, priceRes, custRes, orderRes] = await Promise.all([
                 db.from('locations').select('*').order('location_name'),
@@ -245,18 +279,16 @@
             currentEditingOrder = orderRes.data;
             document.getElementById('editModalOrderTitle').textContent = `รหัสออเดอร์: #${targetOrderId}`;
 
-            if (currentEditingOrder.created_at) {
-                const d = new Date(currentEditingOrder.created_at);
-                selectedOrderDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-                curH = String(d.getHours()).padStart(2,'0');
-                curM = String(d.getMinutes()).padStart(2,'0');
-                document.getElementById('editOrderDateBtnText').textContent = formatThaiDateDisplay(selectedOrderDate);
-                const wheelH = document.getElementById('wheelH'), wheelM = document.getElementById('wheelM');
-                if(wheelH && wheelM) { scrollToValue(wheelH, parseInt(curH, 10)); scrollToValue(wheelM, parseInt(curM, 10)); }
-            }
+            const d = currentEditingOrder.created_at ? new Date(currentEditingOrder.created_at) : new Date();
+            selectedOrderDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            curH = String(d.getHours()).padStart(2,'0');
+            curM = String(d.getMinutes()).padStart(2,'0');
+            document.getElementById('editOrderDateBtnText').textContent = formatThaiDateDisplay(selectedOrderDate);
+            const wheelH = document.getElementById('wheelH'), wheelM = document.getElementById('wheelM');
+            if(wheelH && wheelM) { scrollToValue(wheelH, parseInt(curH, 10)); scrollToValue(wheelM, parseInt(curM, 10)); }
 
             const typeId = Number(currentEditingOrder.customer_type_id || 1);
-            selectEditCustomerGroup(typeId);
+            selectEditCustomerGroup(typeId, false);
 
             if (currentEditingOrder.customer_name) {
                 const custName = removeDuplicateWords(currentEditingOrder.customer_name || '');
@@ -266,6 +298,7 @@
             if (typeId === 2 && currentEditingOrder.location_id) {
                 const foundLoc = locationsCache.find(l => String(l.location_id) === String(currentEditingOrder.location_id));
                 if (foundLoc) {
+                    currentSelectedLocationName = foundLoc.location_name || '';
                     document.getElementById('editSelectedLocationId').value = foundLoc.location_id;
                     let txt = foundLoc.location_name;
                     if (currentEditingOrder.zone_id) {
@@ -279,12 +312,18 @@
                 }
             }
 
-            const rawItems = typeof currentEditingOrder.items === 'string' ? JSON.parse(currentEditingOrder.items) : (currentEditingOrder.items || []);
-            currentEditingOrderItems = Array.isArray(rawItems) ? rawItems.map(normalizeOrderItem) : [];
+            originalOrderItems = parseOrderItems(currentEditingOrder.items);
+            currentEditingOrderItems = JSON.parse(JSON.stringify(originalOrderItems));
             renderEditOrderModalItems();
-        } catch (err) { showAlert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลได้', '❌', goBackToReport); }
+        } catch (err) {
+            console.error('fetchMasterDataAndOrder error:', err);
+            showAlert('เกิดข้อผิดพลาด', err.message || 'ไม่สามารถโหลดข้อมูลได้', '❌', goBackToReport);
+        }
     }
     /* --- [End Block 4.2] DATA FETCHING & STATE MANAGEMENT --- */
+
+
+
 
     /* --- [Start Block 4.3] UI RENDERING & COMPONENT BUILDERS --- */
     /* ฟังก์ชันสร้างคอมโพเนนต์เลือกสถานที่และตัวเลือกเวลาแบบ Rolling Wheel */
@@ -344,7 +383,7 @@
         matches.forEach(cust => {
             const item = document.createElement('div');
             item.className = 'customer-dropdown-item';
-            item.innerHTML = `<span class="font-semibold">${removeDuplicateWords(cust.customer_name)}</span>`;
+            item.innerHTML = `<span class="font-semibold">${escapeHtml(removeDuplicateWords(cust.customer_name))}</span>`;
             item.onclick = () => {
                 selectedCustomerObj = cust;
                 document.querySelectorAll('.customer-input-field').forEach(inp => inp.value = removeDuplicateWords(cust.customer_name));
@@ -386,7 +425,11 @@
 
     function scrollToValue(container, index) { container.scrollTop = index * ITEM_HEIGHT; }
 
-    function selectEditCustomerGroup(groupId) {
+
+
+
+
+    function selectEditCustomerGroup(groupId, shouldRender = true) {
         document.getElementById('editCustomerGroupSelect').value = groupId;
         document.querySelectorAll('.group-btn-v2').forEach(b => b.classList.remove('active'));
         document.getElementById(`btn-group-${groupId}`)?.classList.add('active');
@@ -394,20 +437,30 @@
         const locContainer = document.getElementById('editLocationBtnContainer');
         if (groupId === 2) locContainer.classList.remove('hidden');
         else {
+            currentSelectedLocationName = '';
             locContainer.classList.add('hidden');
             document.getElementById('editSelectedLocationId').value = '';
             document.getElementById('editSelectedZoneId').value = '';
+            const btnText = document.getElementById('editLocationBtnText');
+            if (btnText) btnText.textContent = 'เลือกสถานที่';
         }
-        if (currentEditingOrderItems.length > 0) renderEditOrderModalItems();
+        if (shouldRender && currentEditingOrderItems.length > 0) renderEditOrderModalItems();
     }
 
-    function selectLocationAndZone(locId, locName, zoneId, zoneName) {
+    
+    
+    
+
+        function selectLocationAndZone(locId, locName, zoneId, zoneName) {
+        currentSelectedLocationName = String(locName || '');
         document.getElementById('editSelectedLocationId').value = locId;
         document.getElementById('editSelectedZoneId').value = zoneId || '';
-        document.getElementById('editLocationBtnText').textContent = `${locName}${zoneName ? ' - ' + zoneName : ''}`;
+        document.getElementById('editLocationBtnText').textContent = `${currentSelectedLocationName}${zoneName ? ' - ' + zoneName : ''}`;
         toggleModal('subLocZoneModal', 'subLocZoneBox', false);
         renderEditOrderModalItems();
     }
+
+    
 
     function removeDuplicateWords(text) {
         if (!text) return '';
@@ -418,6 +471,16 @@
 
     /* --- [Start Block 4.4] CART & ITEM MANAGEMENT FUNCTIONS --- */
     /* ฟังก์ชันคำนวณและจัดการรายการสินค้าในตะกร้าบิลออเดอร์ */
+    function syncCartToSubFrames() {
+        const popupIframe = document.getElementById('popupIframe');
+        if (popupIframe && popupIframe.contentWindow) {
+            popupIframe.contentWindow.postMessage({
+                type: 'UPDATE_CART_STATE',
+                cart: currentEditingOrderItems
+            }, getAppOrigin());
+        }
+    }
+
     function normalizeOrderItem(item) {
         const q = Number(item.qty || item.quantity || 1);
         const p = Number(item.unit_price || item.price || 0);
@@ -481,6 +544,7 @@
             container.innerHTML = `<div class="text-center text-slate-400 py-6 text-xs">⏳ ไม่มีรายการอาหาร</div>`;
             document.getElementById('editCartCountText').textContent = `0 รายการ | 0 ชิ้น`;
             document.getElementById('editTotalPrice').textContent = `0 บาท`;
+            syncCartToSubFrames();
             return;
         }
 
@@ -509,11 +573,11 @@
                 <div class="flex-1 pr-2 flex items-center gap-1">
                     <button type="button" onclick="currentEditingOrderItems.splice(${index},1); renderEditOrderModalItems();" class="delete-btn text-sm">&times;</button>
                     <div>
-                        <span class="font-bold text-slate-800">${q}x ${item.name || item.food_name || 'รายการ'}</span>
-                        <span class="text-amber-600 font-semibold">${details.length ? ` (${details.join(', ')})` : ''}</span>
+                        <span class="font-bold text-slate-800">${escapeHtml(q)}x ${escapeHtml(item.name || item.food_name || 'รายการ')}</span>
+                        <span class="text-amber-600 font-semibold">${details.length ? ` (${escapeHtml(details.join(', '))})` : ''}</span>
                     </div>
                 </div>
-                <span class="font-extrabold text-slate-900">${sub}.-</span>`;
+                <span class="font-extrabold text-slate-900">${escapeHtml(sub)}.-</span>`;
             container.appendChild(row);
         });
 
@@ -531,7 +595,7 @@
             deliveryRow.innerHTML = `
                 <div class="flex-1 flex items-center gap-1"><span>🛵</span><span class="font-bold text-amber-900">ค่าบริการจัดส่ง</span></div>
                 <div class="flex items-center gap-3">
-                    <span class="font-extrabold text-amber-900">${deliveryFee}.-</span>
+                    <span class="font-extrabold text-amber-900">${escapeHtml(deliveryFee)}.-</span>
                     <button type="button" onclick="isDeliveryFeeWaived=true; renderEditOrderModalItems();" class="delete-btn">&times;</button>
                 </div>`;
             container.appendChild(deliveryRow);
@@ -539,13 +603,14 @@
 
         document.getElementById('editCartCountText').textContent = `${currentEditingOrderItems.length} รายการ | ${totalQty} ชิ้น`;
         document.getElementById('editTotalPrice').textContent = `${(totalCartPrice + deliveryFee).toLocaleString()} บาท`;
+        syncCartToSubFrames();
     }
 
     function addItemToEditCart(newItem) {
         const safeQty = Math.max(1, Number(newItem.qty || newItem.quantity) || 1);
         const foodId = Number(newItem.food_id || newItem.id || 9999);
         const foodName = newItem.name || newItem.food_name || 'รายการ';
-        
+
         let basePrice = getGroupBasePriceForEdit(newItem, Number(document.getElementById('editCustomerGroupSelect').value || 1));
         let unitPrice = Number(newItem.unit_price || newItem.price || basePrice) || 0;
         let daoQty = Number(newItem.friedEggQty || 0);
@@ -559,8 +624,8 @@
             price: unitPrice, unit_price: finalUnitPrice, total_price: subtotalPrice, note: newItem.note || '',
             food_group_id: Number(newItem.food_group_id || 1), friedEggQty: daoQty, omeletQty: jiaoQty,
             base_price: newItem.base_price !== undefined ? newItem.base_price : null,
-            cost_price: Number(item.cost_price || 0), isSpecialMenu: Boolean(item.isSpecialMenu),
-            is_buying_resell: Boolean(item.is_buying_resell), originalIndex: currentEditingOrderItems.length
+            cost_price: Number(newItem.cost_price || 0), isSpecialMenu: Boolean(newItem.isSpecialMenu),
+            is_buying_resell: Boolean(newItem.is_buying_resell), originalIndex: currentEditingOrderItems.length
         };
 
         currentEditingOrderItems.push(normalizedItem);
@@ -609,11 +674,23 @@
 
         iframe.onload = () => {
             if (pendingFoodSelectInit && iframe.contentWindow) {
-                iframe.contentWindow.postMessage(pendingFoodSelectInit, getAppOrigin());
+                iframe.contentWindow.postMessage({
+                    ...pendingFoodSelectInit,
+                    cart: currentEditingOrderItems
+                }, getAppOrigin());
                 pendingFoodSelectInit = null;
             }
             if (iframe.contentWindow) {
-                iframe.contentWindow.postMessage({ type: 'RENDER_CATEGORIES', categories: categoriesCache, foods: foodsCache, cart: currentEditingOrderItems }, getAppOrigin());
+                iframe.contentWindow.postMessage({
+                    type: 'RENDER_CATEGORIES',
+                    categories: categoriesCache,
+                    foods: foodsCache,
+                    cart: currentEditingOrderItems
+                }, getAppOrigin());
+                iframe.contentWindow.postMessage({
+                    type: 'UPDATE_CART_STATE',
+                    cart: currentEditingOrderItems
+                }, getAppOrigin());
             }
         };
     }
@@ -672,14 +749,19 @@
             return;
         }
 
+
         if (type === 'SELECT_ZONE' && isLocationMessage && zoneObj && typeof zoneObj === 'object') {
             const zoneId = zoneObj.zone_id ?? null;
             const zoneName = String(zoneObj.zone_name || '');
             const currentLocId = document.getElementById('editSelectedLocationId').value || '';
-            const currentLocName = document.getElementById('editLocationBtnText').textContent.split(' - ')[0] || '';
+            const fallbackLocName = document.getElementById('editLocationBtnText').textContent.split(' - ')[0] || '';
+            const currentLocName = currentSelectedLocationName || fallbackLocName;
             selectLocationAndZone(currentLocId, currentLocName, zoneId, zoneName);
             return;
         }
+
+        
+        
 
         if (type === 'ADD_NEW_ZONE' && isLocationMessage) {
             const { zoneName, locationId } = data;
@@ -705,7 +787,12 @@
 
         if (type === 'OPEN_FOOD_SELECT' || type === 'SELECT_CONSIGNMENT_ITEM') {
             if (!data.food || data.food.food_id == null) return;
-            pendingFoodSelectInit = { type: 'INIT_FOOD_SELECT', food: data.food, catId: Number(catId) };
+            pendingFoodSelectInit = {
+                type: 'INIT_FOOD_SELECT',
+                food: data.food,
+                catId: Number(catId),
+                cart: currentEditingOrderItems
+            };
             openDynamicPopup(`foodselect.html?food_id=${encodeURIComponent(data.food.food_id)}&group_id=${encodeURIComponent(catId)}`, true);
             return;
         }
@@ -737,7 +824,7 @@
         const existing = customersList.find(c => removeDuplicateWords(c.customer_name || '').toLowerCase() === val.toLowerCase());
         if (existing) return existing;
         try {
-            if (typeof db !== 'undefined') {
+            if (typeof db !== 'undefined' && db) {
                 const { data, error } = await db.from('customers').insert([{ customer_name: val }]).select().single();
                 if (!error && data) { customersList.push(data); return data; }
             }
@@ -745,8 +832,123 @@
         return { customer_name: val };
     }
 
+    /* --- [Start Block 4.6.1] STOCK RESTORE & DEDUCT OPERATIONS --- */
+    /* ฟังก์ชันคำนวณ คืน และหักสต็อกวัตถุดิบจากตาราง menu_food_stock และ food_stock */
+    async function getUsageByStockId(orderItems) {
+        const usageByStockId = {};
+        if (!Array.isArray(orderItems) || orderItems.length === 0) return usageByStockId;
+
+        const foodQtyMap = {};
+        const foodIds = [];
+
+        for (const item of orderItems) {
+            const foodId = Number(item.food_id || item.id);
+            const orderQty = Math.max(1, Number(item.qty || item.quantity) || 1);
+            if (!Number.isFinite(foodId) || foodId === 9999) continue;
+
+            if (!foodQtyMap[foodId]) {
+                foodQtyMap[foodId] = 0;
+                foodIds.push(foodId);
+            }
+            foodQtyMap[foodId] += orderQty;
+        }
+
+        if (foodIds.length === 0) return usageByStockId;
+
+        const { data: relations, error: relError } = await db
+            .from('menu_food_stock')
+            .select('food_id, food_stock_id')
+            .in('food_id', foodIds);
+
+        if (relError) {
+            throw new Error(`ดึงความสัมพันธ์วัตถุดิบไม่สำเร็จ: ${relError.message}`);
+        }
+
+        for (const rel of (relations || [])) {
+            const foodId = Number(rel.food_id);
+            const stockId = Number(rel.food_stock_id);
+            const qty = Number(foodQtyMap[foodId]) || 0;
+            if (Number.isFinite(stockId) && qty > 0) {
+                usageByStockId[stockId] = (usageByStockId[stockId] || 0) + qty;
+            }
+        }
+
+        return usageByStockId;
+    }
+
+    async function restoreStockForOrder(orderItems) {
+        if (!db || !Array.isArray(orderItems) || orderItems.length === 0) return;
+
+        const usageByStockId = await getUsageByStockId(orderItems);
+        const stockIds = Object.keys(usageByStockId).map(Number);
+        if (stockIds.length === 0) return;
+
+        const { data: stockRows, error: fetchError } = await db
+            .from('food_stock')
+            .select('food_stock_id, quantity')
+            .in('food_stock_id', stockIds);
+
+        if (fetchError || !stockRows) {
+            throw new Error(fetchError?.message || 'ไม่สามารถดึงข้อมูลสต็อกเพื่อคืนได้');
+        }
+
+        for (const row of stockRows) {
+            const stockId = Number(row.food_stock_id);
+            const currentQty = Number(row.quantity) || 0;
+            const restoreQty = Number(usageByStockId[stockId]) || 0;
+            const nextQty = currentQty + restoreQty;
+
+            const { error: updateError } = await db
+                .from('food_stock')
+                .update({ quantity: nextQty, updated_at: new Date().toISOString() })
+                .eq('food_stock_id', stockId);
+
+            if (updateError) {
+                throw new Error(`คืนสต็อก food_stock_id=${stockId} ไม่สำเร็จ: ${updateError.message}`);
+            }
+        }
+    }
+
+    async function deductStockForOrder(orderItems) {
+        if (!db || !Array.isArray(orderItems) || orderItems.length === 0) return;
+
+        const usageByStockId = await getUsageByStockId(orderItems);
+        const stockIds = Object.keys(usageByStockId).map(Number);
+        if (stockIds.length === 0) return;
+
+        const { data: stockRows, error: fetchError } = await db
+            .from('food_stock')
+            .select('food_stock_id, quantity')
+            .in('food_stock_id', stockIds);
+
+        if (fetchError || !stockRows) {
+            throw new Error(fetchError?.message || 'ไม่สามารถดึงข้อมูลสต็อกเพื่อหักได้');
+        }
+
+        for (const row of stockRows) {
+            const stockId = Number(row.food_stock_id);
+            const currentQty = Number(row.quantity) || 0;
+            const usedQty = Number(usageByStockId[stockId]) || 0;
+            const nextQty = Math.max(0, currentQty - usedQty);
+
+            const { error: updateError } = await db
+                .from('food_stock')
+                .update({ quantity: nextQty, updated_at: new Date().toISOString() })
+                .eq('food_stock_id', stockId);
+
+            if (updateError) {
+                throw new Error(`หักสต็อก food_stock_id=${stockId} ไม่สำเร็จ: ${updateError.message}`);
+            }
+        }
+    }
+    /* --- [End Block 4.6.1] STOCK RESTORE & DEDUCT OPERATIONS --- */
+
     async function saveOrderEditData() {
         if (!targetOrderId) return;
+        if (!db) {
+            showAlert('เกิดข้อผิดพลาด', 'ไม่พบการเชื่อมต่อฐานข้อมูล Supabase', '❌');
+            return;
+        }
         try {
             const customerType = Number(document.getElementById('editCustomerGroupSelect').value || 1);
             const rawCustomerInput = document.getElementById('editCustomerInput')?.value || '';
@@ -765,32 +967,64 @@
             }
 
             const updatePayload = {
-                customer_type_id: customerType, customer_name: customerDisplayName,
-                customer_id: customerObj ? String(customerObj.customer_id || '') : null,
+                customer_type_id: customerType,
+                customer_name: customerDisplayName,
+                customer_id: customerObj && customerObj.customer_id != null ? String(customerObj.customer_id) : null,
                 location_id: locationId ? Number(locationId) : null,
                 zone_id: zoneId ? Number(zoneId) : null,
                 items: JSON.stringify(currentEditingOrderItems),
-                subtotal: subtotal, delivery_fee: deliveryFee,
+                subtotal: subtotal,
+                delivery_fee: deliveryFee,
                 total_price: subtotal + deliveryFee,
                 total_qty: currentEditingOrderItems.reduce((sum, item) => sum + Number(item.qty || 1), 0)
             };
 
-            if (selectedOrderDate) updatePayload.created_at = new Date(`${selectedOrderDate}T${timeVal}:00`).toISOString();
+            if (selectedOrderDate) {
+                // ✅ แก้ Timezone: บังคับ +07:00 ชัดเจน — ไม่ขึ้นกับ timezone ของ browser
+                updatePayload.created_at = new Date(`${selectedOrderDate}T${timeVal}:00+07:00`).toISOString();
+            }
 
-            const { error } = await db.from('orders').update(updatePayload).eq('order_id', targetOrderId);
+            // 1. คืนสต็อกของรายการเดิมก่อน
+            const oldItems = originalOrderItems.length > 0
+                ? originalOrderItems
+                : parseOrderItems(currentEditingOrder?.items);
+            await restoreStockForOrder(oldItems);
+
+            // 2. หักสต็อกตามรายการใหม่ให้เรียบร้อยก่อนอัปเดตบิล
+            await deductStockForOrder(currentEditingOrderItems);
+
+            // 3. อัปเดตข้อมูลออเดอร์
+            const { error } = await db
+                .from('orders')
+                .update(updatePayload)
+                .eq('order_id', targetOrderId);
+
             if (error) throw error;
-            showAlert('สำเร็จ', 'บันทึกการแก้ไขเรียบร้อยแล้ว!', '🎉', () => goBackToReport());
-        } catch (err) { showAlert('เกิดข้อผิดพลาด', err.message, '❌'); }
+
+            originalOrderItems = JSON.parse(JSON.stringify(currentEditingOrderItems));
+            showAlert('สำเร็จ', 'บันทึกการแก้ไขและปรับสต็อกเรียบร้อยแล้ว!', '🎉', () => goBackToReport());
+        } catch (err) {
+            console.error('saveOrderEditData error:', err);
+            showAlert('เกิดข้อผิดพลาด', err.message || 'ไม่สามารถบันทึกการแก้ไขได้', '❌');
+        }
     }
 
     async function deleteCurrentEditingOrder() {
         if (!targetOrderId) return;
-        showAlert('ยืนยันการลบ', `คุณต้องการลบออเดอร์ #${targetOrderId} ใช่หรือไม่?`, '🗑', async () => {
+        showAlert('ยืนยันการลบ', `คุณต้องการลบออเดอร์ #${targetOrderId} ใช่หรือไม่?\n\n⚠️ สต็อกวัตถุดิบจะถูกคืนกลับเข้าคลัง`, '🗑', async () => {
             try {
+                const itemsToRestore = originalOrderItems.length > 0
+                    ? originalOrderItems
+                    : parseOrderItems(currentEditingOrder?.items);
+                await restoreStockForOrder(itemsToRestore);
+
                 const { error } = await db.from('orders').delete().eq('order_id', targetOrderId);
                 if (error) throw error;
-                showAlert('สำเร็จ', 'ลบออเดอร์เรียบร้อยแล้ว', '🗑️', () => goBackToReport());
-            } catch (err) { showAlert('เกิดข้อผิดพลาด', err.message, '❌'); }
+                showAlert('สำเร็จ', 'ลบออเดอร์และคืนสต็อกเรียบร้อยแล้ว', '🗑️', () => goBackToReport());
+            } catch (err) {
+                console.error('deleteCurrentEditingOrder error:', err);
+                showAlert('เกิดข้อผิดพลาด', err.message || 'ไม่สามารถลบออเดอร์ได้', '❌');
+            }
         }, true);
     }
     /* --- [End Block 4.6] DATABASE SAVE & DELETE OPERATIONS --- */
@@ -814,7 +1048,7 @@
         } else {
             btns.innerHTML = `
                 <button type="button" class="flex-1 py-2.5 bg-slate-100 text-slate-700 font-bold text-xs rounded-xl cursor-pointer">ยกเลิก</button>
-                <button type="1" class="flex-1 py-2.5 bg-rose-500 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer">ยืนยัน</button>`;
+                <button type="button" class="flex-1 py-2.5 bg-rose-500 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer">ยืนยัน</button>`;
             btns.children[0].onclick = () => toggleModal('customAlertModal','customAlertBox',false);
             btns.children[1].onclick = () => { toggleModal('customAlertModal','customAlertBox',false); if(onOk) onOk(); };
         }
