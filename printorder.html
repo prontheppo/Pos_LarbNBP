@@ -20,6 +20,7 @@
 
     <!-- [Start Block 1.2] GLOBAL STYLES -->
     <style>
+        /* ✅ เพิ่ม override ให้ printorder scroll ได้ (top window) */
         html, body {
             height: auto !important;
             min-height: 100vh !important;
@@ -77,7 +78,7 @@
         </div>
 
         <div class="pt-2 border-t border-slate-100 flex gap-2 flex-shrink-0 no-print mt-3">
-            <button type="button" onclick="window.location.href='ordersystem.html?tab=2'" class="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-extrabold text-xs rounded-xl transition cursor-pointer">⬅ กลับไปแก้ไข</button>
+            <button type="button" onclick="window.location.href='index.html?tab=2'" class="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-extrabold text-xs rounded-xl transition cursor-pointer">⬅ กลับไปแก้ไข</button>
             <button type="button" onclick="handleSaveOrder(false)" id="saveOnlyBtn" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow transition cursor-pointer">💾 บันทึก</button>
             <button type="button" onclick="handleSaveOrder(true)" id="saveAndPrintBtn" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl shadow transition cursor-pointer">🖨️ บันทึก / พิมพ์</button>
         </div>
@@ -89,7 +90,6 @@
     <script>
         /* --- [Start Block 3.1] STATE VARIABLES & INITIALIZATION --- */
         let orderData = null;
-        let isProcessing = false;
 
         function escapeHtml(value) {
             return String(value ?? '')
@@ -104,7 +104,7 @@
             const rawData = sessionStorage.getItem('printOrderData');
             if (!rawData) {
                 Swal.fire('แจ้งเตือน', 'ไม่พบข้อมูลออร์เดอร์ กรุณาเลือกรายการใหม่', 'warning').then(() => {
-                    window.location.href = 'ordersystem.html';
+                    window.location.href = 'index.html';
                 });
                 return;
             }
@@ -121,7 +121,7 @@
                 console.error('Invalid printOrderData:', error);
                 sessionStorage.removeItem('printOrderData');
                 Swal.fire('แจ้งเตือน', 'ข้อมูลออร์เดอร์ไม่สมบูรณ์ กรุณาเลือกรายการใหม่', 'warning').then(() => {
-                    window.location.href = 'ordersystem.html';
+                    window.location.href = 'index.html';
                 });
             }
         });
@@ -203,9 +203,9 @@
         /* --- [End Block 3.2] RENDER RECEIPT & PREVIEW --- */
 
         /* --- [Start Block 3.3] STOCK DEDUCTION ON SAVE / PRINT --- */
+        /* หักยอดสต็อกในตาราง food_stock เฉพาะตอนกดบันทึกหรือบันทึก/พิมพ์ โดยไม่บล็อกแม้เหลือ 0 และกันหักซ้ำ */
         async function deductStockOnce(payload) {
-            const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
-            if (!payload || !client) return;
+            if (!payload || typeof supabaseClient === 'undefined') return;
 
             const sessionKey = payload.orderSessionId
                 ? `stock_deducted_${payload.orderSessionId}`
@@ -229,7 +229,7 @@
             const foodIds = Object.keys(qtyByFoodId).map(Number);
             if (foodIds.length === 0) return;
 
-            const { data: relations, error: relError } = await client
+            const { data: relations, error: relError } = await supabaseClient
                 .from('menu_food_stock')
                 .select('food_id, food_stock_id')
                 .in('food_id', foodIds);
@@ -254,7 +254,7 @@
                 return;
             }
 
-            const { data: stockRows, error: fetchError } = await client
+            const { data: stockRows, error: fetchError } = await supabaseClient
                 .from('food_stock')
                 .select('food_stock_id, quantity')
                 .in('food_stock_id', stockIds);
@@ -269,7 +269,7 @@
                 const usedQty = Number(usageByStockId[stockId]) || 0;
                 const nextQty = Math.max(0, currentQty - usedQty);
 
-                const { error: updateError } = await client
+                const { error: updateError } = await supabaseClient
                     .from('food_stock')
                     .update({ quantity: nextQty })
                     .eq('food_stock_id', stockId);
@@ -287,22 +287,14 @@
 
         /* --- [Start Block 3.4] SAVE ORDER & PRINT HANDLER --- */
         async function handleSaveOrder(shouldPrint = false) {
-            if (isProcessing) return;
-
-            const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
-            if (!client) {
-                Swal.fire('เกิดข้อผิดพลาด', 'ไม่พบการเชื่อมต่อฐานข้อมูล', 'error');
-                return;
-            }
-
-            isProcessing = true;
-
-            const saveBtn1 = document.getElementById('saveOnlyBtn');
-            const saveBtn2 = document.getElementById('saveAndPrintBtn');
-            if (saveBtn1) saveBtn1.disabled = true;
-            if (saveBtn2) saveBtn2.disabled = true;
-
             try {
+                const saveBtn1 = document.getElementById('saveOnlyBtn');
+                const saveBtn2 = document.getElementById('saveAndPrintBtn');
+                if (saveBtn1) saveBtn1.disabled = true;
+                if (saveBtn2) saveBtn2.disabled = true;
+
+                await deductStockOnce(orderData);
+
                 const { locationData, customerDisplayName, customerId, orderSummary } = orderData;
 
                 let finalNickname = customerDisplayName;
@@ -315,8 +307,7 @@
 
                 const createdAt = new Date().toISOString();
 
-                // 1️⃣ บันทึกข้อมูลออเดอร์ลงตาราง orders ก่อน
-                const { error } = await client.from('orders').insert([{
+                const { error } = await supabaseClient.from('orders').insert([{
                     created_at: createdAt,
                     customer_type_id: Number(locationData.groupId),
                     customer_name: finalNickname,
@@ -332,20 +323,16 @@
                 }]).select();
 
                 if (error) throw error;
-
-                // 2️⃣ เมื่อบันทึกสำเร็จค่อยหักสต็อก
-                await deductStockOnce(orderData);
-
                 if (shouldPrint) window.print();
 
                 localStorage.removeItem('cart');
                 sessionStorage.removeItem('printOrderData');
-                window.location.href = 'ordersystem.html?tab=1';
+                window.location.href = 'index.html?tab=1';
 
             } catch (err) {
-                console.error('Save order error:', err);
-                Swal.fire('เกิดข้อผิดพลาด', err.message || 'ไม่สามารถบันทึกออเดอร์ได้', 'error');
-                isProcessing = false;
+                Swal.fire('เกิดข้อผิดพลาด', err.message, 'error');
+                const saveBtn1 = document.getElementById('saveOnlyBtn');
+                const saveBtn2 = document.getElementById('saveAndPrintBtn');
                 if (saveBtn1) saveBtn1.disabled = false;
                 if (saveBtn2) saveBtn2.disabled = false;
             }

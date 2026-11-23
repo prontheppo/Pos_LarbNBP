@@ -195,7 +195,7 @@
     <!-- ปุ่มควบคุมด้านล่างสำหรับกลับหน้าหลักและบันทึกยอดด่วน -->
     <div class="fixed-footer-wrapper">
         <div class="flex gap-2.5 max-w-2xl mx-auto">
-            <a href="index.html" class="bg-white hover:bg-gray-50 text-slate-800 border border-slate-300 font-bold py-3.5 px-3 rounded-xl text-xs flex-1 text-center shadow-sm transition flex items-center justify-center gap-1">
+            <a href="menu.html" class="bg-white hover:bg-gray-50 text-slate-800 border border-slate-300 font-bold py-3.5 px-3 rounded-xl text-xs flex-1 text-center shadow-sm transition flex items-center justify-center gap-1">
                 🏠 หน้าหลัก
             </a>
             <button type="button" onclick="submitQuickOrder()" id="btnSubmitOrder" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold py-3.5 px-3 rounded-xl text-xs flex-1 text-center shadow transition flex items-center justify-center gap-1 cursor-pointer">
@@ -610,7 +610,7 @@
                 if (error) throw error;
             }
 
-            window.location.href = 'index.html';
+            window.location.href = 'menu.html';
 
         } catch (err) {
             console.error('Submit Quick Order Error:', err);
