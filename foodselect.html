@@ -407,11 +407,30 @@
             updateParentHeight();
         }
 
+
+
         function deleteCartItemMatch(itemId) {
+            // 1. กรองลบรายการออกจาก state ในหน้านี้ทันที
+            const targetId = String(itemId ?? '');
+            currentCartState = currentCartState.filter(item => String(item.item_id ?? '') !== targetId);
+
+            // 2. อัปเดต localStorage และวาด UI โซนรายการที่เลือกไว้ใหม่ทันที
+            try {
+                localStorage.setItem('cart', JSON.stringify(currentCartState));
+            } catch (error) {
+                console.error('Failed to sync cart to localStorage:', error);
+            }
+            renderSelectedCartList();
+
+            // 3. ส่งสัญญาณไปแจ้ง index.html ให้ลบรายการออกจากตะกร้าหลักด้วย
             if (window.self !== window.top) {
                 window.parent.postMessage({ type: 'DELETE_CART_ITEM_BY_ID', itemId: itemId }, getTargetOrigin());
             }
         }
+
+        
+        
+        
         /* --- [End Block 3.2] AUTO-RESIZE & RENDERING LOGIC --- */
 
         /* --- [Start Block 3.3] ACTIONS & CART OPERATIONS --- */

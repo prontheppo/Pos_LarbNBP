@@ -23,9 +23,20 @@
     <!-- การกำหนดสไตล์ CSS พื้นฐานของหน้ารายการอาหาร -->
     <style>
         html, body {
-            width: 100%; height: auto; background-color: #ffffff; color: #1e293b;
-            font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; user-select: none;
-            display: flex; flex-direction: column; overflow-y: auto; border-radius: 1.5rem;
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff;
+            color: #1e293b;
+            font-family: 'Sarabun', sans-serif;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: 1.5rem;
         }
 
         input, select, textarea, button {
@@ -58,9 +69,9 @@
          [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
          ส่วนติดต่อผู้ใช้และองค์ประกอบหน้าจอแสดงรายการอาหาร
          ========================================================== -->
-    <div class="sticky top-0 z-50 flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0 shadow-sm">
+    <div id="lockedCategoryHeader" class="flex justify-between items-center px-4 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0 shadow-sm z-20">
         <span id="groupTitleName" class="font-extrabold text-sm text-slate-700 truncate px-2">📌 หมวดหมู่เมนู</span>
-        <div class="flex items-center gap-1.5">
+        <div class="flex items-center gap-1.5 shrink-0">
             <button type="button" onclick="openAddMenuModal()" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1 shadow transition cursor-pointer">
                 <span>➕</span> เมนู
             </button>
@@ -68,7 +79,7 @@
         </div>
     </div>
 
-    <div class="p-3.5 pb-12 space-y-3 bg-white w-full">
+    <div id="foodScrollContainer" class="p-3.5 pb-12 space-y-3 bg-white w-full flex-1 overflow-y-auto min-h-0">
         <div id="foodListGrid" class="grid grid-cols-2 gap-2.5">
             <div class="col-span-2 text-center text-slate-400 py-8 text-xs font-bold">⏳ กำลังโหลดข้อมูล...</div>
         </div>
@@ -177,7 +188,15 @@
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
                 if (window.parent !== window) {
-                    const totalHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+                    const headerEl = document.getElementById('lockedCategoryHeader');
+                    const gridEl = document.getElementById('foodListGrid');
+                    const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 56;
+                    const gridHeight = gridEl ? gridEl.scrollHeight : 140;
+                    const desiredHeight = Math.round(headerHeight + gridHeight + 36);
+                    const refHeight = window.parent.innerHeight || window.innerHeight;
+                    const maxAllowedHeight = Math.max(180, Math.floor(refHeight * 0.6));
+                    const totalHeight = Math.min(Math.max(desiredHeight, 150), maxAllowedHeight);
+
                     if (Math.abs(totalHeight - lastReportedHeight) >= 2) {
                         lastReportedHeight = totalHeight;
                         window.parent.postMessage({ type: 'RESIZE_POPUP', height: totalHeight }, getTargetOrigin());
@@ -227,8 +246,11 @@
 
         function renderFoodButtons() {
             const grid = document.getElementById('foodListGrid');
+            const scrollContainer = document.getElementById('foodScrollContainer');
             if (!grid) return;
             grid.innerHTML = '';
+            if (scrollContainer) scrollContainer.scrollTop = 0;
+            lastReportedHeight = 0;
 
             const filteredFoods = allFoods
                 .filter(f => String(f.food_group_id) === String(currentGroupId))

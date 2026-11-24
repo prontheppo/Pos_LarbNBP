@@ -59,11 +59,9 @@
 <div class="app-container shadow-2xl w-full border border-slate-100">
     <!-- ==========================================================
          [Start Block 2] USER INTERFACE & LAYOUT COMPONENTS
-         ส่วนติดต่อผู้ใช้และองค์ประกอบหน้าจอรายงานการขายและรายจ่าย (แบ่งเป็น Tab สรุป, รายวัน, กลุ่ม)
          ========================================================== -->
 
     <!-- [Start Block 2.1] HEADER AND TAB NAVIGATION -->
-    <!-- ส่วนหัวของแอปพลิเคชันและปุ่มสลับแท็บแสดงรายงาน -->
     <header class="bg-white border-b border-slate-200 shrink-0">
         <div class="px-4 pt-3 pb-2 flex justify-between items-center">
             <div class="flex items-center gap-2">
@@ -93,7 +91,6 @@
     <!-- [End Block 2.1] HEADER AND TAB NAVIGATION -->
 
     <!-- [Start Block 2.2] SALES OVERVIEW TAB -->
-    <!-- แท็บสรุปยอดขายและรายจ่ายย้อนหลัง 15 วัน -->
     <div id="tabOverview" class="tab-content">
         <div class="p-3 bg-slate-50 border-b border-slate-100 shrink-0">
             <div class="bg-purple-50 p-2.5 rounded-xl border border-purple-100 flex justify-between items-center">
@@ -108,7 +105,6 @@
     <!-- [End Block 2.2] SALES OVERVIEW TAB -->
 
     <!-- [Start Block 2.3] DAILY ORDERS TAB -->
-    <!-- แท็บแสดงรายการออร์เดอร์ขายและรายจ่ายร้านค้าประจำวัน -->
     <div id="tabDaily" class="tab-content">
         <div class="p-3 bg-slate-50 border-b border-slate-100 space-y-2 shrink-0">
             <div class="bg-blue-50 p-2 rounded-xl border border-blue-100 flex items-center justify-between">
@@ -133,13 +129,11 @@
             </div>
         </div>
         
-        <!-- พื้นที่แสดงรายการ (แยก ออร์เดอร์ขาย และ รายจ่ายร้านค้า) -->
         <div class="p-3 overflow-y-auto space-y-3 bg-slate-100 flex-1" id="dailyOrdersContainer" style="-webkit-overflow-scrolling: touch;"></div>
     </div>
     <!-- [End Block 2.3] DAILY ORDERS TAB -->
 
     <!-- [Start Block 2.4] GROUP SALES TAB -->
-    <!-- แท็บสรุปยอดขายแยกตามกลุ่มลูกค้า -->
     <div id="tabGroupSales" class="tab-content">
         <div class="p-3 bg-slate-50 border-b border-slate-100 shrink-0 space-y-2.5">
             <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100 flex items-center justify-between">
@@ -158,7 +152,6 @@
 </div>
 
 <!-- [Start Block 2.5] GROUP SALES DETAIL MODAL -->
-<!-- หน้าต่างป๊อปอัปแสดงรายละเอียดออร์เดอร์ของแต่ละกลุ่มลูกค้า -->
 <div id="groupDetailModal" onclick="handleOutsideModalClick(event)" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
     <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl flex flex-col max-h-[80vh] overflow-hidden transform scale-95 transition-transform duration-200" id="groupDetailBox">
         <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
@@ -178,7 +171,6 @@
 <!-- [End Block 2.5] GROUP SALES DETAIL MODAL -->
 
 <!-- [Start Block 2.6] DATE PICKER CALENDAR MODAL -->
-<!-- หน้าต่างป๊อปอัปเลือกวันที่ (ปฏิทิน) -->
 <div id="calendarModal" onclick="handleCalendarOutsideClick(event)" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
     <div class="bg-white w-full max-w-xs rounded-2xl shadow-2xl overflow-hidden relative flex flex-col transform scale-95 transition-transform duration-200" id="calendarBox">
         <div class="bg-slate-800 text-white p-3 flex justify-between items-center">
@@ -190,15 +182,10 @@
 </div>
 <!-- [End Block 2.6] DATE PICKER CALENDAR MODAL -->
 
-<!-- [End Block 2] USER INTERFACE & LAYOUT COMPONENTS -->
-
 <!-- ==========================================================
      [Start Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS
-     การทำงานส่วนตรรกะ การดึงข้อมูลจาก Supabase การคำนวณรายรับ-รายจ่าย และการแสดงผลรายงาน
      ========================================================== -->
 <script>
-    /* --- [Start Block 3.1] STATE VARIABLES & INITIALIZATION --- */
-    /* ตัวแปรส่วนกลางและการเริ่มต้นการทำงานเมื่อโหลดหน้าเว็บ */
     let db;
     let allOrdersCache = [];
     let allExpensesCache = [];
@@ -210,7 +197,6 @@
 
     const THAI_OFFSET_MS = 7 * 60 * 60 * 1000;
 
-    // แปลงเวลา ISO / Date ให้เป็นวันที่ตามโซนเวลาไทย (+07:00) ในรูปแบบ YYYY-MM-DD
     function toThaiDateStr(rawDate) {
         if (!rawDate) return '';
         const d = new Date(rawDate);
@@ -263,10 +249,11 @@
             let q = Number(item.qty || item.quantity || 1);
             let unitPrice = Number(item.price || item.unit_price || 0);
             let itemTotal = Number(item.total_price || item.sum || (unitPrice * q));
-            let name = item.name || item.food_name || '';
-            
+            let originalName = String(item.name || item.food_name || '').trim();
+            let name = originalName;
+
             let rawNote = item.note || item.comment || item.remark || item.details || item.option || item.note_text || item.topping || item.extras || '';
-            
+
             let friedEgg = Number(item.friedEggQty || item.khaiDaoQty || item.fried_egg || item.egg_dao || 0);
             if (friedEgg > 0) {
                 let eggText = `ไข่ดาว ${friedEgg}`;
@@ -283,7 +270,7 @@
                 if (typeof item.selectedOptions === 'string') rawNote = item.selectedOptions;
                 else if (Array.isArray(item.selectedOptions)) rawNote = item.selectedOptions.join(', ');
             }
-            
+
             if (!rawNote && Array.isArray(item.options)) {
                 rawNote = item.options.map(opt => opt.name || opt).join(', ');
             }
@@ -294,51 +281,92 @@
                 }
             }
 
+            let bracketNotes = [];
             if (name.includes('(') && name.includes(')')) {
-                const match = name.match(/^(.*?)\s*\((.*?)\)$/);
-                if (match) {
-                    name = match[1].trim();
-                    let bracketNote = match[2].trim();
-                    rawNote = rawNote ? `${rawNote}, ${bracketNote}` : bracketNote;
+                const matches = [...name.matchAll(/\((.*?)\)/g)];
+                if (matches.length > 0) {
+                    bracketNotes = matches.map(m => m[1].trim());
+                    name = name.replace(/\s*\(.*?\)/g, '').trim();
                 }
             }
 
-            name = name.replace(/\s*\(สินค้าฝากซื้อ.*?\)/g, '').trim();
-
-            let note = '';
+            let noteStr = '';
             if (rawNote) {
-                if (typeof rawNote === 'string') {
-                    note = rawNote.trim();
-                } else if (typeof rawNote === 'object') {
-                    note = JSON.stringify(rawNote);
-                }
+                if (typeof rawNote === 'string') noteStr = rawNote.trim();
+                else if (typeof rawNote === 'object') noteStr = JSON.stringify(rawNote);
             }
 
-            let isConsignment = item.isSpecialMenu || String(item.food_group_id || item.group_id) === '98' || String(item.food_group_id || item.group_id) === '99' || name.includes('สินค้าฝากซื้อ');
-            let costPrice = Number(item.cost_price || 0) * q;
+            const combinedTagText = `${originalName} ${noteStr} ${bracketNotes.join(' ')}`.trim();
+            const groupCode = String(item.food_group_id || item.group_id || '').trim();
 
+            const hasSpecialKeyword = /เมนูพิเศษ/.test(combinedTagText) || groupCode === '98' || Boolean(item.isSpecialMenu);
+            const hasConsignmentKeyword = /(รายการฝากซื้อ|สินค้าฝากซื้อ|ฝากซื้อ)/.test(combinedTagText) || groupCode === '99';
+
+            const isSpecialMenu = hasSpecialKeyword && !/ฝากซื้อ/.test(bracketNotes.join(' ') + ' ' + noteStr);
+            const isConsignment = hasConsignmentKeyword && !isSpecialMenu;
+
+            let cleanedBracketNotes = bracketNotes.filter(b => {
+                if (/^(รายการฝากซื้อ|สินค้าฝากซื้อ|ฝากซื้อ)$/.test(b)) return false;
+                if (/^เมนูพิเศษ$/.test(b)) return false;
+                return true;
+            });
+
+            let cleanedNote = noteStr
+                .replace(/\(?(รายการฝากซื้อ|สินค้าฝากซื้อ|ฝากซื้อ)\)?/g, '')
+                .replace(/\(?(เมนูพิเศษ)\)?/g, '')
+                .replace(/\s*,\s*,/g, ',')
+                .replace(/^,\s*|,\s*$/g, '')
+                .trim();
+
+            let finalNote = [...cleanedBracketNotes, cleanedNote].filter(Boolean).join(', ');
             if (isConsignment) {
-                note = '';
+                finalNote = '';
             }
 
-            return { name: name || 'รายการ', qty: q, unitPrice, totalPrice: itemTotal, note, isConsignment, costPrice };
+            // คำนวณราคาซื้อต้นทุน (ถ้าไม่ได้ระบุ cost_price จะประเมิน ลบ 5 บาท เป็นตัวอย่าง เช่น ทุน 55 ขาย 60)
+            let costUnitPrice = Number(item.cost_price || item.buy_price || item.cost || (unitPrice > 5 ? unitPrice - 5 : unitPrice));
+            let totalCostPrice = costUnitPrice * q;
+            let profit = itemTotal - totalCostPrice;
+
+            return {
+                name: name || 'รายการ',
+                qty: q,
+                unitPrice,
+                totalPrice: itemTotal,
+                costUnitPrice,
+                totalCostPrice,
+                profit,
+                note: finalNote,
+                isConsignment,
+                isSpecialMenu
+            };
         });
 
         let deliveryFee = Number(order.delivery_fee || 0);
         let subtotal = computedItems.reduce((sum, item) => sum + item.totalPrice, 0);
         let billTotal = Number(order.total_price || order.subtotal || 0);
-        
+
         if (billTotal === 0 && subtotal > 0) {
             billTotal = subtotal + deliveryFee;
         }
 
-        let consignmentTotal = 0;
+        // คำนวณฝากซื้อ: ยอดขายรวมฝากซื้อ, ยอดต้นทุนซื้อรวม, และกำไรฝากซื้อสุทธิ
+        let consignmentTotalSales = 0;
+        let consignmentTotalCost = 0;
+        let consignmentTotalProfit = 0;
+
         computedItems.forEach(item => {
             if (item.isConsignment) {
-                consignmentTotal += item.costPrice;
+                consignmentTotalSales += item.totalPrice;
+                consignmentTotalCost += item.totalCostPrice;
+                consignmentTotalProfit += item.profit;
             }
         });
 
+        // รายรับจริงของร้านหลังหักทุนซื้อของฝากซื้อออก = ยอดขายรวมทั้งบิล - ต้นทุนซื้อฝากซื้อ
+        let netActualIncome = billTotal - consignmentTotalCost;
+
+        // ดึงข้อมูลสถานที่และเปอร์เซ็นต์คอมมิชชัน
         let commissionPercent = 0;
         let resortName = "";
         let locationId = order.location_id || "";
@@ -350,14 +378,13 @@
             }
         }
 
-        let commissionBase = subtotal - consignmentTotal - deliveryFee;
+        // ฐานคิดคอมมิชชัน = ยอดขายรวมของร้าน (ตัดรายการฝากซื้อทั้งหมดไอดี 99 ออก และตัดค่าส่งออก)
+        let commissionBase = subtotal - consignmentTotalSales;
         if (commissionBase < 0) commissionBase = 0;
 
+        // ปัดเศษหลักร้อยลง (เช่น 180 -> 100, 200 -> 200)
         let roundedBase = Math.floor(commissionBase / 100) * 100;
         let commissionBaht = commissionPercent > 0 ? Math.round(roundedBase * (commissionPercent / 100)) : 0;
-
-        let totalExpense = consignmentTotal;
-        let netProfitTotal = billTotal - totalExpense;
 
         let groupTypeName = "ชาวบ้าน";
         let typeId = Number(order.customer_type_id);
@@ -387,24 +414,31 @@
             parsedItems: computedItems,
             computedTotal: billTotal,
             deliveryFee: deliveryFee,
-            consignmentTotal,
+            consignmentTotalSales,
+            consignmentTotalCost,
+            consignmentTotalProfit,
+            netActualIncome,
             commissionPercent,
             commissionBase,
             roundedBase,
             commissionBaht,
-            totalExpense,
-            netProfitTotal,
-            hasExpense: totalExpense > 0,
             groupTypeName,
-            resortName: resortName || (typeId === 2 ? groupTypeName : "ไม่ระบุรีสอร์ต"),
+            resortName: resortName || (typeId === 2 ? groupTypeName : "ไม่ระบุสถานที่"),
             displayCustomerName: zoneOnly,
             dateStr: getOrderDateStr(order)
         };
     }
-    /* --- [End Block 3.1] STATE VARIABLES & INITIALIZATION --- */
 
-    /* --- [Start Block 3.2] FETCH SUPABASE DATA & CACHE --- */
-    /* ฟังก์ชันดึงข้อมูลจาก Supabase ทั้งข้อมูลสถานที่ ออร์เดอร์ และรายจ่าย */
+    function renderItemBadge(item) {
+        if (item.isConsignment) {
+            return ` <span class="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">ฝากซื้อ</span>`;
+        }
+        if (item.isSpecialMenu) {
+            return ` <span class="text-[9px] bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-bold">เมนูพิเศษ</span>`;
+        }
+        return '';
+    }
+
     async function fetchMasterData() {
         if (!db) return;
         try {
@@ -505,10 +539,7 @@
         if (document.getElementById('txtDailyDate')) document.getElementById('txtDailyDate').textContent = text;
         if (document.getElementById('txtGroupDate')) document.getElementById('txtGroupDate').textContent = text;
     }
-    /* --- [End Block 3.2] FETCH SUPABASE DATA & CACHE --- */
 
-    /* --- [Start Block 3.3] TAB NAVIGATION & CALENDAR --- */
-    /* ฟังก์ชันสลับแท็บเมนูและการจัดการป๊อปอัปปฏิทิน */
     async function switchTab(tabName, btnEl) {
         currentActiveTab = tabName;
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active-tab'));
@@ -572,10 +603,7 @@
         }
         if (event.data.action === 'CLOSE_MODAL') closeCalendarModal();
     });
-    /* --- [End Block 3.3] TAB NAVIGATION & CALENDAR --- */
 
-    /* --- [Start Block 3.4] RENDER REPORTS & MODALS --- */
-    /* ฟังก์ชันคำนวณและแสดงผลรายงานยอดขาย รายจ่าย และหน้าต่างรายละเอียด */
     function renderOverviewData() {
         const container = document.getElementById('overviewDateListContainer');
         if (!container) return;
@@ -592,13 +620,14 @@
 
         let dateGroups = {};
         allDatesSet.forEach(dateStr => {
-            dateGroups[dateStr] = { totalIncome: 0, storeExpense: 0, netTotal: 0, count: 0, expenseCount: 0 };
+            dateGroups[dateStr] = { totalIncome: 0, storeExpense: 0, netTotal: 0, count: 0, expenseCount: 0, totalCommission: 0 };
         });
 
         allOrdersCache.forEach(order => {
             let dateStr = order.dateStr;
             if (!dateStr || !dateGroups[dateStr]) return;
             dateGroups[dateStr].totalIncome += order.computedTotal;
+            dateGroups[dateStr].totalCommission += order.commissionBaht;
             dateGroups[dateStr].count += 1;
         });
 
@@ -619,6 +648,7 @@
 
         container.innerHTML = sortedDates.map(dateStr => {
             const data = dateGroups[dateStr];
+            let commTag = data.totalCommission > 0 ? `<div class="text-[10px] text-amber-700 font-bold mt-0.5">💰 หักคอมมิชชันรวม: ฿${data.totalCommission.toLocaleString()}</div>` : '';
             return `
                 <div onclick="goToDailyTab('${dateStr}')" class="bg-white p-3.5 rounded-xl border border-slate-200 hover:border-purple-400 active:scale-95 transition cursor-pointer shadow-xs flex justify-between items-center">
                     <div>
@@ -630,6 +660,7 @@
                             <span>รายรับ: <strong class="text-red-600">฿${data.totalIncome.toLocaleString()}</strong></span>
                             <span>รายจ่ายร้าน: <strong class="text-yellow-700">฿${data.storeExpense.toLocaleString()}</strong></span>
                         </div>
+                        ${commTag}
                     </div>
                     <div class="text-right">
                         <div class="text-xs font-black text-emerald-600">สุทธิจริง ฿${data.netTotal.toLocaleString()}.-</div>
@@ -706,8 +737,8 @@
 
             let redItemsHtml = order.parsedItems.map(item => {
                 let comment = item.note ? ` <span class="text-amber-800 font-semibold bg-amber-50 px-1.5 py-0.5 rounded text-[11px]">(${item.note})</span>` : '';
-                let badge = item.isConsignment ? ` <span class="text-[9px] bg-amber-100 text-amber-800 px-1 rounded font-bold">ฝากซื้อ</span>` : '';
-                return `<tr class="border-b border-red-100">
+                let badge = renderItemBadge(item);
+                return `<tr class="border-b border-slate-100">
                     <td class="p-1.5 text-xs text-slate-800 font-medium">${item.name}${badge}${comment}</td>
                     <td class="p-1.5 text-xs text-center font-bold">x${item.qty}</td>
                     <td class="p-1.5 text-xs text-right font-bold text-red-600">${item.totalPrice.toLocaleString()}.-</td>
@@ -715,11 +746,72 @@
             }).join('');
 
             if (order.deliveryFee > 0) {
-                redItemsHtml += `<tr class="border-b border-red-100 bg-red-50/40">
+                redItemsHtml += `<tr class="border-b border-slate-100 bg-red-50/40">
                     <td class="p-1.5 text-xs text-red-900 font-bold flex items-center gap-1"><span>🛵</span><span>ค่าบริการจัดส่ง</span></td>
                     <td class="p-1.5 text-xs text-center font-bold text-red-900">-</td>
                     <td class="p-1.5 text-xs text-right font-bold text-red-900">${order.deliveryFee.toLocaleString()}.-</td>
                 </tr>`;
+            }
+
+            // บล็อกแสดงรายการฝากซื้อ (สลับโทนสีแบ็คกราวด์ส้มอ่อน สบายตา)
+            let consignmentSummaryBox = '';
+            const consignmentItems = order.parsedItems.filter(i => i.isConsignment);
+            if (consignmentItems.length > 0) {
+                let itemLinesHtml = consignmentItems.map(item => `
+                    <div class="flex justify-between items-center text-[11px] py-0.5 text-amber-950">
+                        <span>• ${item.name} (x${item.qty})</span>
+                        <span>ซื้อ: ฿${item.totalCostPrice.toLocaleString()} ➔ ขาย: ฿${item.totalPrice.toLocaleString()} <strong class="text-emerald-700 ml-1">(กำไร ฿${item.profit.toLocaleString()})</strong></span>
+                    </div>
+                `).join('');
+
+                consignmentSummaryBox = `
+                    <div class="bg-amber-50/80 border border-amber-200 rounded-lg p-2.5 mt-2 space-y-1">
+                        <div class="flex justify-between items-center border-b border-amber-200/60 pb-1 text-xs">
+                            <span class="font-extrabold text-amber-900 flex items-center gap-1">
+                                <span>🛍️</span> <span>สรุปรายการฝากซื้อ (ไอดี 99):</span>
+                            </span>
+                            <span class="font-black text-emerald-700 text-xs bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                                ได้กำไรสุทธิ: ฿${order.consignmentTotalProfit.toLocaleString()}.-
+                            </span>
+                        </div>
+                        ${itemLinesHtml}
+                    </div>`;
+            }
+
+            // เพิ่มตารางสรุปรายรับร้านสุทธิ (ตรงตำแหน่งขีดสีฟ้า)
+            let actualIncomeSummaryBox = '';
+            if (consignmentItems.length > 0) {
+                actualIncomeSummaryBox = `
+                    <div class="bg-emerald-50 border-2 border-emerald-400 rounded-lg p-2 mt-2 flex justify-between items-center text-xs">
+                        <div>
+                            <div class="font-extrabold text-emerald-950 flex items-center gap-1">
+                                <span>💵</span> <span>สรุปรายรับร้านสุทธิ (หลังหักทุนฝากซื้อ):</span>
+                            </div>
+                            <div class="text-[10px] text-slate-500 mt-0.5">
+                                ยอดในบิล (฿${order.computedTotal.toLocaleString()}) - ต้นทุนซื้อ (฿${order.consignmentTotalCost.toLocaleString()})
+                            </div>
+                        </div>
+                        <span class="font-black text-emerald-700 text-sm bg-white px-2 py-1 rounded border border-emerald-200 shadow-xs">
+                            ฿${order.netActualIncome.toLocaleString()}.-
+                        </span>
+                    </div>`;
+            }
+
+            // บล็อกแสดงค่าคอมมิชชัน
+            let commissionBox = '';
+            if (order.commissionPercent > 0) {
+                commissionBox = `
+                    <div class="bg-yellow-50/90 border border-yellow-300 rounded-lg p-2 mt-2 flex justify-between items-center text-xs">
+                        <div>
+                            <div class="font-bold text-amber-900 flex items-center gap-1">
+                                <span>💰</span> <span>ค่าคอมมิชชัน ${order.resortName} (${order.commissionPercent}%):</span>
+                            </div>
+                            <div class="text-[10px] text-slate-500 mt-0.5">
+                                ฐานคิด: ฿${order.commissionBase.toLocaleString()} ➔ ปัดเศษคิดที่: ฿${order.roundedBase.toLocaleString()}
+                            </div>
+                        </div>
+                        <span class="font-black text-amber-700 text-sm">฿${order.commissionBaht.toLocaleString()}.-</span>
+                    </div>`;
             }
 
             let orderId = order.order_id || order.id;
@@ -731,14 +823,17 @@
                         <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded truncate max-w-[200px]">👤 ${order.displayCustomerName}</span>
                     </div>
 
-                    <div class="border border-red-300 rounded-lg p-2 bg-red-50/20 shadow-xs">
+                    <div class="border border-slate-200 rounded-lg p-2 bg-slate-50/50 shadow-xs">
                         <div class="text-[11px] font-bold text-red-800 mb-1">🔴 รายรับทั้งหมด (ยอดขายในบิล):</div>
                         <table class="w-full text-left"><tbody>${redItemsHtml}</tbody></table>
-                        <div class="flex justify-between items-center text-xs font-bold text-red-900 pt-1 border-t border-red-200 mt-1">
+                        <div class="flex justify-between items-center text-xs font-bold text-red-900 pt-1 border-t border-slate-200 mt-1">
                             <span>รวมรายรับ:</span>
                             <span class="text-red-600">฿${order.computedTotal.toLocaleString()}.-</span>
                         </div>
                     </div>
+                    ${consignmentSummaryBox}
+                    ${actualIncomeSummaryBox}
+                    ${commissionBox}
                 </div>`;
         });
 
@@ -836,7 +931,7 @@
         group.orders.forEach(o => {
             let redItemsHtml = o.parsedItems.map(item => {
                 let comment = item.note ? ` <span class="text-amber-800 font-semibold bg-amber-50 px-1.5 py-0.5 rounded text-[10px]">(${item.note})</span>` : '';
-                let badge = item.isConsignment ? ` <span class="text-[9px] bg-amber-100 text-amber-800 px-1 rounded font-bold">ฝากซื้อ</span>` : '';
+                let badge = renderItemBadge(item);
                 return `<div class="text-[11px] flex justify-between items-start text-slate-600 py-1 border-b border-red-50 last:border-none">
                     <div><span class="font-medium text-slate-800">• ${item.name}${badge}${comment}</span> <span class="text-red-600 font-bold ml-1">x${item.qty}</span></div>
                     <span class="font-bold text-slate-700 shrink-0 ml-2">฿${item.totalPrice.toLocaleString()}</span>
@@ -854,7 +949,14 @@
             if (o.commissionBaht > 0) {
                 commissionBox = `
                     <div class="bg-amber-50 border border-amber-300 rounded-lg p-2 my-1.5 flex justify-between items-center text-xs">
-                        <span class="font-bold text-amber-900 flex items-center gap-1"><span>💰</span> <span>ค่าคอมมิชชัน (${o.commissionPercent}%):</span></span>
+                        <div>
+                            <span class="font-bold text-amber-900 flex items-center gap-1">
+                                <span>💰</span> <span>ค่าคอมมิชชัน (${o.commissionPercent}%):</span>
+                            </span>
+                            <div class="text-[10px] text-slate-500 mt-0.5">
+                                ฐานคิด: ฿${o.commissionBase.toLocaleString()} ➔ ปัดเศษ: ฿${o.roundedBase.toLocaleString()}
+                            </div>
+                        </div>
                         <span class="font-black text-amber-700 text-sm">฿${o.commissionBaht.toLocaleString()}.-</span>
                     </div>`;
             }
@@ -897,7 +999,6 @@
     function goToEditOrder(orderId) {
         window.location.href = `editorder.html?order_id=${orderId}`;
     }
-    /* --- [End Block 3.4] RENDER REPORTS & MODALS --- */
 </script>
 <!-- [End Block 3] JAVASCRIPT CORE LOGIC & EVENT HANDLERS -->
 </body>

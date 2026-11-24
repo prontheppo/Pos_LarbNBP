@@ -33,25 +33,33 @@
         input, select, textarea, button {
             font-size: 16px;
         }
-
+        
+        
         .custom-modal-overlay { 
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
             background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
-            display: none; align-items: center; justify-content: center; z-index: 9999; padding: 1rem; 
+            display: none; align-items: flex-start; justify-content: center; z-index: 9999; padding: 10vh 1rem 1rem; 
         }
         .custom-modal-overlay.active { display: flex !important; }
 
         .popup-container {
             background: transparent !important; width: 100% !important; max-width: 28rem !important;
-            height: auto !important; max-height: 90vh !important; border-radius: 0 !important; box-shadow: none !important;
+            height: auto !important; max-height: calc 60vh !important; border-radius: 0 !important; box-shadow: none !important;
             display: flex; flex-direction: column; overflow: visible !important; position: relative;
             animation: popupFadeIn 0.2s ease-out;
         }
         @keyframes popupFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         .popup-content-wrapper { 
-            width: 100%; background: #ffffff; overflow-y: auto !important; display: flex; flex-direction: column; 
-            max-height: 85vh !important; border-radius: 1.5rem !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+            width: 100%; background: #ffffff; overflow: hidden !important; display: flex; flex-direction: column; 
+            max-height: calc 60vh !important; border-radius: 1.5rem !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
         }
+        #popupIframe {
+            width: 100%; border: 0; display: block;
+        }
+
+        
+        
+        
         
         #locationFrame {
             width: 100%; height: auto; min-height: 350px; max-height: calc(90vh - 2rem);
@@ -305,8 +313,16 @@
             if (type === 'RESIZE_POPUP' && isPopupMessage) {
                 const requestedHeight = Number(height);
                 if (!Number.isFinite(requestedHeight) || requestedHeight <= 0) return;
-                const maxAllowedHeight = Math.max(150, Math.floor(window.innerHeight * 0.9 - 32));
+  
+  
+  
+                const maxAllowedHeight = Math.max(150, Math.floor(window.innerHeight * 0.6));
                 const safeHeight = Math.min(Math.max(Math.round(requestedHeight), 150), maxAllowedHeight);
+
+                
+                
+                
+                
                 if (Math.abs(safeHeight - lastPopupHeight) >= 2) {
                     popupIframe.style.height = `${safeHeight}px`;
                     lastPopupHeight = safeHeight;
@@ -493,12 +509,23 @@
             updateCartUI();
         }
 
+
+
         function removeCartItemById(itemId) {
             cart = cart.filter(item => String(item.item_id) !== String(itemId));
             persistCart();
             updateCartUI();
             renderOrderSummary();
+
+            // ส่งข้อมูลตะกร้าล่าสุดกลับไปอัปเดต popupIframe ทันที
+            const popupIframe = document.getElementById('popupIframe');
+            if (popupIframe && popupIframe.contentWindow) {
+                popupIframe.contentWindow.postMessage({ type: 'UPDATE_CART_STATE', cart: cart }, getAppOrigin());
+            }
         }
+
+
+
 
         function confirmClearCart() { document.getElementById('confirmClearModalOverlay').classList.add('active'); }
         function closeConfirmClearModal() { document.getElementById('confirmClearModalOverlay').classList.remove('active'); }
