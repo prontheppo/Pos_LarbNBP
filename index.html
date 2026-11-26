@@ -1,6 +1,6 @@
 <!--
  =================================
-  FILE NAME: ordersystem.html
+  FILE NAME: index.html
  =================================
 -->
 <!DOCTYPE html>
@@ -95,22 +95,23 @@
 
         <!-- [Start Block 2.1] TAB 1: เลือกเมนูอาหาร -->
         <div id="tabContent1" class="flex flex-col w-full flex-1 min-h-0">
-            <div class="pb-2 flex-shrink-0">
+            <div class="pb-2 shrink-0">
                 <div class="bg-white p-2.5 px-4 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
                     <span class="font-bold text-sm text-slate-700">🛒 ตะกร้าสินค้าปัจจุบัน:</span>
                     <span class="text-emerald-600 font-extrabold text-base" id="cartCountTextTab1">0 รายการ | 0 ชิ้น</span>
                 </div>
             </div>
-            <div class="w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1 min-h-[300px]">
+            <div class="w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1 min-h-0">
                 <iframe id="foodGroupFrame" src="foodgroup.html" class="w-full h-full border-0"></iframe>
             </div>
-            <div class="pt-2 pb-4 grid grid-cols-3 gap-2 flex-shrink-0">
-                <button type="button" onclick="window.location.href='index.html'" class="bg-white text-slate-700 border border-slate-300 font-bold py-2.5 px-2 rounded-2xl text-xs flex items-center justify-center gap-1 shadow active:scale-95 transition cursor-pointer">🏠 หน้าหลัก</button>
+            <div class="pt-2 pb-2 grid grid-cols-3 gap-2 shrink-0">
+                <button type="button" onclick="window.location.href='menu.html'" class="bg-white text-slate-700 border border-slate-300 font-bold py-2.5 px-2 rounded-2xl text-xs flex items-center justify-center gap-1 shadow active:scale-95 transition cursor-pointer">🏠 หน้าหลัก</button>
                 <button type="button" onclick="confirmClearCart()" class="bg-rose-50 text-rose-600 border border-rose-200 font-bold py-2.5 px-2 rounded-2xl text-xs flex items-center justify-center gap-1 shadow active:scale-95 transition cursor-pointer">🗑️ ล้างตะกร้า</button>
                 <button type="button" onclick="switchTab(2)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-2 rounded-2xl text-xs flex items-center justify-center gap-1 shadow active:scale-95 transition cursor-pointer">🔍 ไปตรวจสอบ</button>
             </div>
         </div>
         <!-- [End Block 2.1] TAB 1: เลือกเมนูอาหาร -->
+
 
         <!-- [Start Block 2.2] TAB 2: ตรวจสอบรายการและเลือกสถานที่/ลูกค้า -->
         <div id="tabContent2" class="flex flex-col w-full hidden">
@@ -740,39 +741,72 @@
         /* --- [Start Block 3.6] ORDER CALCULATION & PREVIEW --- */
         /* ฟังก์ชันคำนวณราคาสินค้าตามกลุ่มลูกค้าและสถานที่ พร้อมแสดงผลพรีวิวออเดอร์ */
         function getGroupBasePrice(item, groupId) {
-            const foodId = String(item.food_id || item.id || '');
-            const currentLocId = locationData.locationId;
-            if (currentLocId && foodId && Number(locationFoodPricesMap[`${currentLocId}_${foodId}`]) > 0) {
-                return Number(locationFoodPricesMap[`${currentLocId}_${foodId}`]);
-            }
+            try {
+                if (!item || typeof item !== 'object') return 0;
 
-            const gId = Number(groupId) || 1;
-            const foodObj = dbFoodsMap[foodId];
-            if (foodObj) {
-                const pLocal = Number(foodObj.price_1 || 0);
-                const pTourist = Number(foodObj.price_2 || 0);
-                const pSabaidee = Number(foodObj.price_3 || 0);
-                if (gId === 1) return pLocal > 0 ? pLocal : (pTourist > 0 ? pTourist : Number(item.price || item.unit_price || 0));
-                if (gId === 2) return pTourist > 0 ? pTourist : (pLocal > 0 ? pLocal : Number(item.price || item.unit_price || 0));
-                if (gId === 3) return pSabaidee > 0 ? pSabaidee : (pLocal > 0 ? pLocal : Number(item.price || item.unit_price || 0));
-            }
+                const foodId = String(item.food_id || item.id || '');
+                const groupIdStr = String(item.food_group_id || item.group_id || '');
+                const isGroup99 = groupIdStr === '99';
 
-            if (item.price !== undefined && item.price !== null && item.price !== '' && !isNaN(Number(item.price)) && Number(item.price) > 0) {
-                return Number(item.price);
+                // 1. หากไม่ใช่ Group 99 และมีการกรอกราคาพิเศษในช่องวงแดง ให้ใช้ราคานี้เป็นหลักทันที
+                if (!isGroup99 && item.price !== undefined && item.price !== null && String(item.price).trim() !== '') {
+                    const customPrice = Number(item.price);
+                    if (!Number.isNaN(customPrice) && customPrice > 0) {
+                        return customPrice;
+                    }
+                }
+
+                // 2. ราคาพิเศษตามสถานที่ (ถ้ามี)
+                const currentLocId = locationData && locationData.locationId;
+                const locPrice = (currentLocId && foodId && locationFoodPricesMap)
+                    ? Number(locationFoodPricesMap[`${currentLocId}_${foodId}`] || 0)
+                    : 0;
+                if (locPrice > 0) {
+                    return locPrice;
+                }
+
+                // 3. คิดราคาตามกลุ่มลูกค้า (price_1, price_2, price_3)
+                const gId = Number(groupId) || 1;
+                const foodObj = dbFoodsMap && foodId ? dbFoodsMap[foodId] : null;
+                if (foodObj) {
+                    const pLocal = Number(foodObj.price_1 || 0);
+                    const pTourist = Number(foodObj.price_2 || 0);
+                    const pSabaidee = Number(foodObj.price_3 || 0);
+
+                    if (gId === 1 && pLocal > 0) return pLocal;
+                    if (gId === 2 && pTourist > 0) return pTourist;
+                    if (gId === 3 && pSabaidee > 0) return pSabaidee;
+
+                    if (pLocal > 0) return pLocal;
+                    if (pTourist > 0) return pTourist;
+                    if (pSabaidee > 0) return pSabaidee;
+                }
+
+                const fallbackPrice = Number(item.unit_price || 0);
+                return Number.isNaN(fallbackPrice) ? 0 : fallbackPrice;
+            } catch (err) {
+                console.error('getGroupBasePrice error:', err);
+                const safeFallback = Number(item?.unit_price || item?.price || 0);
+                return Number.isNaN(safeFallback) ? 0 : safeFallback;
             }
-            return Number(item.unit_price || 0);
         }
 
         function removeDeliveryFee() { isDeliveryFeeWaived = true; renderOrderSummary(); }
 
         function renderOrderSummary() {
-            cart = readCartFromStorage();
+            cart = readCartFromStorage().filter(item => item && typeof item === 'object');
             const listContainer = document.getElementById('cartPreviewList');
+            const totalPriceEl = document.getElementById('cartTotalPrice');
             if (!listContainer) return;
+
+            const totalItems = cart.length;
+            const totalQty = cart.reduce((sum, item) => sum + (Number(item.qty) || 1), 0);
+            const tab2El = document.getElementById('cartCountTextTab2');
+            if (tab2El) tab2El.textContent = `${totalItems} รายการ | ${totalQty} ชิ้น`;
 
             if (cart.length === 0) {
                 listContainer.innerHTML = '<span class="text-gray-400 text-xs py-8 text-center block">ยังไม่มีรายการอาหารในตะกร้า</span>';
-                document.getElementById('cartTotalPrice').textContent = 'รวม 0.-';
+                if (totalPriceEl) totalPriceEl.textContent = 'รวม 0.-';
                 processedItemsForDb = [];
                 currentOrderSummary = { itemsCount: 0, totalQty: 0, subtotal: 0, deliveryFee: 0, grandTotal: 0, processedCart: [] };
                 return;
@@ -780,7 +814,7 @@
 
             let totalCartPrice = 0;
             listContainer.innerHTML = '';
-            
+
             const mappedItems = cart.map((item, index) => {
                 const basePrice = getGroupBasePrice(item, locationData.groupId);
                 const daoQty = Number(item.friedEggQty || 0);
@@ -842,13 +876,35 @@
                 listContainer.appendChild(row);
             });
 
-            let deliveryFee = 0;
-            const isStoreFront = locationData.locationName.includes('หน้าร้าน') || locationData.locationName.includes('รับที่ร้าน') || locationData.locationName.includes('ทานที่ร้าน');
-            const isTouristWithoutLocation = (locationData.groupId === 2 && !locationData.locationId);
 
-            if (!isTouristWithoutLocation && locationData.groupId === 2 && !isStoreFront && !isDeliveryFeeWaived) {
-                deliveryFee = 20;
-            }
+
+
+
+
+            let deliveryFee = 0;
+const isStoreFront = locationData.locationName.includes('หน้าร้าน') || locationData.locationName.includes('รับที่ร้าน') || locationData.locationName.includes('ทานที่ร้าน');
+const isTouristWithoutLocation = (locationData.groupId === 2 && !locationData.locationId);
+
+if (!isTouristWithoutLocation && locationData.groupId === 2 && !isStoreFront && !isDeliveryFeeWaived) {
+    // ดึงข้อมูลสถานที่ปัจจุบันจาก locationsCache
+    const selectedLoc = locationsCache.find(loc => Number(loc.location_id || loc.id) === Number(locationData.locationId));
+    if (selectedLoc) {
+        const minOrderForFree = Number(selectedLoc.min_order_for_free_delivery ?? 300);
+        const locDeliveryFee = Number(selectedLoc.delivery_fee ?? 20);
+
+        // คำนวณค่าจัดส่ง: ถ้ายอดรวมสินค้าน้อยกว่ายอดขั้นต่ำ จึงจะคิดค่าจัดส่งตามเรทสถานที่นั้น
+        if (totalCartPrice < minOrderForFree) {
+            deliveryFee = locDeliveryFee;
+        }
+    } else {
+        // กรณีสำรอง หากไม่เจอข้อมูลสถานที่ ให้คิดค่าส่งพื้นฐาน 20 บาท
+        deliveryFee = 20;
+    }
+}
+
+            
+            
+            
 
             if (deliveryFee > 0) {
                 const deliveryRow = document.createElement('div');
@@ -867,7 +923,7 @@
             }
 
             const grandTotal = totalCartPrice + deliveryFee;
-            document.getElementById('cartTotalPrice').textContent = `รวม ${grandTotal}.-`;
+            if (totalPriceEl) totalPriceEl.textContent = `รวม ${grandTotal}.-`;
             currentOrderSummary = {
                 itemsCount: cart.length,
                 totalQty: processedItemsForDb.reduce((s, i) => s + i.qty, 0),
@@ -886,10 +942,6 @@
             const groupLabel = document.getElementById('customerGroupLabel');
             const touristSection = document.getElementById('touristOnlySection');
 
-            if (!currentOrderSummary.processedCart.length) {
-                container.innerHTML = '<p class="text-slate-300 font-bold text-center text-xs my-auto py-4">ยังไม่มีรายการอาหารในตะกร้า</p>';
-            }
-
             if (locationData.groupId === 2) {
                 touristSection.classList.remove('hidden');
                 let display = [locationData.locationName, locationData.zoneName].filter(Boolean).join(' - ') || 'นักท่องเที่ยว';
@@ -900,6 +952,13 @@
             } else {
                 touristSection.classList.add('hidden');
                 groupWrapper.classList.add('hidden');
+            }
+
+            if (!currentOrderSummary.processedCart || currentOrderSummary.processedCart.length === 0) {
+                container.innerHTML = '<p class="text-slate-300 font-bold text-center text-xs my-auto py-4">ยังไม่มีรายการอาหารในตะกร้า</p>';
+                document.getElementById('summaryQty').textContent = '0 รายการ - 0 ชิ้น';
+                document.getElementById('summaryTotal').textContent = '0';
+                return;
             }
 
             let html = '';
@@ -953,11 +1012,16 @@
                 `;
             }
 
-            if (html) container.innerHTML = html;
+            container.innerHTML = html;
             document.getElementById('summaryQty').textContent = `${currentOrderSummary.itemsCount} รายการ - ${currentOrderSummary.totalQty} ชิ้น`;
             document.getElementById('summaryTotal').textContent = currentOrderSummary.grandTotal.toLocaleString();
         }
         /* --- [End Block 3.6] ORDER CALCULATION & PREVIEW --- */
+
+        
+        
+        
+        
 
         /* --- [Start Block 3.7] PRINT ORDER NAVIGATION --- */
         /* ฟังก์ชันบันทึกข้อมูลลูกค้าและส่งต่อไปยังหน้าพิมพ์ (printorder.html) */
